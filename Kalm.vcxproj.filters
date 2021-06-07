@@ -1,0 +1,356 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Arquivos de Origem">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Recurso">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core">
+      <UniqueIdentifier>{eca15c58-0d02-4c59-83fd-bab91d2d4efb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics">
+      <UniqueIdentifier>{a8095bd2-4fd3-48a1-814a-dc5e75a37094}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\CommandPool">
+      <UniqueIdentifier>{1d479d89-77ae-49bd-a3f1-4dc1b72202f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\RenderContext">
+      <UniqueIdentifier>{fac15c54-2b10-4b8f-b98e-44fac54be269}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\RenderFrame">
+      <UniqueIdentifier>{9b85a85a-f63a-4a24-9792-ee8d0ca5e082}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\CommandBuffer">
+      <UniqueIdentifier>{5f1909bd-37ea-44cd-ba9d-eb049bc83018}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\Pipeline">
+      <UniqueIdentifier>{d626ad0b-77ae-479f-969c-bee3e7ba88b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\Thread">
+      <UniqueIdentifier>{379ea86b-d215-449c-a710-dcb2280081b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\Descriptorpool">
+      <UniqueIdentifier>{b21e5ccc-2330-4bf6-979c-c59dc204550d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\Descriptorset">
+      <UniqueIdentifier>{ed55607c-e730-463f-a4ab-9e9bed18006f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\Image">
+      <UniqueIdentifier>{a2d710d6-2452-4c86-8f56-870d9d336655}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\Framebuffer">
+      <UniqueIdentifier>{375518dd-ad9a-4f97-bbd9-8d3911b1f521}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\GraphicsUtility">
+      <UniqueIdentifier>{d611d11c-2603-4413-a425-9c9861725ed6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\RenderTarget">
+      <UniqueIdentifier>{a49418e4-ef83-4801-90e6-6b6eaa53801f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine">
+      <UniqueIdentifier>{dbb7ddaa-6d79-4a1b-9c77-3a1cd6bdb62a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Component">
+      <UniqueIdentifier>{f22998e7-9756-4f70-a33c-723729dd6830}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Entity">
+      <UniqueIdentifier>{2df37b16-3cc1-47d4-9019-bf7e5b149180}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Mesh">
+      <UniqueIdentifier>{70f403d5-0f1c-44f6-af2c-a7b7915d9a25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Utility">
+      <UniqueIdentifier>{f73a56c5-df9c-44b0-b4c1-27fb5dd1db48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Utility\Transform">
+      <UniqueIdentifier>{778519a9-5d20-46ed-b4e4-7debddad2ffe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Camera">
+      <UniqueIdentifier>{5446d2c9-239a-4798-9841-3a0763c9e9f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Game">
+      <UniqueIdentifier>{0dcf5f54-2783-456c-9606-e0f00c5312b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Window">
+      <UniqueIdentifier>{4a54b205-8ca6-4493-99f5-1ee03d502e10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Input">
+      <UniqueIdentifier>{63c29311-7fc4-4cc1-9e45-2c3d3128732c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Script">
+      <UniqueIdentifier>{a7b42852-26ef-4656-b6ac-a473f85ba4c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\ScriptManager">
+      <UniqueIdentifier>{7ce2ab51-3ad2-44d4-80e2-d3eb50acfdaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Shaders">
+      <UniqueIdentifier>{284bc52b-1d93-4ead-9c19-b032395ce3c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Shaders\Common">
+      <UniqueIdentifier>{805812a1-7135-4460-b734-c2a4978ca2c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Game\Scripts">
+      <UniqueIdentifier>{d06ca6d8-e425-45b8-b029-8ecf6cb3c38c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\RenderPasses">
+      <UniqueIdentifier>{e1807dc5-e802-40e2-b70a-f05edcc109fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Framebuffers">
+      <UniqueIdentifier>{bf795137-0bf4-4fe6-8f5d-17716aa76c26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Shaders\gbufferComposition">
+      <UniqueIdentifier>{e9a18344-8a89-4f54-82a6-a1e30b44c635}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Shaders\deferredLIghting">
+      <UniqueIdentifier>{32ba0a47-fbb3-4538-8719-06c521f21f84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Material">
+      <UniqueIdentifier>{9a974e45-e7f6-470a-a48f-aac4840be1b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\CubeMap">
+      <UniqueIdentifier>{f0971dcc-1678-4ab3-a55e-926cc3205049}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Core\Graphics\NewFilter1">
+      <UniqueIdentifier>{a930eff1-1f70-442c-87c8-b26d911cdffe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\SceneGraph">
+      <UniqueIdentifier>{f073f8fb-ec61-42f3-a9d2-e4d8b9da6c7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Game\Scene">
+      <UniqueIdentifier>{2f6ee5eb-a7d0-4167-bb5f-f49ab1aa01f4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Kalm.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\Render.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\Debuger.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\VulkanFramework.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\CommandPool\CommandPool.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\CommandPool</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\RenderContext\RenderContext.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\RenderContext</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\RenderFrame\RenderFrame.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\RenderFrame</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\Pipeline\Pipeline.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\Thread\Thread.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\CommandPool\CommandBuffer.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\CommandBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\DescriptorPool\Descriptorpool.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\Descriptorpool</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\Descriptorset\Descriptorset.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\Descriptorset</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\Image\Image.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\FrameBuffer\Framebuffer.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\Framebuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\GraphicsUtil\GraphicsUtility.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\GraphicsUtility</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\RenderTarget\RenderTarget.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\RenderTarget</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Entity\Entity.cpp">
+      <Filter>Arquivos de Recurso\Engine\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Components\Component.cpp">
+      <Filter>Arquivos de Recurso\Engine\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\MeshComponent\Mesh.cpp">
+      <Filter>Arquivos de Recurso\Engine\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Utility\Transform.cpp">
+      <Filter>Arquivos de Recurso\Engine\Utility\Transform</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Camera\Camera.cpp">
+      <Filter>Arquivos de Recurso\Engine\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\Window.cpp">
+      <Filter>Arquivos de Recurso\Engine\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Input\Input.cpp">
+      <Filter>Arquivos de Recurso\Engine\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Script\Script.cpp">
+      <Filter>Arquivos de Recurso\Engine\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ScriptManager\ScriptManager.cpp">
+      <Filter>Arquivos de Recurso\Engine\ScriptManager</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\cameraController\CameraController.cpp">
+      <Filter>Arquivos de Recurso\Game\Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\RenderpassManager\RenderpassManager.cpp">
+      <Filter>Arquivos de Recurso\Core\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\FramebufferManager\FramebufferManagement.cpp">
+      <Filter>Arquivos de Recurso\Core\Framebuffers</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Material\Material.cpp">
+      <Filter>Arquivos de Recurso\Engine\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Graphics\Cubemap\CubeMap.cpp">
+      <Filter>Arquivos de Recurso\Core\Graphics\CubeMap</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\SceneGraph\SceneGraph.cpp">
+      <Filter>Arquivos de Recurso\Engine\SceneGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Scene\Scene.cpp">
+      <Filter>Arquivos de Recurso\Game\Scene</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Core\Graphics\VulkanFramework.h">
+      <Filter>Arquivos de Recurso\Core\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\Render.h">
+      <Filter>Arquivos de Recurso\Core\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\VulkanDef.h">
+      <Filter>Arquivos de Recurso\Core\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\Debuger.h">
+      <Filter>Arquivos de Recurso\Core\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Kalm.h">
+      <Filter>Arquivos de Recurso\Core\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\CommandPool\CommandPool.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\CommandPool</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\RenderContext\RenderContext.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\RenderContext</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\RenderFrame\RenderFrame.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\RenderFrame</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\Pipeline\Pipeline.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\VkInitializer.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\Thread\Thread.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\CommandPool\CommandBuffer.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\CommandBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\DescriptorPool\Descriptorpool.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\Descriptorpool</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\Descriptorset\Descriptorset.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\Descriptorset</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\Image\Image.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\FrameBuffer\Framebuffer.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\Framebuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\GraphicsUtil\GraphicsUtility.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\GraphicsUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\stb_image\stb_image.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\RenderTarget\RenderTarget.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\RenderTarget</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Entity\Entity.h">
+      <Filter>Arquivos de Recurso\Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Components\Component.h">
+      <Filter>Arquivos de Recurso\Engine\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\MeshComponent\Mesh.h">
+      <Filter>Arquivos de Recurso\Engine\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Utility\Transform.h">
+      <Filter>Arquivos de Recurso\Engine\Utility\Transform</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Camera\Camera.h">
+      <Filter>Arquivos de Recurso\Engine\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\Window.h">
+      <Filter>Arquivos de Recurso\Engine\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Input\Input.h">
+      <Filter>Arquivos de Recurso\Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Script\Script.h">
+      <Filter>Arquivos de Recurso\Engine\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ScriptManager\ScriptManager.h">
+      <Filter>Arquivos de Recurso\Engine\ScriptManager</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\cameraController\CameraController.h">
+      <Filter>Arquivos de Recurso\Game\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\RenderpassManager\RenderpassManager.h">
+      <Filter>Arquivos de Recurso\Core\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\FramebufferManager\FramebufferManagement.h">
+      <Filter>Arquivos de Recurso\Core\Framebuffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Material\Material.h">
+      <Filter>Arquivos de Recurso\Engine\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Graphics\Cubemap\CubeMap.h">
+      <Filter>Arquivos de Recurso\Core\Graphics\CubeMap</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\SceneGraph\SceneGraph.h">
+      <Filter>Arquivos de Recurso\Engine\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Scene\Scene.h">
+      <Filter>Arquivos de Recurso\Game\Scene</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Common\frag.frag">
+      <Filter>Arquivos de Recurso\Shaders\Common</Filter>
+    </None>
+    <None Include="Shaders\Common\vert.vert">
+      <Filter>Arquivos de Recurso\Shaders\Common</Filter>
+    </None>
+    <None Include="Shaders\gBufferComposition\vert.vert">
+      <Filter>Arquivos de Recurso\Shaders\gbufferComposition</Filter>
+    </None>
+    <None Include="Shaders\gBufferComposition\frag.frag">
+      <Filter>Arquivos de Recurso\Shaders\gbufferComposition</Filter>
+    </None>
+    <None Include="Shaders\deferredLighting\vert.vert">
+      <Filter>Arquivos de Recurso\Shaders\deferredLIghting</Filter>
+    </None>
+    <None Include="Shaders\deferredLighting\frag.frag">
+      <Filter>Arquivos de Recurso\Shaders\deferredLIghting</Filter>
+    </None>
+  </ItemGroup>
+</Project>

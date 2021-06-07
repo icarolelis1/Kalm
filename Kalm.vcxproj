@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{A5B691B8-B271-4087-AAC4-53611CCDFB3F}</ProjectGuid>
+    <RootNamespace>Kalm</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependences\GLFW64\include;$(SolutionDir)Dependencies\include;C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependences\GLFW64\lib-vc2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)glfw3.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\assimp\include;$(SolutionDir)Dependencies\glm\glm;$(SolutionDir)Dependencies\stb_image;$(SolutionDir)Dependencies\GLFW64\include;$(SolutionDir)Game\;$(SolutionDir)Engine\;$(SolutionDir)Core\;$(SolutionDir)Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\assimp\lib;$(SolutionDir)Dependencies\Lib;$(SolutionDir)Dependencies\GLFW64\lib-vc2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\include;C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Core\Graphics\CommandPool\CommandBuffer.cpp" />
+    <ClCompile Include="Core\Graphics\CommandPool\CommandPool.cpp" />
+    <ClCompile Include="Core\Graphics\Cubemap\CubeMap.cpp" />
+    <ClCompile Include="Core\Graphics\Debuger.cpp" />
+    <ClCompile Include="Core\Graphics\DescriptorPool\Descriptorpool.cpp" />
+    <ClCompile Include="Core\Graphics\Descriptorset\Descriptorset.cpp" />
+    <ClCompile Include="Core\Graphics\FramebufferManager\FramebufferManagement.cpp" />
+    <ClCompile Include="Core\Graphics\FrameBuffer\Framebuffer.cpp" />
+    <ClCompile Include="Core\Graphics\GraphicsUtil\GraphicsUtility.cpp" />
+    <ClCompile Include="Core\Graphics\Image\Image.cpp" />
+    <ClCompile Include="Core\Graphics\Pipeline\Pipeline.cpp" />
+    <ClCompile Include="Core\Graphics\Render.cpp" />
+    <ClCompile Include="Core\Graphics\RenderContext\RenderContext.cpp" />
+    <ClCompile Include="Core\Graphics\RenderFrame\RenderFrame.cpp" />
+    <ClCompile Include="Core\Graphics\RenderpassManager\RenderpassManager.cpp" />
+    <ClCompile Include="Core\Graphics\RenderTarget\RenderTarget.cpp" />
+    <ClCompile Include="Core\Graphics\Thread\Thread.cpp" />
+    <ClCompile Include="Core\Graphics\VulkanFramework.cpp" />
+    <ClCompile Include="Core\Graphics\Window.cpp" />
+    <ClCompile Include="Engine\Camera\Camera.cpp" />
+    <ClCompile Include="Engine\Components\Component.cpp" />
+    <ClCompile Include="Engine\Entity\Entity.cpp" />
+    <ClCompile Include="Engine\Input\Input.cpp" />
+    <ClCompile Include="Engine\Material\Material.cpp" />
+    <ClCompile Include="Engine\MeshComponent\Mesh.cpp" />
+    <ClCompile Include="Engine\SceneGraph\SceneGraph.cpp" />
+    <ClCompile Include="Engine\ScriptManager\ScriptManager.cpp" />
+    <ClCompile Include="Engine\Script\Script.cpp" />
+    <ClCompile Include="Engine\Utility\Transform.cpp" />
+    <ClCompile Include="Game\cameraController\CameraController.cpp" />
+    <ClCompile Include="Game\Scene\Scene.cpp" />
+    <ClCompile Include="Kalm.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Core\Graphics\CommandPool\CommandBuffer.h" />
+    <ClInclude Include="Core\Graphics\CommandPool\CommandPool.h" />
+    <ClInclude Include="Core\Graphics\Cubemap\CubeMap.h" />
+    <ClInclude Include="Core\Graphics\Debuger.h" />
+    <ClInclude Include="Core\Graphics\DescriptorPool\Descriptorpool.h" />
+    <ClInclude Include="Core\Graphics\Descriptorset\Descriptorset.h" />
+    <ClInclude Include="Core\Graphics\FramebufferManager\FramebufferManagement.h" />
+    <ClInclude Include="Core\Graphics\FrameBuffer\Framebuffer.h" />
+    <ClInclude Include="Core\Graphics\GraphicsUtil\GraphicsUtility.h" />
+    <ClInclude Include="Core\Graphics\Image\Image.h" />
+    <ClInclude Include="Core\Graphics\Pipeline\Pipeline.h" />
+    <ClInclude Include="Core\Graphics\Render.h" />
+    <ClInclude Include="Core\Graphics\RenderContext\RenderContext.h" />
+    <ClInclude Include="Core\Graphics\RenderFrame\RenderFrame.h" />
+    <ClInclude Include="Core\Graphics\RenderpassManager\RenderpassManager.h" />
+    <ClInclude Include="Core\Graphics\RenderTarget\RenderTarget.h" />
+    <ClInclude Include="Core\Graphics\Thread\Thread.h" />
+    <ClInclude Include="Core\Graphics\VkInitializer.h" />
+    <ClInclude Include="Core\Graphics\VulkanDef.h" />
+    <ClInclude Include="Core\Graphics\VulkanFramework.h" />
+    <ClInclude Include="Core\Graphics\Window.h" />
+    <ClInclude Include="Dependencies\stb_image\stb_image.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Engine\Camera\Camera.h" />
+    <ClInclude Include="Engine\Components\Component.h" />
+    <ClInclude Include="Engine\Entity\Entity.h" />
+    <ClInclude Include="Engine\Input\Input.h" />
+    <ClInclude Include="Engine\Material\Material.h" />
+    <ClInclude Include="Engine\MeshComponent\Mesh.h" />
+    <ClInclude Include="Engine\SceneGraph\SceneGraph.h" />
+    <ClInclude Include="Engine\ScriptManager\ScriptManager.h" />
+    <ClInclude Include="Engine\Script\Script.h" />
+    <ClInclude Include="Engine\Utility\Transform.h" />
+    <ClInclude Include="Game\cameraController\CameraController.h" />
+    <ClInclude Include="Game\Scene\Scene.h" />
+    <ClInclude Include="Kalm.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Common\frag.frag" />
+    <None Include="Shaders\Common\vert.vert" />
+    <None Include="Shaders\deferredLighting\frag.frag" />
+    <None Include="Shaders\deferredLighting\vert.vert" />
+    <None Include="Shaders\gBufferComposition\frag.frag" />
+    <None Include="Shaders\gBufferComposition\vert.vert" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
