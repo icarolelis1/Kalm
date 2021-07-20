@@ -274,9 +274,9 @@ void Game::RenderpassManager::createDeferredLightingRenderPass(VkExtent2D extent
 
 	subpass.dependencies[1].srcSubpass = 0;
 	subpass.dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-	subpass.dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	subpass.dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	subpass.dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpass.dependencies[1].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;;
+	subpass.dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;;
 	subpass.dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 	subpass.dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
