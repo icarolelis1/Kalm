@@ -201,7 +201,7 @@ namespace VK_Objects {
 	class DescriptorSetLayout {
 	
 	public:
-		DescriptorSetLayout(const VK_Objects::Device* _device, const std::vector<ShaderResource> _resources);
+		DescriptorSetLayout(const VK_Objects::Device* _device, const std::vector<ShaderResource> _resources,const char *description = "GenericSet");
 
 
 

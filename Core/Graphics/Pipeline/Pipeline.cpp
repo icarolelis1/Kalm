@@ -178,7 +178,7 @@ void VK_Objects::Shader::destroyModule()
 	vkDestroyShaderModule(device.getLogicalDevice(), vk_shaderModule, nullptr);
 }
 
-VK_Objects::DescriptorSetLayout::DescriptorSetLayout(const Device* _device, const std::vector<ShaderResource> _resources):device(_device)
+VK_Objects::DescriptorSetLayout::DescriptorSetLayout(const Device* _device, const std::vector<ShaderResource> _resources,const char *description):device(_device)
 {
 
 	for (auto& resource : _resources) {

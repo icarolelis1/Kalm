@@ -15,7 +15,7 @@
 #include <Graphics/RenderpassManager/RenderpassManager.h>
 #include <Graphics/FramebufferManager/FramebufferManagement.h>
 #include <Scene/Scene.h>
-
+#include <Graphics/Thread/Thread.h>
 #ifndef GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #endif

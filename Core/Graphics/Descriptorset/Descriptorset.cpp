@@ -45,7 +45,7 @@ void VK_Objects::Descriptorset::updateDescriptorset(std::vector<VkDescriptorBuff
 		w.descriptorCount = 1;
 		w.dstBinding = i; i++;
 		w.pImageInfo = &imageInfo;
-		w.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+		w.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		w.dstSet = vk_descriptorset;
 
 		writes.push_back(w);

@@ -53,9 +53,9 @@ void Render::initiateResources(Utils::WindowHandler*windowHandler , uint32_t WID
 	createCommandPools();
 	addMeshes();
 	createScene();
+	createMaterials();
 	separateSceneObjects();
 	createDynamicUniformBuffers();
-	createMaterials();
 	createRenderContexts();
 	creteCommandBuffer();
 }
@@ -193,6 +193,7 @@ void Render::createRenderpass()
 
 void Render::createRenderContexts()
 {
+	RENDER::Thread t1;
 	uint32_t n = swapChain.getNumberOfImages();
 	
 	//Create Resources
@@ -261,15 +262,15 @@ void Render::createRenderContexts()
 
 		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo[0].imageView = *framebuffersManager->g_bufferImages["ALBEDO"]->getVkImageViewHandle();
-		imageInfo[0].sampler = VK_NULL_HANDLE;
+		imageInfo[0].sampler = sampler_Testing;
 
 		imageInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo[1].imageView = *framebuffersManager->g_bufferImages["METALLICROUGHNESS"]->getVkImageViewHandle();
-		imageInfo[1].sampler = VK_NULL_HANDLE;
+		imageInfo[1].sampler = sampler_Testing;
 
 		imageInfo[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo[2].imageView = *framebuffersManager->g_bufferImages["NORMALS"]->getVkImageViewHandle();
-		imageInfo[2].sampler = VK_NULL_HANDLE;
+		imageInfo[2].sampler = sampler_Testing;
 
 		deferredShading_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
 
@@ -303,16 +304,17 @@ void Render::createRenderContexts()
 	//Record commands
 	std::array<VkClearValue, 5> clearValues = {};
 	clearValues[0].depthStencil = { 1.f };
-	clearValues[1].color = { .0,1.0,.0,.0 };
+	clearValues[1].color = { 1.0,1.0,.0,1.0 };
 	clearValues[2].color = { .0,.0,.0,.0 };
 	clearValues[3].color = { .00,.00,.0 ,1.0 };
-	clearValues[4].color = { .0,.0,.0,.0 };
+	clearValues[4].color = { .0,.0,1.0,1.0 };
 
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[3]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[4]);
+	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[4]);	
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[0]);
+	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[4]);
 
 	/*
 	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
@@ -331,7 +333,6 @@ void Render::createRenderContexts()
 		Vk_Functions::beginCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
 
 		createShadowMap(commandBuffers[i]->getCommandBufferHandle(),i);
-
 
 		renderpass->passes["G_BUFFER"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
 
@@ -365,9 +366,13 @@ void Render::createRenderContexts()
 
 			meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle());
 		}
+		
+		renderpass->passes["G_BUFFER"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
+
 
 		{
-			vkCmdNextSubpass(commandBuffers[i]->getCommandBufferHandle(), VK_SUBPASS_CONTENTS_INLINE);
+
+			renderpass->passes["DEFERRED_LIGHTING"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
 
 			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineHandle());
 			
@@ -377,9 +382,10 @@ void Render::createRenderContexts()
 
 			vkCmdDraw(commandBuffers[i]->getCommandBufferHandle(), 3, 1, 0, 0);
 
+			renderpass->passes["DEFERRED_LIGHTING"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
+
 		}
 
-		renderpass->passes["G_BUFFER"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
 
 		Vk_Functions::endCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
 
@@ -390,6 +396,8 @@ void Render::createRenderContexts()
 
 	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(&camera, "camController");
 	scriptManager.insertScript(cameraController);
+
+
 
 	while (!glfwWindowShouldClose(w)) {
 
@@ -407,9 +415,7 @@ void Render::createRenderContexts()
 		glfwSetWindowTitle(window, ss.str().c_str());		
 
 
-		VP t;
-		t.view = camera.getViewMatrix();
-		t.projection = camera.getProjectionMatrix();
+	
 		ModelMatrix m;
 
 		//m.model = glm::mat4(1.0f);
@@ -650,12 +656,12 @@ void Render::createPipeline()
 	std::vector<std::vector<VK_Objects::ATRIBUTES>>att{ atributes };
 
 	pipelineInfo.atributes = att;
-	pipelineInfo.colorAttachmentsCount = 4;
+	pipelineInfo.colorAttachmentsCount = 3;
 	pipelineInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	pipelineInfo.dephTest = 1;
+	pipelineInfo.dephTest = 0;
 	pipelineInfo.depthBias = 0;
 	pipelineInfo.rdpass = &renderpass->passes["G_BUFFER"]->vk_renderpass ;
-	pipelineInfo.frontFaceClock = VK_FRONT_FACE_CLOCKWISE;
+	pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pipelineInfo.vertexOffsets = { 0 };
 	pipelineInfo.subpass = 0;
 
@@ -670,17 +676,17 @@ void Render::createPipeline()
 		VK_Objects::ShaderResource albedoResourceInput{};
 		albedoResourceInput.binding = static_cast<uint32_t>(0);
 		albedoResourceInput.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-		albedoResourceInput.type = VK_Objects::ShaderResourceType::INPUT_ATTACHMENT;
-
+		albedoResourceInput.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+		
 		VK_Objects::ShaderResource metallicRoughnessInput{};
 		metallicRoughnessInput.binding = static_cast<uint32_t>(1);
 		metallicRoughnessInput.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-		metallicRoughnessInput.type = VK_Objects::ShaderResourceType::INPUT_ATTACHMENT;
+		metallicRoughnessInput.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
 		VK_Objects::ShaderResource normalsInput{};
 		normalsInput.binding = static_cast<uint32_t>(2);
 		normalsInput.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-		normalsInput.type = VK_Objects::ShaderResourceType::INPUT_ATTACHMENT;
+		normalsInput.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
 		//Create shader resource and Allocate Descriptorsets 
 		std::vector<VK_Objects::ShaderResource> resourcess = { albedoResourceInput , metallicRoughnessInput , normalsInput };
@@ -734,13 +740,13 @@ void Render::createPipeline()
 
 		pipelineInfo.atributes = att;
 		pipelineInfo.colorAttachmentsCount = 1;
-		pipelineInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 		pipelineInfo.dephTest = 0;
 		pipelineInfo.depthBias = 0;
-		pipelineInfo.rdpass = &renderpass->passes["G_BUFFER"]->vk_renderpass;
-		pipelineInfo.frontFaceClock = VK_FRONT_FACE_CLOCKWISE;
+		pipelineInfo.rdpass = &renderpass->passes["DEFERRED_LIGHTING"]->vk_renderpass;
+		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pipelineInfo.vertexOffsets = { 0 };
-		pipelineInfo.subpass = 1;
+		pipelineInfo.subpass = 0;
 
 		std::unique_ptr<VK_Objects::Pipeline> deferredLightingPipeline = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move(vert), std::move(frag), pipelineInfo);
 		deferredLightingPipeline->id = "DEFERRED_SHADING";
@@ -887,12 +893,12 @@ void Render::createScene()
 	std::shared_ptr<Engine::Mesh> m2 = std::dynamic_pointer_cast<Engine::Mesh>(mesh2->getComponent(Engine::COMPONENT_TYPE::MESH));
 
 	m1->transform.setPosition(glm::vec3(0));
-	m1->transform.setScale(glm::vec3(.05));
+	m1->transform.setScale(glm::vec3(.01));
 
 	m1->transform.updateModelMatrix(nullptr);
 
-	m2->transform.setPosition(glm::vec3(glm::vec3(0,0,6)));
-	m2->transform.setScale(glm::vec3(.05));
+	m2->transform.setPosition(glm::vec3(glm::vec3(0,0,15)));
+	m2->transform.setScale(glm::vec3(.01));
 
 	m2->transform.updateModelMatrix(nullptr);
 
@@ -969,7 +975,9 @@ void Render::updateUniforms(uint32_t imageIndex)
 	lightProjectionUniformBuffers[imageIndex]->udpate(lightMatrix);
 
 
+	//Update the uniform buffers that hold model projection, which is stored in one large buffer per frame.
 	updateDynamicUniformBuffer(imageIndex);
+
 	//Update Dynamic Uniform Buffersf
 	/*
 	if (!modelBuffers[imageIndex]->isMapped()) {
@@ -1019,6 +1027,7 @@ void Render::updateDynamicUniformBuffer(uint32_t imageIndex)
 
 	}
 	for (int i = 0; i < meshes.size(); i++) {
+
 		if (meshes[i]->shouldUpdateOnThisFrame()) {
 
 			glm::mat4* m0 = (glm::mat4*)((uint64_t)modelMatrixes.model + dynamicAlignment*i);
