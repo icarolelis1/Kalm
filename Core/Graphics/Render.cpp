@@ -305,16 +305,14 @@ void Render::createRenderContexts()
 	std::array<VkClearValue, 5> clearValues = {};
 	clearValues[0].depthStencil = { 1.f };
 	clearValues[1].color = { 1.0,1.0,.0,1.0 };
-	clearValues[2].color = { .0,.0,.0,.0 };
-	clearValues[3].color = { .00,.00,.0 ,1.0 };
-	clearValues[4].color = { .0,.0,1.0,1.0 };
+
 
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[3]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[4]);	
+	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
+	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
+	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);	
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[0]);
-	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[4]);
+	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
 
 	/*
 	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
@@ -332,14 +330,14 @@ void Render::createRenderContexts()
 
 		Vk_Functions::beginCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
 
-		createShadowMap(commandBuffers[i]->getCommandBufferHandle(),i);
+	//	createShadowMap(commandBuffers[i]->getCommandBufferHandle(),i);
 
 		renderpass->passes["G_BUFFER"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
 
 		VkViewport viewport = {};
 
 		viewport.width = static_cast<uint32_t>(e.width);
-		viewport.height = static_cast<uint32_t>(e.width);
+		viewport.height = static_cast<uint32_t>(e.height);
 		
 		viewport.maxDepth = 1.0f;
 
@@ -373,6 +371,10 @@ void Render::createRenderContexts()
 		{
 
 			renderpass->passes["DEFERRED_LIGHTING"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
+
+			vkCmdSetViewport(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &viewport);
+
+			vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
 
 			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineHandle());
 			
@@ -658,10 +660,10 @@ void Render::createPipeline()
 	pipelineInfo.atributes = att;
 	pipelineInfo.colorAttachmentsCount = 3;
 	pipelineInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	pipelineInfo.dephTest = 0;
+	pipelineInfo.dephTest = 1;
 	pipelineInfo.depthBias = 0;
 	pipelineInfo.rdpass = &renderpass->passes["G_BUFFER"]->vk_renderpass ;
-	pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pipelineInfo.frontFaceClock = VK_FRONT_FACE_CLOCKWISE;
 	pipelineInfo.vertexOffsets = { 0 };
 	pipelineInfo.subpass = 0;
 
@@ -808,7 +810,7 @@ void Render::createPipeline()
 		pipelineInfo.atributes = att;
 		pipelineInfo.colorAttachmentsCount = 1;
 		pipelineInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-		pipelineInfo.dephTest = 0;
+		pipelineInfo.dephTest = 1;
 		pipelineInfo.depthBias = 0;
 		pipelineInfo.rdpass = &renderpass->passes["SHADOW_MAP"]->vk_renderpass;
 		pipelineInfo.frontFaceClock = VK_FRONT_FACE_CLOCKWISE;
@@ -867,10 +869,10 @@ void Render::createDynamicUniformBuffers()
 
 void Render::createMaterials()
 {
-	Engine::FilesPath path;
-	path.diffuseMap = "Assets\\Common\\Vehicle_basecolor.png";
+	Engine::FilesPath path; 
+	path.diffuseMap = "Assets\\samus\\textures\\base_baseColor.png";
 	path.metallicMap = "Assets\\Common\\Vehicle_metallic.png";
-	path.normalMap = "Assets\\Common\\Vehicle_normal.png";
+	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
 	path.roughnessMap = "Assets\\Common\\Vehicle_rougness.png";
 
 	materialManager["teste"] = std::make_unique<Engine::Material>(&device, "teste", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
@@ -884,7 +886,7 @@ void Render::createScene()
 	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Mesh1");
 	std::shared_ptr<Engine::Entity> mesh2 = std::make_shared<Engine::Entity>("Mesh2");
 
-	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1,"icaro\\ds", "Assets\\BTech.fbx", &device, transferPool.get()));
+	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1,"icaro\\ds", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
 	mesh2->attachComponent(std::make_shared<Engine::Mesh>(mesh1,"icaro\\ds", "Assets\\BTech.fbx", &device, transferPool.get()));
 
 
@@ -893,8 +895,8 @@ void Render::createScene()
 	std::shared_ptr<Engine::Mesh> m2 = std::dynamic_pointer_cast<Engine::Mesh>(mesh2->getComponent(Engine::COMPONENT_TYPE::MESH));
 
 	m1->transform.setPosition(glm::vec3(0));
-	m1->transform.setScale(glm::vec3(.01));
-
+	m1->transform.setScale(glm::vec3(.4	));
+	m1->transform.setRotation(0, 90, 90);
 	m1->transform.updateModelMatrix(nullptr);
 
 	m2->transform.setPosition(glm::vec3(glm::vec3(0,0,15)));

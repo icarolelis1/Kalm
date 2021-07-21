@@ -19,6 +19,17 @@ void Engine::Transform::setPosition(glm::vec3 p)
 {
 	position = p;
 }
+void Engine::Transform::setRotation(glm::vec3 r)
+{
+	rotation = r;
+}
+
+void Engine::Transform::setRotation(float x, float y, float z)
+{
+	rotation = glm::vec3(x, y, z);
+
+}
+
 void Engine::Transform::setPosition(float x,float y , float z)
 {
 	position = glm::vec3(x,y,z);
@@ -29,10 +40,6 @@ void Engine::Transform::setScale(glm::vec3 p)
 	scale = p;
 }
 
-void Engine::Transform::setRotation(glm::vec3 r)
-{
-	rotation = r;
-}
 
 void Engine::Transform::increasePos(float x, float y, float z)
 {

@@ -25,6 +25,7 @@ namespace Engine {
 		void setPosition(float x, float y, float z);
 		void setScale(glm::vec3 p);
 		void setRotation(glm::vec3 r);
+		void setRotation(float x, float y, float z);
 
 		void increasePos(float x, float y, float z);
 		void increasePos(glm::vec3 p);
