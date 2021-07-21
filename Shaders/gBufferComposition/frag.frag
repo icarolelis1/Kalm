@@ -12,10 +12,10 @@ layout(location = 2) in vec3 WorldPos;
 
 
 
-layout (location = 0 ) out vec4  Color;
-layout (location = 1 ) out vec4 Albedo;
-layout (location = 2 ) out vec2 MetallicRoughness;
-layout (location = 3 ) out vec4 Normal;
+
+layout (location = 0 ) out vec4 Albedo;
+layout (location = 1 ) out vec2 MetallicRoughness;
+layout (location = 2 ) out vec4 Normal;
 
 mat3 getTBN(){
 
@@ -57,19 +57,12 @@ void main()
 {
 
 
- 
 
- /*    
 
-    vec3 albedo =   pow(texture( albedoMap , TexCoords).xyz  ,vec3(2.2));
-    float metallic =   texture(metallicMap,TexCoords * scaleFactor).r  * Material.metallicRoughness.x;
-    float roughness =    texture(roughnessMap, TexCoords * scaleFactor).x  *  Material.metallicRoughness.g;
-    float ao =   texture(aoMap, TexCoords * scaleFactor  ).r ;
-*/
-Color = vec4(0);
 Normal = vec4(getNormalFromMap(vec2(1.0)),1.0);
 float metallic =   texture(metallicMap,TexCoords ).r ;
 float roughness =    texture(roughnessMap, TexCoords ).x ;
 Albedo =  vec4(pow(texture( diffuseMap, TexCoords).xyz  ,vec3(2.2)),1.0);
+
 MetallicRoughness= vec2(metallic,roughness);
 }

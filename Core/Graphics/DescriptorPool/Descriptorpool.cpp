@@ -47,13 +47,15 @@ VK_Objects::Descriptorset VK_Objects::DescriptorPoolManager::allocateDescriptor(
 	
 	//Create new Pool
 	if (static_cast<uint32_t>(pools.size()==pool_index)) {
-
+		 
 		std::vector<VkDescriptorPoolSize> pool_sizes;
 
 		auto bindings = _descriptorLayout->getBindings();
 		
-		for (auto& binding : bindings) {
 
+
+		for (auto& binding : bindings) {
+			
 			pool_sizes.push_back({ binding.descriptorType,binding.descriptorCount * MAX_SETS });
 
 		}
@@ -67,7 +69,10 @@ VK_Objects::Descriptorset VK_Objects::DescriptorPoolManager::allocateDescriptor(
 		create_info.maxSets = MAX_SETS;
 		
 		pools.push_back(std::make_unique<DescriptorPool>(device, *_descriptorLayout.get()));
-	
+
+		std::cout << "\n - Created Descriptorpool number : : " << pools.size() << std::endl;
+		std::cout << "\n";
+
 		auto result = vkCreateDescriptorPool(device->getLogicalDevice(), &create_info, device->getAllocator(), &pools[pool_index]->getPoolHandle());
 		
 		if (result != VK_SUCCESS) {

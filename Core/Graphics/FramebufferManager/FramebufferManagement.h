@@ -33,6 +33,8 @@ private:
 	void createAttachemnts(VkExtent2D extent);
 	void createGBufferAttachments(VkExtent2D extent);
 	void createDepthMapAttachment(VkExtent2D extent);
+	void createSwapChainAttachment(VK_Objects::SwapChain* swapChain);
+
 
 	void createFramebuffers(VkExtent2D extent);
 

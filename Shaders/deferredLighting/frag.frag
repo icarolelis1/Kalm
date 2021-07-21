@@ -20,10 +20,10 @@ layout(set = 0, binding = 0) uniform UniformBuffLight{
 
 }lightUbo;
 
-layout (set = 1 ,input_attachment_index = 0, binding = 0) uniform subpassInput Albedo;
-layout (set = 1 ,input_attachment_index = 1, binding = 1) uniform subpassInput inputDepth;
-layout (set = 1 ,input_attachment_index = 2, binding = 2) uniform subpassInput Normal;
 
+layout (set = 1, binding = 0) uniform sampler2D Albedo;
+layout (set = 1, binding = 1) uniform sampler2D MetallicRoughness;
+layout (set = 1, binding = 2) uniform sampler2D Normal;
 
 //layout(set = 1, binding = 0) uniform sampler2D shadowMapImage;
 
@@ -42,8 +42,7 @@ vec3 getPositionFromDepth(float  inDepth){
 
 void main(){
 
-	Color = vec4(subpassLoad(Albedo).rgb,1.0) 	;
-	vec4 c = vec4(subpassLoad(Normal).rgb,1.0)	;
-	vec2 d  =subpassLoad(inputDepth).rg;
+	Color = texture(Normal,TexCoords)	;
+	
 	//Color = vec4(1);
 }

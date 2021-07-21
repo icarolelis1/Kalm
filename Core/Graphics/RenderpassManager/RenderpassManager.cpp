@@ -12,6 +12,9 @@ void Game::RenderpassManager::createRenderpasses(VkExtent2D extent )
 {
 	createShadowMapRenderpass(extent);
 	createGBufferRenderpass(extent);
+	createDeferredLightingRenderPass(extent);
+
+
 }
 
 void Game::RenderpassManager::createShadowMapRenderpass(VkExtent2D extent)
@@ -107,7 +110,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	VK_Objects::RenderpassProperties renderpassProperties;
 
 	//Single Attachment
-	renderpassProperties.attachments.resize(5);
+	renderpassProperties.attachments.resize(4);
 
 	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
@@ -126,7 +129,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	depthAttachment.description.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	depthAttachment.description.flags = 0;
 
-	depthAttachment.reference.attachment = 4;
+	depthAttachment.reference.attachment = 3;
 	depthAttachment.reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 
@@ -138,10 +141,10 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	metallicRoughnessAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	metallicRoughnessAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	metallicRoughnessAttachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	metallicRoughnessAttachment.description.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	metallicRoughnessAttachment.description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	metallicRoughnessAttachment.description.flags = 0;
 
-	metallicRoughnessAttachment.reference.attachment =2;
+	metallicRoughnessAttachment.reference.attachment = 1;
 	metallicRoughnessAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VK_Objects::RenderAttachment NormalsAttachment;
@@ -152,10 +155,10 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	NormalsAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	NormalsAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	NormalsAttachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	NormalsAttachment.description.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	NormalsAttachment.description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	NormalsAttachment.description.flags = 0;
 
-	NormalsAttachment.reference.attachment = 3;
+	NormalsAttachment.reference.attachment = 2;
 	NormalsAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 
@@ -167,54 +170,26 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	albedoAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	albedoAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	albedoAttachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	albedoAttachment.description.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	albedoAttachment.description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	albedoAttachment.description.flags = 0;
 
-	albedoAttachment.reference.attachment = 1;
+	albedoAttachment.reference.attachment = 0;
 	albedoAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	//Final output of the renderpass
-	VK_Objects::RenderAttachment colorAttachemnt;
-	colorAttachemnt.description.format = swapChain->getFormat();
-	colorAttachemnt.description.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachemnt.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachemnt.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachemnt.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachemnt.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachemnt.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachemnt.description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	colorAttachemnt.description.flags = 0;
-
-	colorAttachemnt.reference.attachment = 0;
-	colorAttachemnt.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
 	VK_Objects::Subpass subpass;
-	subpass.description.resize(2);
-	subpass.dependencies.resize(3);
+	subpass.description.resize(1);
+	subpass.dependencies.resize(2);
 
-	VkAttachmentReference pColorAttachments[4] = { colorAttachemnt.reference, albedoAttachment.reference , metallicRoughnessAttachment.reference , NormalsAttachment.reference };
+	VkAttachmentReference pColorAttachments[3] = {  albedoAttachment.reference , metallicRoughnessAttachment.reference , NormalsAttachment.reference };
 
 
 	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.description[0].colorAttachmentCount =4;
+	subpass.description[0].colorAttachmentCount =3;
 	subpass.description[0].pColorAttachments = pColorAttachments; 
 	subpass.description[0].pDepthStencilAttachment = &depthAttachment.reference;
 
-	VkAttachmentReference inputReferences[3];
-	inputReferences[0] = { 1, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-	inputReferences[1] = { 2, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-	inputReferences[2] = { 3, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
 
-
-	subpass.description[1].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.description[1].colorAttachmentCount = 1;
-	subpass.description[1].pColorAttachments = &colorAttachemnt.reference;
-	subpass.description[1].pDepthStencilAttachment = &depthAttachment.reference;
-	subpass.description[1].inputAttachmentCount = 3;
-	subpass.description[1].pInputAttachments = inputReferences;
-
-
-
+		
 	subpass.dependencies[0].srcSubpass =		VK_SUBPASS_EXTERNAL;
 	subpass.dependencies[0].dstSubpass =		0;
 	subpass.dependencies[0].srcStageMask =		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
@@ -223,28 +198,19 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	subpass.dependencies[0].dstAccessMask =		VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;;
 	subpass.dependencies[0].dependencyFlags=	VK_DEPENDENCY_BY_REGION_BIT;
 
-	subpass.dependencies[1].srcSubpass = 0;		
-	subpass.dependencies[1].dstSubpass = 1;		
-	subpass.dependencies[1].srcStageMask =		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpass.dependencies[1].dstStageMask =		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	subpass.dependencies[1].srcAccessMask =		VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpass.dependencies[1].dstAccessMask =		VK_ACCESS_SHADER_READ_BIT;
-	subpass.dependencies[1].dependencyFlags	=   VK_DEPENDENCY_BY_REGION_BIT;
 
-	subpass.dependencies[2].srcSubpass = 0;
-	subpass.dependencies[2].dstSubpass = VK_SUBPASS_EXTERNAL;
-	subpass.dependencies[2].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	subpass.dependencies[2].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpass.dependencies[2].srcAccessMask = VK_ACCESS_SHADER_READ_BIT ;;
-	subpass.dependencies[2].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	subpass.dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+	subpass.dependencies[1].srcSubpass = 0;
+	subpass.dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	subpass.dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	subpass.dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpass.dependencies[1].srcAccessMask = VK_ACCESS_SHADER_READ_BIT ;;
+	subpass.dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpass.dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-
-	renderpassProperties.attachments[0] = colorAttachemnt;
-	renderpassProperties.attachments[1] = albedoAttachment;
-	renderpassProperties.attachments[2] = metallicRoughnessAttachment;
-	renderpassProperties.attachments[3] = NormalsAttachment;
-	renderpassProperties.attachments[4] = depthAttachment;
+	renderpassProperties.attachments[0] = albedoAttachment;
+	renderpassProperties.attachments[1] = metallicRoughnessAttachment;
+	renderpassProperties.attachments[2] = NormalsAttachment;
+	renderpassProperties.attachments[3] = depthAttachment;
 
 	gbufferRenderpass->properties = renderpassProperties;
 	gbufferRenderpass->subpass = subpass;
@@ -253,5 +219,78 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 
 	passes[gbufferRenderpass->getKey()] = std::move(gbufferRenderpass);
 
+
+}
+
+void Game::RenderpassManager::createDeferredLightingRenderPass(VkExtent2D extent)
+{
+
+	//Creates renderpass to be used in DeferredLighting creation.
+
+	std::unique_ptr<VK_Objects::Renderpass> deferredLightingRenderPass = std::make_unique<VK_Objects::Renderpass>(device, "DEFERRED_LIGHTING", extent);
+
+	VK_Objects::RenderpassProperties renderpassProperties;
+
+	//Single Attachment
+	renderpassProperties.attachments.resize(1);
+
+	VkFormat format = swapChain->getFormat();
+	
+	VK_Objects::RenderAttachment swapChainAttachment;
+	swapChainAttachment.description.format = format;
+	swapChainAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
+	swapChainAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	swapChainAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	swapChainAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	swapChainAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	swapChainAttachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	swapChainAttachment.description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	swapChainAttachment.description.flags = 0;
+
+	swapChainAttachment.reference.attachment = 0;
+	swapChainAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VK_Objects::Subpass subpass;
+	subpass.description.resize(1);
+	subpass.dependencies.resize(2);
+
+	VkAttachmentReference pColorAttachments[1] = { swapChainAttachment.reference };
+
+
+	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.description[0].colorAttachmentCount =1;
+	subpass.description[0].pColorAttachments = pColorAttachments;
+
+
+
+	subpass.dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	subpass.dependencies[0].dstSubpass = 0;
+	subpass.dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpass.dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpass.dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpass.dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;;
+	subpass.dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+
+	subpass.dependencies[1].srcSubpass = 0;
+	subpass.dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	subpass.dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	subpass.dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpass.dependencies[1].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;;
+	subpass.dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpass.dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	renderpassProperties.attachments[0] = swapChainAttachment;
+
+
+	deferredLightingRenderPass->properties = renderpassProperties;
+	deferredLightingRenderPass->subpass = subpass;
+
+	deferredLightingRenderPass->properties = renderpassProperties;
+	deferredLightingRenderPass->subpass = subpass;
+
+	Vk_Functions::createRenderpass(device, *deferredLightingRenderPass.get());
+
+	passes[deferredLightingRenderPass->getKey()] = std::move(deferredLightingRenderPass);
 
 }
