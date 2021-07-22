@@ -42,7 +42,7 @@ vec3 getPositionFromDepth(float  inDepth){
 
 void main(){
 
-	Color = texture(Normal,TexCoords)	;
+	Color = texture(Albedo,TexCoords)	;
 	
 	//Color = vec4(1);
 }
