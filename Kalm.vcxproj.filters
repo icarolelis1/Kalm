@@ -127,6 +127,9 @@
     <Filter Include="Arquivos de Recurso\Game\Scene">
       <UniqueIdentifier>{2f6ee5eb-a7d0-4167-bb5f-f49ab1aa01f4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\EventSystem">
+      <UniqueIdentifier>{a51eec93-5f57-4696-a922-01cfb6bbc5c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Kalm.cpp">

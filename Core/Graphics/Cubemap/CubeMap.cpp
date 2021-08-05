@@ -195,6 +195,7 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 
 	descriptorset = poolManager->allocateDescriptor(descLayout);
 
+
 	descriptors.push_back(std::move(descLayout));
 
 	std::unique_ptr<VK_Objects::Shader> vertex = std::make_unique< VK_Objects::Shader>(*device, VK_Objects::SHADER_TYPE::VERTEX_SHADER, Utils::readFile("Shaders\\equirectangular\\vert.spv"));

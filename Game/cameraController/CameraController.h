@@ -7,7 +7,7 @@
 	class CameraController :public Engine::Script {
 
 	public:
-		CameraController(Engine::Camera *camera , std::string id);
+		CameraController(std::shared_ptr<Engine::Camera> camera , std::string id);
 
 		void awake();
 		void start();
@@ -18,7 +18,7 @@
 		float YAW = 90;
 		float PITCH = -60;
 		float ROLL;
-		Engine::Camera* camera;
+		std::shared_ptr<Engine::Camera> camera;
 
 	};
 

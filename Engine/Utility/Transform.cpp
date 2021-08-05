@@ -5,7 +5,7 @@ glm::mat4& Engine::Transform::getModelMatrix()
 	return model;
 }
 
-glm::vec3 Engine::Transform::getPosition()
+glm::vec3& Engine::Transform::getPosition()
 {
 	return position;
 }
@@ -18,6 +18,7 @@ glm::vec3 Engine::Transform::getScale()
 void Engine::Transform::setPosition(glm::vec3 p)
 {
 	position = p;
+
 }
 void Engine::Transform::setRotation(glm::vec3 r)
 {
