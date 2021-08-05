@@ -3,13 +3,14 @@
 Engine::Camera::Camera(const char* _id) :  Engine::Entity(_id)
 {
 	projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, .1f, 100.f);
-
 }
 
 glm::mat4& Engine::Camera::getViewMatrix()
 {
-	auto pos = transform.getPosition();
+	auto pos =   transform.getPosition();
+
 	viewMatrix = glm::lookAt(pos, pos + eulerDirections.front, eulerDirections.up);
+
 	return viewMatrix;
 }
 
@@ -29,7 +30,6 @@ void Engine::Camera::start()
 
 void Engine::Camera::update(float timeStep)
 {
-	//Entity::update(timeStep);
 }
 
 std::array<float, 6> Engine::Camera::calculateFrustumInLightSpace(glm::mat4 lightMatrix)
@@ -70,8 +70,8 @@ std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers()
 	float heightFar = 2 * tan * farPlane;
 	float widthFar = heightFar * aspectRatio;
 
-	glm::vec3 centerNear = transform.getPosition() + eulerDirections.front * nearPlane;
-	glm::vec3 centerFar = transform.getPosition() + eulerDirections.front * farPlane;
+	glm::vec3 centerNear = this->transform.getPosition() + eulerDirections.front * nearPlane;
+	glm::vec3 centerFar = this->transform.getPosition() + eulerDirections.front * farPlane;
 
 	std::array<glm::vec3, 8> corners;
 

@@ -88,9 +88,11 @@ namespace Engine {
 
 		std::shared_ptr<Engine::Component> getComponent(std::string name);
 		std::shared_ptr<Engine::Component> getComponent(Engine::COMPONENT_TYPE componentType);
+		Transform transform;
 
 		Transform transform;
-		//CHANGING GITHUB STUFF
+
+
 	protected:
 		bool alive = true;
 		bool displayOnInspector = true;

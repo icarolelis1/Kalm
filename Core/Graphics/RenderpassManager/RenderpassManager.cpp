@@ -42,7 +42,7 @@ void Game::RenderpassManager::createShadowMapRenderpass(VkExtent2D extent)
 	depthAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	depthAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthAttachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depthAttachment.description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	depthAttachment.description.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	depthAttachment.description.flags = 0;
 
 	depthAttachment.reference.attachment = 1;

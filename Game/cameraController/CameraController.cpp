@@ -1,6 +1,6 @@
 #include "CameraController.h"
 
-CameraController::CameraController(Engine::Camera* _camera, std::string id):Script(id.data()),camera(_camera)
+CameraController::CameraController(std::shared_ptr<Engine::Camera> _camera, std::string id):Script(id.data()),camera(_camera)
 {
 }
 
@@ -19,7 +19,9 @@ void CameraController::update(float timeStep)
 {
 
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_W)) {
+
 		camera->transform.increasePos(camera->eulerDirections.front * timeStep * .04f);
+
 	}
 	
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_S)) {

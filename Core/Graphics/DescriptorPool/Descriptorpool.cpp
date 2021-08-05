@@ -76,6 +76,7 @@ VK_Objects::Descriptorset VK_Objects::DescriptorPoolManager::allocateDescriptor(
 		auto result = vkCreateDescriptorPool(device->getLogicalDevice(), &create_info, device->getAllocator(), &pools[pool_index]->getPoolHandle());
 		
 		if (result != VK_SUCCESS) {
+
 			std::cout << "Failed to create DescriptorPool\n";
 		}
 	}
@@ -87,6 +88,7 @@ VK_Objects::Descriptorset VK_Objects::DescriptorPoolManager::allocateDescriptor(
 
 		return dset;
 	}
+	
 	else {
 
 		pool_index++;
