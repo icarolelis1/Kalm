@@ -90,6 +90,8 @@ namespace Engine {
 		std::shared_ptr<Engine::Component> getComponent(Engine::COMPONENT_TYPE componentType);
 		Transform transform;
 
+		Transform transform;
+
 
 	protected:
 		bool alive = true;

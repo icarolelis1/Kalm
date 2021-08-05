@@ -11,6 +11,7 @@
 
 //Graphics FrameWork for vulkan abstractions like Textures, Pipelines, Renderpasses and etc
 namespace VK_Objects {
+
 	// STANDARD LUNGARG validation layer
 	static const std::vector<const char*> validationLayers = {
 		"VK_LAYER_KHRONOS_validation"
