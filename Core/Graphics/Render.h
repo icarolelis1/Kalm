@@ -16,6 +16,7 @@
 #include <Graphics/FramebufferManager/FramebufferManagement.h>
 #include <Scene/Scene.h>
 #include <Graphics/Thread/Thread.h>
+
 #ifndef GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #endif
@@ -41,8 +42,8 @@ struct ModelMatrix {
 
 struct LightUbo {
 
-	alignas(16) glm::vec3 position;
 	alignas(16) glm::vec3 color;
+	alignas(16) glm::vec3 position;
 	float type;
 
 };
@@ -50,8 +51,8 @@ struct LightUniform {
 
 	glm::mat4 invView;
 	glm::mat4 invProj;
+	alignas(16) glm::vec3 camera;
 	LightUbo light[1];
-
 };
 
 class Render
@@ -111,7 +112,7 @@ private:
 	VK_Objects::PCommandPool graphicsPool;
 	VK_Objects::PCommandPool transferPool;
 
-	Engine::Camera camera;
+	std::shared_ptr<Engine::Camera> camera;
 	LightUbo mainLight;
 
 
@@ -120,6 +121,8 @@ private:
 	std::vector<VK_Objects::Descriptorset> globalData_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> modelMatrix_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> deferredShading_Descriptorsets;
+	std::vector<VK_Objects::Descriptorset> enviromentData_Descriptorsets;
+
 	std::vector<VK_Objects::Descriptorset> light_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> lightProjection_Descriptorset;
 	size_t dynamicAlignment;

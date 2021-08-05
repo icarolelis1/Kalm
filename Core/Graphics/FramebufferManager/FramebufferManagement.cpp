@@ -29,7 +29,7 @@ void FramebufferManagement::createGBufferAttachments(VkExtent2D extent)
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-	VK_Objects::PImage depthImage = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_DEPTH_BIT, 1, 0);
+	VK_Objects::PImage depthImage = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_SAMPLED_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_DEPTH_BIT, 1, 0);
 
 
 	//Framebuffer(VK_Objects::Device * _device, VkImageView & view, VK_Objects::Renderpass * renderpass, VkExtent2D _extent);
@@ -73,6 +73,7 @@ void FramebufferManagement::createDepthMapAttachment(VkExtent2D extent)
 		framebuffers["SHADOW_MAP"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device,2,attachments,renderpasses["SHADOW_MAP"],extent)));
 
 	}
+
 	depth_bufferImages["DEPTH"] = std::move(depth);
 	depth_bufferImages["DEPTH_SQUARED"] = std::move(depthSquared);
 

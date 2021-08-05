@@ -17,7 +17,6 @@ namespace Engine {
 		std::array<float, 6> calculateFrustumInLightSpace(glm::mat4 lightMatrix);
 
 		EulerDirections eulerDirections;
-		Transform transform;
 		
 	private:
 		std::array<glm::vec3, 8> calculateFrustumConers();

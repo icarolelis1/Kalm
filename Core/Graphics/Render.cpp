@@ -22,7 +22,7 @@ void alignedFree(void* data)
 }
 
 //vk_ stands for any vulkan abstraction
-Render::Render() :camera("MainCamera")
+Render::Render() 
 {
 }
 
@@ -193,6 +193,27 @@ void Render::createRenderpass()
 
 void Render::createRenderContexts()
 {
+
+
+	//SKYBOX AND ENVIROMENT 
+
+	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Ref.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
+
+	VK_Objects::CubeMap envMAp(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
+	Vk_Functions::filterEnviromentMap(&device, cubeMap, envMAp, *transferPool.get(), *graphicsPool.get(), poolManager);
+
+	VK_Objects::Image brdfLut(&device, 512, 512, VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+	Vk_Functions::generatBRDFLut(&device, brdfLut, *transferPool.get(), *graphicsPool.get(), poolManager);
+
+	VK_Objects::CubeMap irradianceMap(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+
+
+
+
+
 	RENDER::Thread t1;
 	uint32_t n = swapChain.getNumberOfImages();
 	
@@ -203,10 +224,6 @@ void Render::createRenderContexts()
 	lightProjectionUniformBuffers.resize(n);
 	int index = 0;
 
-
-
-	//const VK_Objects::Device* _device, std::string _id, FilesPath& texturePaths, std::shared_ptr<VK_Objects::DescriptorPoolManager> pool ,
-//VK_Objects::CommandPool * commandPool,int nBufferingSwapChain
 
 
 	Vk_Functions::createSampler(&device, sampler_Testing);
@@ -274,21 +291,46 @@ void Render::createRenderContexts()
 
 		deferredShading_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
 
+	}
 
+	
+	
+	for (int i = 0; i < enviromentData_Descriptorsets.size(); i++) {
+
+		std::vector<VkDescriptorBufferInfo> bufferInfos;
+
+
+		std::vector<VkDescriptorImageInfo> imageInfo;
+		imageInfo.resize(5);
+
+		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		imageInfo[0].imageView = *framebuffersManager->depth_bufferImages["DEPTH"]->getVkImageViewHandle();
+		imageInfo[0].sampler = sampler_Testing;
+
+		imageInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[1].imageView = irradianceMap.getVkViewHandle();
+		imageInfo[1].sampler = sampler_Testing;
+
+		imageInfo[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[2].imageView = envMAp.getVkViewHandle();
+		imageInfo[2].sampler = sampler_Testing;
+
+		imageInfo[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[3].imageView = *brdfLut.getVkImageViewHandle();
+		imageInfo[3].sampler = sampler_Testing;
+
+		imageInfo[4].imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		imageInfo[4].imageView = *framebuffersManager->g_bufferImages["DEPTH"]->getVkImageViewHandle();
+		imageInfo[4].sampler = sampler_Testing;
+
+		enviromentData_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
 
 	}
 	
 	VkExtent2D e = swapChain.getExtent();
 
-	//std::unique_ptr<RENDER::RenderTarget> r = std::make_unique<RENDER::RenderTarget>(device, std::move(images) , std::move(frameBuffers));
-
 	std::unique_ptr<RENDER::RenderContext> r1 = std::make_unique<RENDER::RenderContext>( device,std::make_shared<VK_Objects::SwapChain>(swapChain));
 	
-
-	/*Image(VK_Objects::Device* device, const char* path, VkFormat format, VkImageTiling tiling, VkImageCreateFlags flags, VK_Objects::CommandPool& pool, 
-	uint32_t arrayLayers=1, bool useMaxNumMips=0);
-	*/
-
 	r1->setMaxFramesInFlight(3);
 
 	std::vector<VK_Objects::PComandBuffer> commandBuffers;
@@ -302,9 +344,10 @@ void Render::createRenderContexts()
 	}
 
 	//Record commands
-	std::array<VkClearValue, 5> clearValues = {};
+	std::array<VkClearValue, 3> clearValues = {};
 	clearValues[0].depthStencil = { 1.f };
-	clearValues[1].color = { 1.0,1.0,.0,1.0 };
+	clearValues[1].color = { 1.0,1.0,1.0,1.0 };
+	clearValues[2].color = { 1.0,1.0};
 
 
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
@@ -314,23 +357,12 @@ void Render::createRenderContexts()
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[0]);
 	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
 
-	/*
-	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\Moonless.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
-	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
-	
-	VK_Objects::CubeMap envMAp(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512,numMips);
-	Vk_Functions::filterEnviromentMap(&device, cubeMap, envMAp, *transferPool.get(), *graphicsPool.get(), poolManager);
-
-	VK_Objects::Image brdfLut(&device, 512, 512, VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
-	Vk_Functions::generatBRDFLut(&device, brdfLut, *transferPool.get(), *graphicsPool.get(), poolManager);*/
-
 
 	for (unsigned int i = 0; i < commandBuffers.size(); i++) {
 
 		Vk_Functions::beginCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
 
-	//	createShadowMap(commandBuffers[i]->getCommandBufferHandle(),i);
+		createShadowMap(commandBuffers[i]->getCommandBufferHandle(),i);
 
 		renderpass->passes["G_BUFFER"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
 
@@ -378,9 +410,9 @@ void Render::createRenderContexts()
 
 			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineHandle());
 			
-			VkDescriptorSet descriptorsets[2] = { light_Descriptorsets[i].getDescriptorSetHandle(), deferredShading_Descriptorsets[i].getDescriptorSetHandle() };
+			VkDescriptorSet descriptorsets[3] = { light_Descriptorsets[i].getDescriptorSetHandle(), enviromentData_Descriptorsets[i].getDescriptorSetHandle(), deferredShading_Descriptorsets[i].getDescriptorSetHandle() };
 
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(2), &descriptorsets[0], 0, NULL);
+			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(3), &descriptorsets[0], 0, NULL);
 
 			vkCmdDraw(commandBuffers[i]->getCommandBufferHandle(), 3, 1, 0, 0);
 
@@ -396,8 +428,7 @@ void Render::createRenderContexts()
 
 	r1->setPersistentCommandBuffers(std::move(commandBuffers));
 
-	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(&camera, "camController");
-	scriptManager.insertScript(cameraController);
+
 
 
 
@@ -408,14 +439,13 @@ void Render::createRenderContexts()
 		frameTime = timeStep.getTimeinMilli();
 		lastFrameTIme = time;
 
-		scriptManager.update(frameTime);
 
 		glfwPollEvents();
 		std::stringstream ss;
 		ss << "Kalm" << " " << " [" << frameTime << " MILLISEC]";
 
 		glfwSetWindowTitle(window, ss.str().c_str());		
-
+		scriptManager.update(frameTime);
 
 	
 		ModelMatrix m;
@@ -615,6 +645,7 @@ void Render::createPipeline()
 	modelMatrix.type = VK_Objects::ShaderResourceType::UNIFORM_DYNAMIC;
 
 
+
 	//Create shader resource and Allocate Descriptorsets 
 	std::vector<VK_Objects::ShaderResource> resources=  { viewProjection };
 
@@ -659,11 +690,11 @@ void Render::createPipeline()
 
 	pipelineInfo.atributes = att;
 	pipelineInfo.colorAttachmentsCount = 3;
-	pipelineInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	pipelineInfo.cullMode = VK_CULL_MODE_NONE;
 	pipelineInfo.dephTest = 1;
 	pipelineInfo.depthBias = 0;
 	pipelineInfo.rdpass = &renderpass->passes["G_BUFFER"]->vk_renderpass ;
-	pipelineInfo.frontFaceClock = VK_FRONT_FACE_CLOCKWISE;
+	pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pipelineInfo.vertexOffsets = { 0 };
 	pipelineInfo.subpass = 0;
 
@@ -693,11 +724,46 @@ void Render::createPipeline()
 		//Create shader resource and Allocate Descriptorsets 
 		std::vector<VK_Objects::ShaderResource> resourcess = { albedoResourceInput , metallicRoughnessInput , normalsInput };
 
-		std::shared_ptr<VK_Objects::DescriptorSetLayout> descInputAttachments = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resourcess);
+		std::shared_ptr<VK_Objects::DescriptorSetLayout> descriptorsetForMaterial = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resourcess);
+
+
+		VK_Objects::ShaderResource descriptorsetForShadowMap{};
+		descriptorsetForShadowMap.binding = static_cast<uint32_t>(0);
+		descriptorsetForShadowMap.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptorsetForShadowMap.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+
+		VK_Objects::ShaderResource descriptorsetForIrradianceMap{};
+		descriptorsetForIrradianceMap.binding = static_cast<uint32_t>(1);
+		descriptorsetForIrradianceMap.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptorsetForIrradianceMap.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+
+		VK_Objects::ShaderResource descriptorsetForEnvMap{};
+		descriptorsetForEnvMap.binding = static_cast<uint32_t>(2);
+		descriptorsetForEnvMap.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptorsetForEnvMap.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+
+		VK_Objects::ShaderResource descriptorsetForBRDFLut{};
+		descriptorsetForBRDFLut.binding = static_cast<uint32_t>(3);
+		descriptorsetForBRDFLut.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptorsetForBRDFLut.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+		VK_Objects::ShaderResource descriptorsetForDepthMap{};
+		descriptorsetForDepthMap.binding = static_cast<uint32_t>(4);
+		descriptorsetForDepthMap.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptorsetForDepthMap.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+		std::vector<VK_Objects::ShaderResource> resourcessSlot1 = { descriptorsetForShadowMap , descriptorsetForIrradianceMap , descriptorsetForEnvMap,descriptorsetForBRDFLut,descriptorsetForDepthMap };
+
+		std::shared_ptr<VK_Objects::DescriptorSetLayout> descriptorForEnviroment = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resourcessSlot1);
+
 
 		for (unsigned int i = 0; i < swapChain.getNumberOfImages(); i++) {
 			//Allocate descriptorset for descLayout and store it inside sets variable.
-			deferredShading_Descriptorsets.push_back((poolManager->allocateDescriptor(descInputAttachments)));
+			enviromentData_Descriptorsets.push_back((poolManager->allocateDescriptor(descriptorForEnviroment)));
+			deferredShading_Descriptorsets.push_back((poolManager->allocateDescriptor(descriptorsetForMaterial)));
 
 		}
 
@@ -724,7 +790,8 @@ void Render::createPipeline()
 
 
 		descriptors.push_back(std::move(lightDescLayout));
-		descriptors.push_back(std::move(descInputAttachments));
+		descriptors.push_back(std::move(descriptorForEnviroment));
+		descriptors.push_back(std::move(descriptorsetForMaterial));
 
 		//Create Pipeline
 		std::unique_ptr<VK_Objects::Shader> vert = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::VERTEX_SHADER, Utils::readFile("Shaders\\deferredLighting\\vert.spv"));
@@ -809,11 +876,11 @@ void Render::createPipeline()
 
 		pipelineInfo.atributes = att;
 		pipelineInfo.colorAttachmentsCount = 1;
-		pipelineInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 		pipelineInfo.dephTest = 1;
 		pipelineInfo.depthBias = 0;
 		pipelineInfo.rdpass = &renderpass->passes["SHADOW_MAP"]->vk_renderpass;
-		pipelineInfo.frontFaceClock = VK_FRONT_FACE_CLOCKWISE;
+		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pipelineInfo.vertexOffsets = { 0 };
 		pipelineInfo.subpass = 0;
 
@@ -886,6 +953,11 @@ void Render::createScene()
 	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Mesh1");
 	std::shared_ptr<Engine::Entity> mesh2 = std::make_shared<Engine::Entity>("Mesh2");
 
+	camera = std::make_shared<Engine::Camera>("MainCamera");
+	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(camera, "camController");
+	scriptManager.insertScript(cameraController);
+
+	camera->transform.setPosition(-5, 5, -5);
 	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1,"icaro\\ds", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
 	mesh2->attachComponent(std::make_shared<Engine::Mesh>(mesh1,"icaro\\ds", "Assets\\BTech.fbx", &device, transferPool.get()));
 
@@ -927,6 +999,7 @@ void Render::separateSceneObjects()
 		 if ((*it)->getComponent(Engine::COMPONENT_TYPE::SCRIPT) ) {
 
 			 std::shared_ptr<Engine::Script> m = std::dynamic_pointer_cast<Engine::Script>((*it)->getComponent(Engine::COMPONENT_TYPE::SCRIPT));
+			 std::cout<<m->getId()<<std::endl;
 			 scriptManager.insertScript(m);
 
 		 }
@@ -944,8 +1017,8 @@ void Render::getEntityScripts()
 void Render::updateUniforms(uint32_t imageIndex)
 {
 	VP t;
-	t.view = camera.getViewMatrix();
-	t.projection = camera.getProjectionMatrix();
+	t.view = camera->getViewMatrix();
+	t.projection = camera->getProjectionMatrix();
 
 
 	viewProjectionBuffers[imageIndex]->udpate(t);
@@ -954,13 +1027,12 @@ void Render::updateUniforms(uint32_t imageIndex)
 
 	LightUbo light1;
 	light1.color = glm::vec3(1);
-	lightUbo.light[0] = light1;
-	lightUbo.invProj = glm::inverse(camera.getProjectionMatrix());
-	lightUbo.invView = glm::inverse(camera.getViewMatrix());
-	light1.position = glm::vec3(4);
-
+	lightUbo.invProj = glm::inverse(camera->getProjectionMatrix());
+	light1.position = glm::vec3(400);
+	lightUbo.camera = camera->transform.getPosition();
+	lightUbo.invView = glm::inverse(camera->getViewMatrix());
 	mainLight = light1;
-
+	lightUbo.light[0] = light1;
 	lightUniformBuffers[imageIndex]->udpate(lightUbo);
 
 	glm::vec3 lightDireciton = glm::normalize(mainLight.position);
@@ -968,7 +1040,7 @@ void Render::updateUniforms(uint32_t imageIndex)
 	//glm::mat4 depthViewMatrix = lookAt(  (camera->eulerDir.front * camera->shadowDistance + lightDireciton* shadowMapPass.lightDistance) , camera->eulerDir.front *2.f , glm::vec3(0.0, -1.0, 0.0));
 	glm::mat4 depthViewMatrix = lookAt(lightDireciton * 5.f, glm::vec3(0), glm::vec3(0.0, 1.0, 0.0));
 
-	std::array<float, 6> boundingBox = camera.calculateFrustumInLightSpace(depthViewMatrix);
+	std::array<float, 6> boundingBox = camera->calculateFrustumInLightSpace(depthViewMatrix);
 
 	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], .0f, 8.f);
 
