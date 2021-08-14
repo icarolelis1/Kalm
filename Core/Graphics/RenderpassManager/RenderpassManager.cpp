@@ -14,6 +14,7 @@ void Game::RenderpassManager::createRenderpasses(VkExtent2D extent )
 	createGBufferRenderpass(extent);
 	createDeferredLightingRenderPass(extent);
 
+	createImGuiRenderpass(extent);
 
 }
 
@@ -184,7 +185,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 
 
 	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.description[0].colorAttachmentCount =3;
+	subpass.description[0].colorAttachmentCount = 3;
 	subpass.description[0].pColorAttachments = pColorAttachments; 
 	subpass.description[0].pDepthStencilAttachment = &depthAttachment.reference;
 
@@ -243,7 +244,7 @@ void Game::RenderpassManager::createDeferredLightingRenderPass(VkExtent2D extent
 	swapChainAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	swapChainAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	swapChainAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	swapChainAttachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	swapChainAttachment.description.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	swapChainAttachment.description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	swapChainAttachment.description.flags = 0;
 
@@ -286,11 +287,66 @@ void Game::RenderpassManager::createDeferredLightingRenderPass(VkExtent2D extent
 	deferredLightingRenderPass->properties = renderpassProperties;
 	deferredLightingRenderPass->subpass = subpass;
 
-	deferredLightingRenderPass->properties = renderpassProperties;
-	deferredLightingRenderPass->subpass = subpass;
 
 	Vk_Functions::createRenderpass(device, *deferredLightingRenderPass.get());
 
 	passes[deferredLightingRenderPass->getKey()] = std::move(deferredLightingRenderPass);
+
+}
+
+void Game::RenderpassManager::createImGuiRenderpass(VkExtent2D extent)
+{
+
+
+	//Creates renderpass to be used in DeferredLighting creation.
+
+	std::unique_ptr<VK_Objects::Renderpass> imGuiRenderpass = std::make_unique<VK_Objects::Renderpass>(device, "INTERFACE", extent);
+
+	VK_Objects::RenderpassProperties renderpassProperties;
+
+	//Single Attachment
+	renderpassProperties.attachments.resize(1);
+
+	VkFormat format = swapChain->getFormat();
+
+	VK_Objects::RenderAttachment interfaceAttachment;
+	interfaceAttachment.description.format = format;
+	interfaceAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
+	interfaceAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+	interfaceAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	interfaceAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	interfaceAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	interfaceAttachment.description.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	interfaceAttachment.description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	interfaceAttachment.description.flags = 0;
+
+	interfaceAttachment.reference.attachment = 0;
+	interfaceAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VK_Objects::Subpass subpass;
+	subpass.description.resize(1);
+	subpass.dependencies.resize(1);
+
+	VkAttachmentReference pColorAttachments[1] = { interfaceAttachment.reference };
+
+	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.description[0].colorAttachmentCount = 1;
+	subpass.description[0].pColorAttachments = pColorAttachments;
+
+	subpass.dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	subpass.dependencies[0].dstSubpass = 0;
+	subpass.dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpass.dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpass.dependencies[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpass.dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	renderpassProperties.attachments[0] = interfaceAttachment;
+
+	imGuiRenderpass->properties = renderpassProperties;
+	imGuiRenderpass->subpass = subpass;
+
+	Vk_Functions::createRenderpass(device, *imGuiRenderpass.get());
+
+	passes[imGuiRenderpass->getKey()] = std::move(imGuiRenderpass);
 
 }

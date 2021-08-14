@@ -2,6 +2,8 @@
 #include <iostream>
 #include "Components/Component.h"
 #include "Utility/Transform.h"
+
+#include "imgui.h"
 namespace Engine {
 
 	struct ComponentContainer {
@@ -85,12 +87,14 @@ namespace Engine {
 
 		virtual void update(float timeStep);
 		void attachComponent(std::shared_ptr<Engine::Component> component);
-
+		const char* getName();
 		std::shared_ptr<Engine::Component> getComponent(std::string name);
 		std::shared_ptr<Engine::Component> getComponent(Engine::COMPONENT_TYPE componentType);
-		Transform transform;
+
+		void buildUiRepresentation();
 
 		Transform transform;
+
 
 
 	protected:

@@ -22,16 +22,16 @@ void alignedFree(void* data)
 }
 
 //vk_ stands for any vulkan abstraction
-Render::Render() 
+Render::Render()
 {
 }
 
-void Render::initiateResources(Utils::WindowHandler*windowHandler , uint32_t WIDTH, uint32_t HEIGHT)
+void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WIDTH, uint32_t HEIGHT)
 {
 	window = windowHandler;
 
 	// Instance Initialization
-	createInstance(); 
+	createInstance();
 	//Debuger Initialization
 	createDebuger();
 	//Creation of surface to be used in Window
@@ -44,7 +44,7 @@ void Render::initiateResources(Utils::WindowHandler*windowHandler , uint32_t WID
 	VK_Objects::ImageFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
 	//Setup the swapChain
-	swapChain.prepareSwapChain(WIDTH,HEIGHT,device, &surface, format, windowHandler, queueSharingMode);
+	swapChain.prepareSwapChain(WIDTH, HEIGHT, device, &surface, format, windowHandler, queueSharingMode);
 	//Create First renderpass;
 	createRenderpass();
 	framebuffersManager = std::make_unique<FramebufferManagement>(&device, &swapChain, renderpass->passes);
@@ -54,8 +54,10 @@ void Render::initiateResources(Utils::WindowHandler*windowHandler , uint32_t WID
 	addMeshes();
 	createScene();
 	createMaterials();
-	separateSceneObjects();
+	separateSceneObjects(mainSCene.sceneGraph.root);
 	createDynamicUniformBuffers();
+	if(UI_RENDER)
+	createImGuiInterface();
 	createRenderContexts();
 	creteCommandBuffer();
 }
@@ -77,7 +79,7 @@ void Render::createInstance()
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_2;
 
-	
+
 
 	//Instance
 	instanceInfo.pApplicationInfo = &appInfo;
@@ -91,8 +93,8 @@ void Render::createInstance()
 
 	instanceInfo.enabledLayerCount = 0;
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-		auto layers = debuger.getValidationLayers();
-	
+	auto layers = debuger.getValidationLayers();
+
 	if (DEBUG_) {
 
 		//Layers
@@ -115,7 +117,7 @@ void Render::createDebuger()
 	debuger.setDebugerMessenger(createInfo, instance);
 }
 
-void Render::createSurface(Utils::WindowHandler * window)
+void Render::createSurface(Utils::WindowHandler* window)
 {
 	w = window;
 	glfwCreateWindowSurface(instance.vk_Instance, w, nullptr, &surface);
@@ -123,13 +125,13 @@ void Render::createSurface(Utils::WindowHandler * window)
 
 void Render::prepareDevice(VK_Objects::Surface surface)
 {
-	device.choosePhysicalDevice(instance,surface);
+	device.choosePhysicalDevice(instance, surface);
 	device.createLogicalDevice();
 }
 
 void Render::createRenderpass()
 {
-	renderpass = std::make_unique<Game::RenderpassManager>(&device,&swapChain, swapChain.getExtent());
+	renderpass = std::make_unique<Game::RenderpassManager>(&device, &swapChain, swapChain.getExtent());
 
 	/*
 	VkExtent2D e = swapChain.getExtent();
@@ -193,21 +195,19 @@ void Render::createRenderpass()
 
 void Render::createRenderContexts()
 {
-
-
 	//SKYBOX AND ENVIROMENT 
 
-	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
+	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
 	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Ref.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
 
-	VK_Objects::CubeMap envMAp(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
+	VK_Objects::CubeMap envMAp(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
 	Vk_Functions::filterEnviromentMap(&device, cubeMap, envMAp, *transferPool.get(), *graphicsPool.get(), poolManager);
 
 	VK_Objects::Image brdfLut(&device, 512, 512, VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
 	Vk_Functions::generatBRDFLut(&device, brdfLut, *transferPool.get(), *graphicsPool.get(), poolManager);
 
-	VK_Objects::CubeMap irradianceMap(&device, VK_FORMAT_R16G16B16A16_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
+	VK_Objects::CubeMap irradianceMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
 	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 
 
@@ -216,7 +216,7 @@ void Render::createRenderContexts()
 
 	RENDER::Thread t1;
 	uint32_t n = swapChain.getNumberOfImages();
-	
+
 	//Create Resources
 
 	viewProjectionBuffers.resize(n);
@@ -252,10 +252,10 @@ void Render::createRenderContexts()
 
 		bufferInfos[0].buffer = modelBuffers[i]->getBufferHandle();
 		bufferInfos[0].offset = static_cast<uint32_t>(0);
-		bufferInfos[0].range =  dynamicAlignment;
+		bufferInfos[0].range = dynamicAlignment;
 
 		imageInfo.clear();
-		modelMatrix_Descriptorsets[index].updateDescriptorset(bufferInfos, imageInfo,1);
+		modelMatrix_Descriptorsets[index].updateDescriptorset(bufferInfos, imageInfo, 1);
 
 		bufferInfos[0].buffer = lightProjectionUniformBuffers[i]->getBufferHandle();
 		bufferInfos[0].offset = static_cast<uint32_t>(0);
@@ -269,7 +269,7 @@ void Render::createRenderContexts()
 
 	index = 0;
 
-	for (  int i = 0; i < deferredShading_Descriptorsets.size(); i++ ) {
+	for (int i = 0; i < deferredShading_Descriptorsets.size(); i++) {
 
 		std::vector<VkDescriptorBufferInfo> bufferInfos;
 
@@ -293,8 +293,8 @@ void Render::createRenderContexts()
 
 	}
 
-	
-	
+
+
 	for (int i = 0; i < enviromentData_Descriptorsets.size(); i++) {
 
 		std::vector<VkDescriptorBufferInfo> bufferInfos;
@@ -326,18 +326,18 @@ void Render::createRenderContexts()
 		enviromentData_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
 
 	}
-	
+
 	VkExtent2D e = swapChain.getExtent();
 
-	std::unique_ptr<RENDER::RenderContext> r1 = std::make_unique<RENDER::RenderContext>( device,std::make_shared<VK_Objects::SwapChain>(swapChain));
-	
+	std::unique_ptr<RENDER::RenderContext> r1 = std::make_unique<RENDER::RenderContext>(device, std::make_shared<VK_Objects::SwapChain>(swapChain));
+
 	r1->setMaxFramesInFlight(3);
 
 	std::vector<VK_Objects::PComandBuffer> commandBuffers;
 
 	commandBuffers.resize(n);
 
-	for (uint32_t  i = 0; i < n; i++) {
+	for (uint32_t i = 0; i < n; i++) {
 
 		commandBuffers[i] = graphicsPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
@@ -346,15 +346,16 @@ void Render::createRenderContexts()
 	//Record commands
 	std::array<VkClearValue, 3> clearValues = {};
 	clearValues[0].depthStencil = { 1.f };
-	clearValues[1].color = { 1.0,1.0,1.0,1.0 };
-	clearValues[2].color = { 1.0,1.0};
+	clearValues[1].color = { 1.0,1.0,1.0,.0 };
+	clearValues[2].color = { 1.0,1.0 };
 
 
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);	
+	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
+	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[0]);
+
+
 	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
 
 
@@ -362,7 +363,7 @@ void Render::createRenderContexts()
 
 		Vk_Functions::beginCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
 
-		createShadowMap(commandBuffers[i]->getCommandBufferHandle(),i);
+		createShadowMap(commandBuffers[i]->getCommandBufferHandle(), i);
 
 		renderpass->passes["G_BUFFER"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
 
@@ -370,7 +371,7 @@ void Render::createRenderContexts()
 
 		viewport.width = static_cast<uint32_t>(e.width);
 		viewport.height = static_cast<uint32_t>(e.height);
-		
+
 		viewport.maxDepth = 1.0f;
 
 		VkRect2D rect = {};
@@ -380,14 +381,14 @@ void Render::createRenderContexts()
 
 		vkCmdSetViewport(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &viewport);
 
-		vkCmdSetScissor (commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
+		vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
 
 		VkDescriptorSet descriptorsets[2] = { globalData_Descriptorsets[i].getDescriptorSetHandle(), materialManager["teste"]->getDescriptorsetAtIndex(i) };
-		
-		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(),0,2,descriptorsets,0, NULL);
 
-		vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle() );
-		
+		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 2, descriptorsets, 0, NULL);
+
+		vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
+
 		for (int j = 0; j < meshes.size(); j++) {
 
 			uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
@@ -396,7 +397,7 @@ void Render::createRenderContexts()
 
 			meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle());
 		}
-		
+
 		renderpass->passes["G_BUFFER"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
 
 
@@ -404,12 +405,8 @@ void Render::createRenderContexts()
 
 			renderpass->passes["DEFERRED_LIGHTING"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
 
-			vkCmdSetViewport(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &viewport);
-
-			vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
-
 			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineHandle());
-			
+
 			VkDescriptorSet descriptorsets[3] = { light_Descriptorsets[i].getDescriptorSetHandle(), enviromentData_Descriptorsets[i].getDescriptorSetHandle(), deferredShading_Descriptorsets[i].getDescriptorSetHandle() };
 
 			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(3), &descriptorsets[0], 0, NULL);
@@ -444,10 +441,10 @@ void Render::createRenderContexts()
 		std::stringstream ss;
 		ss << "Kalm" << " " << " [" << frameTime << " MILLISEC]";
 
-		glfwSetWindowTitle(window, ss.str().c_str());		
+		glfwSetWindowTitle(window, ss.str().c_str());
 		scriptManager.update(frameTime);
 
-	
+
 		ModelMatrix m;
 
 		//m.model = glm::mat4(1.0f);
@@ -455,8 +452,8 @@ void Render::createRenderContexts()
 
 	//	mvpBuffers[r1->draw()]->udpate(t);
 		//r1->draw();
-		
-{
+
+		{
 
 			vkWaitForFences(device.getLogicalDevice(), 1, &r1->frames[r1->currentFrameIndex]->getFrameCountControllFence(), VK_FALSE, UINT64_MAX);
 			uint32_t imageIndex;
@@ -483,6 +480,7 @@ void Render::createRenderContexts()
 			r1->frames[imageIndex]->getImageStillInFlightFence() = r1->frames[r1->currentFrameIndex]->getFrameCountControllFence();
 
 			VkSubmitInfo submitInfo = {};
+			renderUI(imageIndex);
 
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -493,10 +491,12 @@ void Render::createRenderContexts()
 			submitInfo.pWaitDstStageMask = waitStages;
 
 
-			VkCommandBuffer cmd = r1->persistentCommandBuffers[imageIndex]->getCommandBufferHandle() ;
+			VkCommandBuffer cmd = r1->persistentCommandBuffers[imageIndex]->getCommandBufferHandle();
 
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &cmd;
+			VkCommandBuffer cmds[2] = {cmd,imGuiCmds[imageIndex] };
+
+			submitInfo.commandBufferCount = 2;
+			submitInfo.pCommandBuffers = &cmds[0];
 
 			VkSemaphore signalSemaphores[] = { r1->frames[r1->currentFrameIndex]->getRenderFinishedSemaphore() };
 			submitInfo.signalSemaphoreCount = 1;
@@ -530,20 +530,21 @@ void Render::createRenderContexts()
 
 			r1->currentFrameIndex = (r1->currentFrameIndex + 1) % 3;
 
-		} 
+		}
 
 	}
 
 	vkDeviceWaitIdle(device.getLogicalDevice());
-	vkDestroySampler(device.getLogicalDevice(), sampler_Testing, nullptr);
+	ImGui_ImplVulkan_Shutdown();
 
+	vkDestroySampler(device.getLogicalDevice(), sampler_Testing, nullptr);
 
 	for (auto& b : modelBuffers) {
 		vkUnmapMemory(device.getLogicalDevice(), b->getMemoryHandle());
 	}
 }
 
-void Render::createShadowMap(VkCommandBuffer& commandBuffer,uint32_t i )
+void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 {
 	VkExtent2D e = swapChain.getExtent();
 
@@ -578,11 +579,11 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer,uint32_t i )
 	vkCmdSetScissor(commandBuffer, 0, 1, &rect);
 
 	//VkDescriptorSet descriptorsets[2] = { globalData_Descriptorsets[i].getDescriptorSetHandle(),lightProjection_Descriptorset[i].getDescriptorSetHandle() };
-	
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,pipelineManager["SHADOW_MAP"]->getPipelineHandle() );
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SHADOW_MAP"]->getPipelineHandle());
 	//
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SHADOW_MAP"]->getPipelineLayoutHandle()->getHandle(), 0, 1, &lightProjection_Descriptorset[i].getDescriptorSetHandle(), 0, NULL);
-	
+
 	for (int j = 0; j < meshes.size(); j++) {
 
 		uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
@@ -592,17 +593,16 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer,uint32_t i )
 		meshes[j]->draw(commandBuffer);
 	}
 
-	
-	
+
+
 	renderpass->passes["SHADOW_MAP"]->endRenderPass(commandBuffer);
-	
+
 	//Vk_Functions::endCommandBuffer(commandBuffer);
 
 }
 
 void Render::createPipeline()
 {
-	//CubeMap(const VK_Objects::Device * _device, const char* texturePath, VkFormat format, VkMemoryPropertyFlags properties, int dim, int numMips);
 
 
 	//Game Descriptor Manager.
@@ -647,7 +647,7 @@ void Render::createPipeline()
 
 
 	//Create shader resource and Allocate Descriptorsets 
-	std::vector<VK_Objects::ShaderResource> resources=  { viewProjection };
+	std::vector<VK_Objects::ShaderResource> resources = { viewProjection };
 
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resources);
 
@@ -662,9 +662,9 @@ void Render::createPipeline()
 
 	for (unsigned int i = 0; i < swapChain.getNumberOfImages(); i++) {
 
-			//Allocate descriptorset for descLayout and store it inside sets variable.
-			globalData_Descriptorsets.push_back(poolManager->allocateDescriptor(descLayout));
-			modelMatrix_Descriptorsets.push_back(poolManager->allocateDescriptor(modelMatrixDescLayout));
+		//Allocate descriptorset for descLayout and store it inside sets variable.
+		globalData_Descriptorsets.push_back(poolManager->allocateDescriptor(descLayout));
+		modelMatrix_Descriptorsets.push_back(poolManager->allocateDescriptor(modelMatrixDescLayout));
 
 	}
 
@@ -681,11 +681,11 @@ void Render::createPipeline()
 	std::vector<VkPushConstantRange> pushConstants;
 
 	std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstants);
-	
+
 	VK_Objects::PipelineProperties pipelineInfo{};
-	
-	std::vector<VK_Objects::ATRIBUTES> atributes = {VK_Objects::ATRIBUTES::VEC3,VK_Objects::ATRIBUTES::VEC3,VK_Objects::ATRIBUTES::VEC2 };
-	
+
+	std::vector<VK_Objects::ATRIBUTES> atributes = { VK_Objects::ATRIBUTES::VEC3,VK_Objects::ATRIBUTES::VEC3,VK_Objects::ATRIBUTES::VEC2 };
+
 	std::vector<std::vector<VK_Objects::ATRIBUTES>>att{ atributes };
 
 	pipelineInfo.atributes = att;
@@ -693,24 +693,24 @@ void Render::createPipeline()
 	pipelineInfo.cullMode = VK_CULL_MODE_NONE;
 	pipelineInfo.dephTest = 1;
 	pipelineInfo.depthBias = 0;
-	pipelineInfo.rdpass = &renderpass->passes["G_BUFFER"]->vk_renderpass ;
+	pipelineInfo.rdpass = &renderpass->passes["G_BUFFER"]->vk_renderpass;
 	pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pipelineInfo.vertexOffsets = { 0 };
 	pipelineInfo.subpass = 0;
 
-	std::unique_ptr<VK_Objects::Pipeline> gBufferCompositionPipeline = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move (vert), std::move(frag), pipelineInfo);
+	std::unique_ptr<VK_Objects::Pipeline> gBufferCompositionPipeline = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move(vert), std::move(frag), pipelineInfo);
 	gBufferCompositionPipeline->id = "GBUFFER_COMPOSITION";
 
 	pipelineManager["GBUFFER_COMPOSITION"] = std::move(gBufferCompositionPipeline);
 
 	//Deferred Lighting Pipeline
 	{
-		
+
 		VK_Objects::ShaderResource albedoResourceInput{};
 		albedoResourceInput.binding = static_cast<uint32_t>(0);
 		albedoResourceInput.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 		albedoResourceInput.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
-		
+
 		VK_Objects::ShaderResource metallicRoughnessInput{};
 		metallicRoughnessInput.binding = static_cast<uint32_t>(1);
 		metallicRoughnessInput.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -847,7 +847,7 @@ void Render::createPipeline()
 		std::vector<VK_Objects::ShaderResource> lightResourceData = { lightResource };
 
 		std::shared_ptr<VK_Objects::DescriptorSetLayout> lightDescLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, lightResourceData);
-	
+
 		for (unsigned int i = 0; i < swapChain.getNumberOfImages(); i++) {
 
 			lightProjection_Descriptorset.push_back((poolManager->allocateDescriptor(lightDescLayout)));
@@ -893,7 +893,7 @@ void Render::createPipeline()
 
 }
 
-void Render::creteCommandBuffer()	{
+void Render::creteCommandBuffer() {
 
 
 }
@@ -901,6 +901,8 @@ void Render::creteCommandBuffer()	{
 void Render::createCommandPools()
 {
 	graphicsPool = std::make_unique<VK_Objects::CommandPool>(device, VK_Objects::POOL_TYPE::GRAPHICS, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+	dynamicPool = std::make_unique<VK_Objects::CommandPool>(device, VK_Objects::POOL_TYPE::GRAPHICS, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 	transferPool = std::make_unique<VK_Objects::CommandPool>(device, VK_Objects::POOL_TYPE::TRANSFER, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 }
@@ -924,10 +926,10 @@ void Render::createDynamicUniformBuffers()
 		dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
 	}
 
-	for(int i = 0 ; i < modelBuffers.size() ; i++)
-	modelBuffers[i] = std::make_shared<VK_Objects::Buffer>(&device, static_cast<uint32_t>(meshes.size()) *dynamicAlignment, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
-	
-	
+	for (int i = 0; i < modelBuffers.size(); i++)
+		modelBuffers[i] = std::make_shared<VK_Objects::Buffer>(&device, static_cast<uint32_t>(meshes.size()) * dynamicAlignment, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+
 	modelBuffersSize = static_cast<uint32_t>(meshes.size()) * dynamicAlignment;
 	modelMatrixes.model = (glm::mat4*)alignedAlloc(modelBuffersSize, dynamicAlignment);
 	assert(modelMatrixes.model);
@@ -936,11 +938,11 @@ void Render::createDynamicUniformBuffers()
 
 void Render::createMaterials()
 {
-	Engine::FilesPath path; 
+	Engine::FilesPath path;
 	path.diffuseMap = "Assets\\samus\\textures\\base_baseColor.png";
-	path.metallicMap = "Assets\\Common\\Vehicle_metallic.png";
+	path.metallicMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
 	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
-	path.roughnessMap = "Assets\\Common\\Vehicle_rougness.png";
+	path.roughnessMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
 
 	materialManager["teste"] = std::make_unique<Engine::Material>(&device, "teste", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 }
@@ -949,63 +951,77 @@ void Render::createScene()
 {
 	Game::Scene scene;
 	SceneGraph& sceneGraph = scene.sceneGraph;
-	
-	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Mesh1");
-	std::shared_ptr<Engine::Entity> mesh2 = std::make_shared<Engine::Entity>("Mesh2");
 
-	camera = std::make_shared<Engine::Camera>("MainCamera");
+	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Samus");
+	std::shared_ptr<Engine::Entity> mesh2 = std::make_shared<Engine::Entity>("Cyberpunk Car");
+
+	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
+	camera = std::dynamic_pointer_cast<Engine::Camera>(camera_entity);
+
 	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(camera, "camController");
-	scriptManager.insertScript(cameraController);
+	camera_entity->attachComponent(cameraController);
 
 	camera->transform.setPosition(-5, 5, -5);
-	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1,"icaro\\ds", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
-	mesh2->attachComponent(std::make_shared<Engine::Mesh>(mesh1,"icaro\\ds", "Assets\\BTech.fbx", &device, transferPool.get()));
+	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "icaro\\ds", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
+	mesh2->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "icaro\\ds", "Assets\\BTech.fbx", &device, transferPool.get()));
 
 
 	//std::shared_ptr<Engine::Mesh> m = std::dynamic_pointer_cast<Engine::Mesh>((*it)->getComponent(Engine::COMPONENT_TYPE::MESH));
-	std::shared_ptr<Engine::Mesh> m1 = std::dynamic_pointer_cast< Engine::Mesh>(mesh1->getComponent(Engine::COMPONENT_TYPE::MESH));
+	std::shared_ptr<Engine::Mesh> m1 = std::dynamic_pointer_cast<Engine::Mesh>(mesh1->getComponent(Engine::COMPONENT_TYPE::MESH));
 	std::shared_ptr<Engine::Mesh> m2 = std::dynamic_pointer_cast<Engine::Mesh>(mesh2->getComponent(Engine::COMPONENT_TYPE::MESH));
 
-	m1->transform.setPosition(glm::vec3(0));
-	m1->transform.setScale(glm::vec3(.4	));
-	m1->transform.setRotation(0, 90, 90);
-	m1->transform.updateModelMatrix(nullptr);
+	mesh1->transform.setPosition(glm::vec3(0));
+	mesh1->transform.setScale(glm::vec3(.4));
+	mesh1->transform.setRotation(0, 90, 90);
+	mesh1->transform.updateModelMatrix(nullptr);
 
-	m2->transform.setPosition(glm::vec3(glm::vec3(0,0,15)));
-	m2->transform.setScale(glm::vec3(.01));
+	mesh2->transform.setPosition(glm::vec3(glm::vec3(0, 0, 15)));
+	mesh2->transform.setScale(glm::vec3(.01));
 
-	m2->transform.updateModelMatrix(nullptr);
+	mesh2->transform.updateModelMatrix(nullptr);
 
-	sceneGraph.addEntity(mesh1);
-	sceneGraph.addEntity(mesh2);
+	std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
+	std::shared_ptr<Node> node2 = std::make_shared<Node>(mesh2);
+	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
+
+	sceneGraph.addNode(node1);
+	sceneGraph.addNode(node2);
+	sceneGraph.addNode(cameraNode);
 
 	mainSCene = std::move(scene);
 }
 
-//SEPARAT MESHES - SCRIPTS - COLLISORS IN CONTIGUOS DATA STRUCTURES 
-void Render::separateSceneObjects()
+
+void Render::separateSceneObjects(std::shared_ptr<Node> node)
 {
-	 std::list< std::shared_ptr<Engine::Entity>>::iterator it = mainSCene.sceneGraph.root.childs.begin() ;
 
-	 while (it != mainSCene.sceneGraph.root.childs.end()) {
 
-		 if ((*it)->getComponent(Engine::COMPONENT_TYPE::MESH) ) {
+	std::shared_ptr<Engine::Entity> e1 = node->entity;
 
-			std::shared_ptr<Engine::Mesh> m =  std::dynamic_pointer_cast<Engine::Mesh>((*it)->getComponent(Engine::COMPONENT_TYPE::MESH));
+
+		if ((e1)->getComponent(Engine::COMPONENT_TYPE::MESH)) {
+
+			std::shared_ptr<Engine::Mesh> m = std::dynamic_pointer_cast<Engine::Mesh>((e1)->getComponent(Engine::COMPONENT_TYPE::MESH));
 			meshes.push_back(m);
 
-		 }
+		}
 
-		 if ((*it)->getComponent(Engine::COMPONENT_TYPE::SCRIPT) ) {
+		if ((e1)->getComponent(Engine::COMPONENT_TYPE::SCRIPT)) {
 
-			 std::shared_ptr<Engine::Script> m = std::dynamic_pointer_cast<Engine::Script>((*it)->getComponent(Engine::COMPONENT_TYPE::SCRIPT));
-			 std::cout<<m->getId()<<std::endl;
-			 scriptManager.insertScript(m);
+			std::shared_ptr<Engine::Script> m = std::dynamic_pointer_cast<Engine::Script>((e1)->getComponent(Engine::COMPONENT_TYPE::SCRIPT));
+			std::cout << m->getId() << std::endl;
+			scriptManager.insertScript(m);
 
-		 }
+		}
 
-		  it++;
-	 }
+		std::list<std::shared_ptr<Node>>::iterator it = node->childs.begin();
+
+
+		while (it != node->childs.end()) {
+			separateSceneObjects(*it);
+			it++;
+		}
+	
 
 }
 
@@ -1013,6 +1029,106 @@ void Render::getEntityScripts()
 {
 
 }
+
+void Render::createImGuiInterface()
+{
+
+	imGuiCmds.resize(swapChain.getNumberOfImages());
+
+
+	for (auto& cmd : imGuiCmds)
+		cmd = dynamicPool->requestCommandBufferVK(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplGlfw_InitForVulkan(window, true);
+	ImGui_ImplVulkan_InitInfo init_info = {};
+	init_info.Instance = instance.vk_Instance;
+	init_info.PhysicalDevice = device.getPhysicalDevice();
+	init_info.Device = device.getLogicalDevice();
+	init_info.QueueFamily = device.getGraphicsQueueIndex();
+	init_info.Queue = device.getQueueHandle(VK_Objects::QUEUE_TYPE::GRAPHICS);
+	init_info.PipelineCache = VK_NULL_HANDLE;
+	init_info.DescriptorPool = poolManager->getDescriptorPoolHandle();
+	init_info.Allocator = VK_NULL_HANDLE;
+	init_info.MinImageCount = swapChain.getNumberOfImages();
+	init_info.ImageCount = swapChain.getNumberOfImages();
+	init_info.CheckVkResultFn = nullptr;
+	ImGui_ImplVulkan_Init(&init_info, renderpass->passes["INTERFACE"]->vk_renderpass);
+
+	std::unique_ptr<VK_Objects::CommandBuffer>cmd = dynamicPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+	Vk_Functions::beginCommandBuffer(cmd->getCommandBufferHandle());
+
+	ImGui_ImplVulkan_CreateFontsTexture(cmd->getCommandBufferHandle(),*transferPool.get(),device);
+
+
+	Vk_Functions::endCommandBuffer(cmd->getCommandBufferHandle());
+
+
+}
+
+void Render::renderUI(uint32_t imageIndex)
+{
+	Vk_Functions::beginCommandBuffer(imGuiCmds[imageIndex]);
+
+	VkExtent2D extent = swapChain.getExtent();
+
+	VkClearValue clearValues;
+
+	clearValues.color = { 1.0f,.0f, 1.0f, 1.f };
+	renderpass->passes["INTERFACE"]->clearValues = { clearValues };
+
+	VkViewport viewport = {};
+	viewport.height = (float)extent.height;
+	viewport.width = (float)extent.width;
+
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D rect = {};
+	rect.extent.width = (float)extent.width;;
+	rect.extent.height = (float)extent.height;;
+	rect.offset = { 0,0 };
+
+	vkCmdSetViewport(imGuiCmds[imageIndex], 0, 1, &viewport);
+	vkCmdSetScissor(imGuiCmds[imageIndex], 0, 1, &rect);
+
+	renderpass->passes["INTERFACE"]->beginRenderPass(imGuiCmds[imageIndex], framebuffersManager->framebuffers["INTERFACE"][imageIndex]->getFramebufferHandle());
+
+	ImGui_ImplGlfw_NewFrame();
+	ImGui_ImplVulkan_NewFrame();
+	ImGui::NewFrame();
+
+
+	//UI Desing
+
+	mainSCene.sceneGraph.buildUI(mainSCene.sceneGraph.root);
+
+
+	ImGui::ShowDemoWindow();
+
+	ImGui::Render();
+
+
+
+
+
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), imGuiCmds[imageIndex]);
+
+	renderpass->passes["INTERFACE"]->endRenderPass(imGuiCmds[imageIndex]);
+
+	Vk_Functions::endCommandBuffer(imGuiCmds[imageIndex]);
+
+}
+
+
 
 void Render::updateUniforms(uint32_t imageIndex)
 {
@@ -1028,7 +1144,9 @@ void Render::updateUniforms(uint32_t imageIndex)
 	LightUbo light1;
 	light1.color = glm::vec3(1);
 	lightUbo.invProj = glm::inverse(camera->getProjectionMatrix());
+
 	light1.position = glm::vec3(400);
+
 	lightUbo.camera = camera->transform.getPosition();
 	lightUbo.invView = glm::inverse(camera->getViewMatrix());
 	mainLight = light1;
@@ -1067,7 +1185,7 @@ void Render::updateUniforms(uint32_t imageIndex)
 	model2 = glm::mat4(1.0f);
 	model2 = glm::translate(model2, glm::vec3(glm::sin(glfwGetTime()*.5)*5.f,.0,9));
 	model2 = glm::scale(model2, glm::vec3(.05));
-	
+
 	std::vector<glm::mat4>models = { model1,model2 };
 
 
@@ -1104,11 +1222,13 @@ void Render::updateDynamicUniformBuffer(uint32_t imageIndex)
 
 		if (meshes[i]->shouldUpdateOnThisFrame()) {
 
-			glm::mat4* m0 = (glm::mat4*)((uint64_t)modelMatrixes.model + dynamicAlignment*i);
+			glm::mat4* m0 = (glm::mat4*)((uint64_t)modelMatrixes.model + dynamicAlignment * i);
+
 			glm::mat4 mm = *m0;
+
 			*m0 = meshes[i]->getModelMatrix();
 
-	
+
 		}
 
 		memcpy(modelBuffers[imageIndex]->mapPointer, modelMatrixes.model, modelBuffersSize);
@@ -1144,12 +1264,12 @@ Render::~Render()
 
 	transferPool.reset();
 	graphicsPool.reset();
-
+	dynamicPool.reset();
 	poolManager.reset();
 	framebuffersManager.reset();
 	renderpass.reset();
 
-	
+
 	for (auto& mesh : meshes) {
 		mesh->destroy();
 	}
@@ -1157,7 +1277,7 @@ Render::~Render()
 	for (auto& buffer : modelBuffers) {
 		buffer.reset();
 	}
-	
+
 	std::unordered_map<const char*, std::unique_ptr<Engine::Material>>::iterator itM = materialManager.begin();
 
 	while (itM != materialManager.end()) {

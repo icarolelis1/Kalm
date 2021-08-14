@@ -350,6 +350,10 @@ namespace Vk_Functions{
 		vkFreeCommandBuffers(device.getLogicalDevice(),pool.getPoolHanndle(), 1, &cmd->getCommandBufferHandle());
 	}
 
+	void copyBufferToImage(VkBuffer& buffer, VkImage image, VkDevice device, VkCommandPool pool, uint32_t width, uint32_t height, uint32_t baseLayer, uint32_t layerCount)
+	{
+	}
+
 	void generateMips(const VK_Objects::Device* device, VK_Objects::Image* image, VK_Objects::CommandPool* commandPool, uint32_t numMips)
 	{
 		VkCommandBuffer	 cmd = commandPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY)->getCommandBufferHandle();

@@ -17,11 +17,13 @@
 #include <Scene/Scene.h>
 #include <Graphics/Thread/Thread.h>
 
+
 #ifndef GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #endif
 
 constexpr bool DEBUG_ = true;
+constexpr bool UI_RENDER = true;
 
 using Meshes = std::vector<std::shared_ptr<Engine::Mesh>>;
 
@@ -92,15 +94,22 @@ private:
 
 	void createScene();
 
-	void separateSceneObjects();
+	void separateSceneObjects(std::shared_ptr<Node> node);
 	void getEntityScripts();
 	void getEntityMeshes();
+	void createImGuiInterface();
+
+	void renderUI(uint32_t imageIndex);
+
 
 	VK_Objects::Instance instance;
 	VK_Objects::Device device;
 	VK_Objects::Surface surface;
 	VK_Objects::SwapChain swapChain;
 	VK_Objects::SDescriptorPoolManager poolManager;
+	VK_Objects::SDescriptorPoolManager dynamicDEscriptorPoolManager;
+
+
 	std::vector<VK_Objects::SBuffer> viewProjectionBuffers;
 	std::vector<VK_Objects::SBuffer> modelBuffers;
 	std::vector<VK_Objects::SBuffer> lightUniformBuffers;
@@ -111,6 +120,7 @@ private:
 	size_t modelBuffersSize;
 	VK_Objects::PCommandPool graphicsPool;
 	VK_Objects::PCommandPool transferPool;
+	VK_Objects::PCommandPool dynamicPool;
 
 	std::shared_ptr<Engine::Camera> camera;
 	LightUbo mainLight;
@@ -131,6 +141,7 @@ private:
 
 	//RenderPasses renderpasses;
 
+	std::vector<VkCommandBuffer> imGuiCmds;
 	Engine::ScriptManager scriptManager;
 	std::unique_ptr<Game::RenderpassManager> renderpass;
 	MaterialManager materialManager;
@@ -139,7 +150,7 @@ private:
 	void updateUniforms(uint32_t imageIndex);
 	void updateDynamicUniformBuffer(uint32_t imageIndex);
 	Game::Scene mainSCene;
-
+	glm::vec3 mainLightPos = glm::vec3(400);
 
 	float lastFrameTIme = 0;
 	float frameTime;

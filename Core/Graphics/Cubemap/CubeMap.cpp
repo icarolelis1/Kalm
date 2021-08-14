@@ -79,7 +79,7 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 	int dim = 1080;
 
 	//HDRI image uses float format
-	VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
+	VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
 
 
 	int texWidth, texHeight, texChannels;
@@ -227,7 +227,7 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 
 	pipelineInfo.atributes = att;
 	pipelineInfo.colorAttachmentsCount = 1;
-	pipelineInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 	pipelineInfo.dephTest = 0;
 	pipelineInfo.depthBias = 0;
 	pipelineInfo.rdpass = &renderpass->vk_renderpass;
@@ -427,7 +427,7 @@ void Vk_Functions::filterEnviromentMap(const VK_Objects::Device* device, VK_Obje
 	int dim = 512;
 
 	//HDRI image uses float format
-	VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
+	VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	const uint32_t numMips = static_cast<uint32_t>(floor(log2(dim))) + 1;
 
 	VkExtent2D extent{ dim,dim };

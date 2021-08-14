@@ -15,7 +15,6 @@ namespace Engine {
 		void start();
 		void update(float timeStep);
 		std::array<float, 6> calculateFrustumInLightSpace(glm::mat4 lightMatrix);
-
 		EulerDirections eulerDirections;
 		
 	private:

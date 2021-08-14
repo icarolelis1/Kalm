@@ -48,6 +48,13 @@ void CameraController::update(float timeStep)
 
 }
 
+void CameraController::buildUi()
+{
+	std::cout << "Peido\n";
+	ImGui::InputDouble("Camera Velocity", &velocity);
+
+}
+
 void CameraController::updateDirections()
 {
 	glm::vec3 front;

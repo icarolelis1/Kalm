@@ -170,10 +170,10 @@ vec3 uncharted2_tonemap_partial(vec3 x)
     return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
 }
 
-/*
+
 vec3 uncharted2_filmic(vec3 v)
 {
-    float exposure_bias = ubo.exposure;
+    float exposure_bias =1.6;
     vec3 curr = uncharted2_tonemap_partial(v * exposure_bias);
 
     vec3 W = vec3(11.2f);
@@ -181,7 +181,7 @@ vec3 uncharted2_filmic(vec3 v)
     return curr * white_scale;
 }
 
-*/
+
      mat4 projection = inverse(lightUbo.invProj);
 
 
@@ -190,8 +190,15 @@ vec3 uncharted2_filmic(vec3 v)
 
 void main(){
 
+    
+
+
     vec3 albedo = texture(Albedo,vec2(TexCoords.x,TexCoords.y)).xyz ;
+    float w = texture(Albedo,vec2(TexCoords)).w;
+    vec3 color  =vec3(0.);
+
     vec3 N = texture(Normal,vec2(TexCoords.x,TexCoords.y)).xyz ;
+
     float metallic =   texture(MetallicRoughness,vec2(TexCoords.x,TexCoords.y)).r;    
     float roughness =  texture(MetallicRoughness,vec2(TexCoords.x,TexCoords.y)).g;   
 
@@ -241,7 +248,13 @@ void main(){
 	kD *= 1.0 - metallic;
 
     vec3 ambient = (kD * diffuse  + specular ) ;
-    Color = vec4(Lo,1.0)  ;
+    color = vec3(Lo+ambient)  ;
+ color = uncharted2_filmic(color);
+   	color = pow(color, vec3(1./2.2));
+    
+
+    Color = mix(vec4(.3),vec4(color,1.0),w);
 
 	
+
 }

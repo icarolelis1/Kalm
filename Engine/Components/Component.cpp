@@ -10,6 +10,11 @@ std::string Engine::Component::getId()
 	return id;
 }
 
+void Engine::Component::buildUi()
+{
+	return;
+}
+
 Engine::COMPONENT_TYPE Engine::Component::getTypeOfComponent()
 {
 	return componentType;

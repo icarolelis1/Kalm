@@ -55,6 +55,8 @@ namespace Vk_Functions {
 
 	void copyBufferToImage(VK_Objects::Buffer& buffer, VkImage image, VK_Objects::Device device, VK_Objects::CommandPool& pool, uint32_t width, uint32_t height, uint32_t baseLayer = 0, uint32_t layerCount = 1);
 
+	void copyBufferToImage(VkBuffer& buffer, VkImage image, VkDevice device, VkCommandPool pool, uint32_t width, uint32_t height, uint32_t baseLayer = 0, uint32_t layerCount = 1);
+
 	void generateMips(const VK_Objects::Device* device,VK_Objects::Image *image, VK_Objects::CommandPool* commandPool, uint32_t numMips);
 }
 #endif;

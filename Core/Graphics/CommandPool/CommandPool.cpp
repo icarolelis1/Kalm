@@ -12,6 +12,7 @@ VK_Objects::CommandPool::CommandPool(const Device& _device, POOL_TYPE type, VkCo
 	else if (type == POOL_TYPE::TRANSFER)
 		createInfo.queueFamilyIndex = device.getTransferQueueIndex();
 
+	createInfo.flags = flags;
 	VkResult result = vkCreateCommandPool(device.getLogicalDevice(), &createInfo, nullptr, &vk_cmdPool);
 
 	if (result != VK_SUCCESS)std::cout << "Failed to create CommandPool\n";
@@ -26,6 +27,15 @@ std::unique_ptr<VK_Objects::CommandBuffer> VK_Objects::CommandPool::requestComma
 
 	 return std::move(cmd);
 
+}
+
+VkCommandBuffer VK_Objects::CommandPool::requestCommandBufferVK(VkCommandBufferLevel level) const
+{
+	std::unique_ptr<CommandBuffer> cmd = std::make_unique<VK_Objects::CommandBuffer>(level);
+
+	allocateCommandBuffer(cmd->getCommandBufferHandle(), level);
+
+	return (cmd->getCommandBufferHandle());
 }
 
 VkCommandPool& VK_Objects::CommandPool::getPoolHanndle()
@@ -59,7 +69,7 @@ void VK_Objects::CommandPool::allocateCommandBuffer(VkCommandBuffer& cmdBuffer, 
 	allocInfo.commandPool = vk_cmdPool;
 	allocInfo.level = level;
 	allocInfo.commandBufferCount = static_cast<uint32_t>(1);
-
+	//VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_
 
 	VkResult result = vkAllocateCommandBuffers(device.getLogicalDevice(), &allocInfo, &cmdBuffer);
 	if (result != VK_SUCCESS)std::cout << "    Failed to allocate CommandBuffer\n";

@@ -4,13 +4,14 @@ FramebufferManagement::FramebufferManagement( VK_Objects::Device * _device , VK_
 {
 	createAttachemnts(swapChain->getExtent());
 	createSwapChainAttachment(swapChain);
-
+	createInterfaceAttachments(swapChain);
 }
 
 void FramebufferManagement::createAttachemnts(VkExtent2D extent)
 {
 	createGBufferAttachments(extent);
 	createDepthMapAttachment(extent);
+
 }
 
 
@@ -84,6 +85,7 @@ void FramebufferManagement::createSwapChainAttachment(VK_Objects::SwapChain* swa
 
 	//Creates one Framebuffer per image on SwapChain
 	int n = spChain->getNumberOfImages();
+
 	for (int i = 0; i < n; i++) {
 
 
@@ -92,6 +94,31 @@ void FramebufferManagement::createSwapChainAttachment(VK_Objects::SwapChain* swa
 		framebuffers["SWAPCHAIN_FRAMEBUFFER"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device, 1, attachments, renderpasses["DEFERRED_LIGHTING"], swapChain->getExtent())));
 
 	}
+
+
+
+}
+
+void FramebufferManagement::createInterfaceAttachments(VK_Objects::SwapChain* swapChain)
+{
+
+	VkExtent2D extent = swapChain->getExtent();
+	VkFormat format = swapChain->getFormat();
+
+	//VK_Objects::PImage interface_UI = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+
+	int n = spChain->getNumberOfImages();
+
+	for (int i = 0; i < n; i++) {
+
+
+		VkImageView attachments[1] = { swapChain->getViews()[i] };
+
+		framebuffers["INTERFACE"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device, 1, attachments, renderpasses["INTERFACE"], extent)));
+
+	}
+
+	//Move the created images to g_bufferImages unordered map.
 
 
 

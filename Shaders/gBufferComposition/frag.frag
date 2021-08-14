@@ -61,7 +61,7 @@ void main()
 
 Normal = vec4(getNormalFromMap(vec2(1.0)),1.0);
 float metallic =   texture(metallicMap,TexCoords ).r ;
-float roughness =    texture(roughnessMap, TexCoords ).x ;
+float roughness =    texture(roughnessMap, TexCoords ).g ;
 Albedo =  vec4(pow(texture( diffuseMap, TexCoords).xyz  ,vec3(2.2)),1.0);
 
 MetallicRoughness= vec2(metallic,roughness);

@@ -5,7 +5,6 @@ Engine::Mesh::Mesh(std::shared_ptr<Engine::Entity> _entity, const char* id, cons
 	static const int assimpFlags = aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices;
 	scene = importer.ReadFile(file, aiProcess_Triangulate);
 	this->componentType = Engine::COMPONENT_TYPE::MESH;
-
 	if (!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		std::cout << "error assimp : " << importer.GetErrorString() << std::endl;
@@ -71,7 +70,7 @@ void Engine::Mesh::setUpdateOnNextFrame(bool value) {
 
 glm::mat4& Engine::Mesh::getModelMatrix() {
 
-	return transform.getModelMatrix();
+	return entity->transform.getModelMatrix();
 }
 
 void Engine::Mesh::destroy()
@@ -105,6 +104,7 @@ void Engine::Mesh::loadMeshes()
 			Vertex vertex;
 			vertex.pos = glm::make_vec3(&aMesh->mVertices[j].x);
 			vertex.uv = glm::make_vec2(&aMesh->mTextureCoords[0][j].x);
+			vertex.uv.y = 1.0 - vertex.uv.y;
 			vertex.normal = glm::make_vec3(&aMesh->mNormals[j].x);
 		
 

@@ -18,7 +18,7 @@ namespace Engine {
 
 		glm::mat4& getModelMatrix();
 		glm::vec3& getPosition();
-		glm::vec3 getScale();
+		glm::vec3& getScale();
 		
 
 		void setPosition(glm::vec3 p);

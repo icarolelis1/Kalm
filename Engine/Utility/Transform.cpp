@@ -10,7 +10,7 @@ glm::vec3& Engine::Transform::getPosition()
 	return position;
 }
 
-glm::vec3 Engine::Transform::getScale()
+glm::vec3& Engine::Transform::getScale()
 {
 	return scale;
 }

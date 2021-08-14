@@ -24,6 +24,7 @@ namespace Engine {
 		virtual void awake() = 0;
 		virtual void start()=0;
 		virtual void update(float timeStep)=0;
+		virtual void buildUi();
 		COMPONENT_TYPE getTypeOfComponent();
 
 	protected:

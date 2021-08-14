@@ -50,7 +50,6 @@ namespace Engine {
 
 		void setUpdateOnEveryFrameNextFrame(bool value);
 
-		Transform transform;
 
 		~Mesh();
 
