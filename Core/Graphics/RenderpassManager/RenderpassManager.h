@@ -22,6 +22,8 @@ namespace Game {
 		void createGBufferRenderpass(VkExtent2D extent);
 		void createDeferredLightingRenderPass(VkExtent2D extent);
 		void createImGuiRenderpass(VkExtent2D extent);
+		void createBloomRenderpasses(VkExtent2D extend);
+		void createSwapChainRenderPass(VkExtent2D extent);
 
 		const VK_Objects::Device* device;
 

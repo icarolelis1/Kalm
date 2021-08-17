@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-Engine::Mesh::Mesh(std::shared_ptr<Engine::Entity> _entity, const char* id, const char* _file, const VK_Objects::Device* _device, VK_Objects::CommandPool* pool) :Component(id), file(_file), device(_device),entity(_entity)
+Engine::Mesh::Mesh(std::shared_ptr<Engine::Entity> _entity, const char* id, const char* _materiaTag, const char* _file, const VK_Objects::Device* _device, VK_Objects::CommandPool* pool) :Component(id), file(_file), device(_device),entity(_entity),materialTag(_materiaTag)
 {
 	static const int assimpFlags = aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices;
 	scene = importer.ReadFile(file, aiProcess_Triangulate);
@@ -33,7 +33,6 @@ void Engine::Mesh::start()
 
 void Engine::Mesh::update(float timeStep)
 {
-
 }
 
 void Engine::Mesh::draw(VkCommandBuffer& cmd)
@@ -42,7 +41,7 @@ void Engine::Mesh::draw(VkCommandBuffer& cmd)
 	VkDeviceSize offsets[1] = { 0 };
 	vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->getBufferHandle(), offsets);
 	vkCmdBindIndexBuffer(cmd, indexBuffer->getBufferHandle(), 0, VK_INDEX_TYPE_UINT32);
-
+	std::cout << entity->transform.getPosition().z << std::endl;
 
 	for (uint32_t i = 0; i < meshes.size(); i++) {
 
@@ -60,6 +59,16 @@ bool Engine::Mesh::shouldUpdateOnThisFrame()
 void Engine::Mesh::setUpdateOnEveryFrameNextFrame(bool value) {
 
 	updateTransformOnEveryFrame = value;
+}
+
+void Engine::Mesh::setMaterialRag(std::string& tag)
+{
+	materialTag = tag;
+}
+
+std::string Engine::Mesh::getMaterialTag()
+{
+	return materialTag;
 }
 
 void Engine::Mesh::setUpdateOnNextFrame(bool value) {

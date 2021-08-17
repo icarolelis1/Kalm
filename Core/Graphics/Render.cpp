@@ -24,6 +24,10 @@ void alignedFree(void* data)
 //vk_ stands for any vulkan abstraction
 Render::Render()
 {
+	light1.color = glm::vec3(1.0f);	light1.position = glm::vec3(glm::vec3(900, 1400, 300));
+	nearFar = glm::vec2(.1f, 100.f);
+	dist = 70.0f;
+
 }
 
 void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WIDTH, uint32_t HEIGHT)
@@ -262,8 +266,9 @@ void Render::createRenderContexts()
 		bufferInfos[0].range = sizeof(glm::mat4);
 
 		lightProjection_Descriptorset[index].updateDescriptorset(bufferInfos, imageInfo);
-
 		index++;
+
+
 
 	}
 
@@ -289,7 +294,38 @@ void Render::createRenderContexts()
 		imageInfo[2].imageView = *framebuffersManager->g_bufferImages["NORMALS"]->getVkImageViewHandle();
 		imageInfo[2].sampler = sampler_Testing;
 
+
 		deferredShading_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
+
+
+		imageInfo.resize(1);
+		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[0].imageView = *framebuffersManager->deferreLighting_Images["DEFERRED_BRIGHTNESS_ATTACHMENT"]->getVkImageViewHandle();
+		imageInfo[0].sampler = sampler_Testing;
+
+
+		verticalBlur_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
+
+		imageInfo.resize(2);
+		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[0].imageView = *framebuffersManager->deferreLighting_Images["DEFERRED_LIGHTING_ATTACHMENT"]->getVkImageViewHandle() ;
+		imageInfo[0].sampler = sampler_Testing;
+
+		imageInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[1].imageView = *framebuffersManager->bloomImages["VERTICAL_BLOOM"]->getVkImageViewHandle();
+		imageInfo[1].sampler = sampler_Testing;
+
+		horizontalBlur_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
+
+
+
+		imageInfo.resize(1);
+		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[0].imageView = *framebuffersManager->bloomImages["HORIZONTAL_BLOOM"]->getVkImageViewHandle();
+		imageInfo[0].sampler = sampler_Testing;
+
+
+		finalOutPut_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
 
 	}
 
@@ -357,6 +393,9 @@ void Render::createRenderContexts()
 
 
 	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
+	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
+
+	renderpass->passes["SWAPCHAIN_RENDERPASS"]->clearValues.push_back(clearValues[1]);
 
 
 	for (unsigned int i = 0; i < commandBuffers.size(); i++) {
@@ -383,27 +422,31 @@ void Render::createRenderContexts()
 
 		vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
 
-		VkDescriptorSet descriptorsets[2] = { globalData_Descriptorsets[i].getDescriptorSetHandle(), materialManager["teste"]->getDescriptorsetAtIndex(i) };
-
-		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 2, descriptorsets, 0, NULL);
+		VkDescriptorSet descriptorsets[1] = { globalData_Descriptorsets[i].getDescriptorSetHandle()};
+		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 1, descriptorsets, 0, NULL);
 
 		vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
 
 		for (int j = 0; j < meshes.size(); j++) {
 
 			uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
+			VkDescriptorSet ddd[1] = { materialManager[meshes[j]->getMaterialTag().c_str()]->getDescriptorsetAtIndex(i) };
+			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &ddd[0], 1, 0);
 
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
+			int x = 1;
+			int y;
+
+			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(),2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
 
 			meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle());
 		}
 
-		renderpass->passes["G_BUFFER"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
 
+		renderpass->passes["G_BUFFER"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
 
 		{
 
-			renderpass->passes["DEFERRED_LIGHTING"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
+			renderpass->passes["DEFERRED_LIGHTING"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["DEFERRED_LIGHTING_FRAMEBUFFER"][i]->getFramebufferHandle());
 
 			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineHandle());
 
@@ -417,6 +460,39 @@ void Render::createRenderContexts()
 
 		}
 
+		createBloom(commandBuffers[i]->getCommandBufferHandle(), i);
+
+		{
+			VkViewport viewport = {};
+
+			viewport.width = static_cast<uint32_t>(e.width);
+			viewport.height = static_cast<uint32_t>(e.height);
+
+			viewport.maxDepth = 1.0f;
+
+			VkRect2D rect = {};
+			rect.extent.width = static_cast<uint32_t>(e.width);
+			rect.extent.height = static_cast<uint32_t>(e.height);
+			rect.offset = { 0,0 };
+
+			vkCmdSetViewport(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &viewport);
+
+			vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
+
+
+			renderpass->passes["SWAPCHAIN_RENDERPASS"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
+
+			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineHandle());
+
+			VkDescriptorSet descriptorsets[1] = { finalOutPut_Descriptorsets[i].getDescriptorSetHandle()};
+
+			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(1), &descriptorsets[0], 0, NULL);
+
+			vkCmdDraw(commandBuffers[i]->getCommandBufferHandle(), 3, 1, 0, 0);
+
+			renderpass->passes["SWAPCHAIN_RENDERPASS"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
+		}
+
 
 		Vk_Functions::endCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
 
@@ -426,7 +502,8 @@ void Render::createRenderContexts()
 	r1->setPersistentCommandBuffers(std::move(commandBuffers));
 
 
-
+	meshes[0]->setUpdateOnEveryFrameNextFrame(1);
+	meshes[1]->setUpdateOnEveryFrameNextFrame(1);
 
 
 	while (!glfwWindowShouldClose(w)) {
@@ -465,12 +542,11 @@ void Render::createRenderContexts()
 				std::cout << result << std::endl;
 			};
 
-			meshes[0]->setUpdateOnEveryFrameNextFrame(1);
-			meshes[1]->setUpdateOnEveryFrameNextFrame(1);
 
 
 
 			//swapChain->update();
+			updateSceneGraph();
 			updateUniforms(r1->currentFrameIndex);
 
 			if (r1->frames[imageIndex]->getImageStillInFlightFence() != VK_NULL_HANDLE) {
@@ -601,9 +677,65 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 
 }
 
-void Render::createPipeline()
+void Render::createBloom(VkCommandBuffer& commandBuffer, uint32_t i)
 {
 
+	VkExtent2D e = swapChain.getExtent();
+	e.width /= 2.0;
+	e.height /= 2.0;
+	VkViewport viewport = {};
+
+	viewport.width = static_cast<uint32_t>(e.width);
+	viewport.height = static_cast<uint32_t>(e.height);
+
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D rect = {};
+	rect.extent.width = static_cast<uint32_t>(e.width);
+	rect.extent.height = static_cast<uint32_t>(e.height);
+	rect.offset = { 0,0 };
+
+	VkClearValue clearValues[2];
+	clearValues[0].color = { 1.0f,.0f, 1.0f, 1.f };
+	clearValues[1].color = { 1.0f,.0f, 1.0f, 1.f };
+
+	renderpass->passes["VERTICAL_BLUR"]->clearValues.push_back(clearValues[1]);
+	renderpass->passes["HORIZONTAL_BLUR"]->clearValues.push_back(clearValues[0]);
+	renderpass->passes["HORIZONTAL_BLUR"]->clearValues.push_back(clearValues[1]);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &rect);
+
+	renderpass->passes["VERTICAL_BLUR"]->beginRenderPass(commandBuffer, framebuffersManager->framebuffers["VERTICAL_FRAMEBUFFER"][i]->getFramebufferHandle());
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["VERTICAL_BLUR_PIPELINE"]->getPipelineHandle());
+
+	VkDescriptorSet descriptorsets[1] = { verticalBlur_Descriptorsets[i].getDescriptorSetHandle() };
+
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["VERTICAL_BLUR_PIPELINE"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(1), &descriptorsets[0], 0, NULL);
+
+	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+	renderpass->passes["VERTICAL_BLUR"]->endRenderPass(commandBuffer);
+
+	{
+		// ------ Second Pass Horizontal Blue
+		renderpass->passes["HORIZONTAL_BLUR"]->beginRenderPass(commandBuffer, framebuffersManager->framebuffers["HORIZONTAL_FRAMEBUFFER"][i]->getFramebufferHandle());
+
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["HORIZONTAL_BLUR_PIPELINE"]->getPipelineHandle());
+
+		VkDescriptorSet descriptorsets[1] = { horizontalBlur_Descriptorsets[i].getDescriptorSetHandle() };
+
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["HORIZONTAL_BLUR_PIPELINE"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(1), &descriptorsets[0], 0, NULL);
+
+		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+		renderpass->passes["HORIZONTAL_BLUR"]->endRenderPass(commandBuffer);
+	}
+}
+
+void Render::createPipeline()
+{
 
 	//Game Descriptor Manager.
 	poolManager = std::make_shared<VK_Objects::DescriptorPoolManager>(&device);
@@ -808,7 +940,7 @@ void Render::createPipeline()
 		std::vector<std::vector<VK_Objects::ATRIBUTES>>att{ atributes };
 
 		pipelineInfo.atributes = att;
-		pipelineInfo.colorAttachmentsCount = 1;
+		pipelineInfo.colorAttachmentsCount = 2;
 		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 		pipelineInfo.dephTest = 0;
 		pipelineInfo.depthBias = 0;
@@ -876,7 +1008,7 @@ void Render::createPipeline()
 
 		pipelineInfo.atributes = att;
 		pipelineInfo.colorAttachmentsCount = 1;
-		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+		pipelineInfo.cullMode = VK_CULL_MODE_NONE;
 		pipelineInfo.dephTest = 1;
 		pipelineInfo.depthBias = 0;
 		pipelineInfo.rdpass = &renderpass->passes["SHADOW_MAP"]->vk_renderpass;
@@ -891,6 +1023,174 @@ void Render::createPipeline()
 
 	}
 
+	{
+
+		//vertical blur  Pipeline
+
+
+		VK_Objects::ShaderResource verticalBlurImageRessource{};
+		verticalBlurImageRessource.binding = static_cast<uint32_t>(0);
+		verticalBlurImageRessource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		verticalBlurImageRessource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+		//Create shader resource and Allocate Descriptorsets 
+		std::vector<VK_Objects::ShaderResource> resources = { verticalBlurImageRessource };
+
+		std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resources);
+
+		for (unsigned int i = 0; i < swapChain.getNumberOfImages(); i++) {
+
+			//Allocate descriptorset for descLayout and store it inside sets variable.
+			verticalBlur_Descriptorsets.push_back(poolManager->allocateDescriptor(descLayout));
+
+		}
+
+		std::vector<std::shared_ptr<VK_Objects::DescriptorSetLayout>> descriptors;
+		descriptors.push_back(std::move(descLayout));
+
+
+		//Create Pipeline
+		std::unique_ptr<VK_Objects::Shader> vert = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::VERTEX_SHADER, Utils::readFile("Shaders\\bloom\\vertical\\vert.spv"));
+		std::unique_ptr<VK_Objects::Shader> frag = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::FRAGMENT_SHADER, Utils::readFile("Shaders\\bloom\\vertical\\frag.spv"));
+
+		std::vector<VkPushConstantRange> pushConstants;
+
+		std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstants);
+
+		VK_Objects::PipelineProperties pipelineInfo{};
+
+		std::vector<VK_Objects::ATRIBUTES> atributes = { };
+
+		std::vector<std::vector<VK_Objects::ATRIBUTES>>att{ atributes };
+
+		pipelineInfo.atributes = att;
+		pipelineInfo.colorAttachmentsCount = 1;
+		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+		pipelineInfo.dephTest = 0;
+		pipelineInfo.depthBias = 0;
+		pipelineInfo.rdpass = &renderpass->passes["VERTICAL_BLUR"]->vk_renderpass;
+		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		pipelineInfo.vertexOffsets = { 0 };
+		pipelineInfo.subpass = 0;
+
+		std::unique_ptr<VK_Objects::Pipeline> verticalBlurPipeline = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move(vert), std::move(frag), pipelineInfo);
+		verticalBlurPipeline->id = "VERTICAL_BLUR_PIPELINE";
+
+		pipelineManager["VERTICAL_BLUR_PIPELINE"] = std::move(verticalBlurPipeline);
+
+	}
+	{
+
+		VK_Objects::ShaderResource HorizontalBlurImageRessource{};
+		HorizontalBlurImageRessource.binding = static_cast<uint32_t>(1);
+		HorizontalBlurImageRessource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		HorizontalBlurImageRessource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+		
+		VK_Objects::ShaderResource ImageRessource{};
+		ImageRessource.binding = static_cast<uint32_t>(0);
+		ImageRessource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		ImageRessource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+		//Create shader resource and Allocate Descriptorsets 
+		std::vector<VK_Objects::ShaderResource> resources = { HorizontalBlurImageRessource,ImageRessource };
+
+		std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resources);
+
+		for (unsigned int i = 0; i < swapChain.getNumberOfImages(); i++) {
+
+			//Allocate descriptorset for descLayout and store it inside sets variable.
+			horizontalBlur_Descriptorsets.push_back(poolManager->allocateDescriptor(descLayout));
+
+		}
+
+		std::vector<std::shared_ptr<VK_Objects::DescriptorSetLayout>> descriptors;
+		descriptors.push_back(std::move(descLayout));
+
+
+		//Create Pipeline
+		std::unique_ptr<VK_Objects::Shader> vert = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::VERTEX_SHADER, Utils::readFile("Shaders\\bloom\\horizontal\\vert.spv"));
+		std::unique_ptr<VK_Objects::Shader> frag = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::FRAGMENT_SHADER, Utils::readFile("Shaders\\bloom\\horizontal\\frag.spv"));
+
+		std::vector<VkPushConstantRange> pushConstants;
+
+		std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstants);
+
+		VK_Objects::PipelineProperties pipelineInfo{};
+
+		std::vector<VK_Objects::ATRIBUTES> atributes = { };
+
+		std::vector<std::vector<VK_Objects::ATRIBUTES>>att{ atributes };
+
+		pipelineInfo.atributes = att;
+		pipelineInfo.colorAttachmentsCount = 1;
+		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+		pipelineInfo.dephTest = 0;
+		pipelineInfo.depthBias = 0;
+		pipelineInfo.rdpass = &renderpass->passes["HORIZONTAL_BLUR"]->vk_renderpass;
+		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		pipelineInfo.vertexOffsets = { 0 };
+		pipelineInfo.subpass = 0;
+
+		std::unique_ptr<VK_Objects::Pipeline> horizontalBlurPipeline = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move(vert), std::move(frag), pipelineInfo);
+		horizontalBlurPipeline->id = "HORIZONTAL_BLUR";
+
+		pipelineManager["HORIZONTAL_BLUR_PIPELINE"] = std::move(horizontalBlurPipeline);
+	}
+
+
+	{
+		//SwapChain Presentation pipeline
+		VK_Objects::ShaderResource finalOutputResource{};
+		finalOutputResource.binding = static_cast<uint32_t>(0);
+		finalOutputResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		finalOutputResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+		//Create shader resource and Allocate Descriptorsets 
+		std::vector<VK_Objects::ShaderResource> resources = { finalOutputResource };
+
+		std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resources);
+
+		for (unsigned int i = 0; i < swapChain.getNumberOfImages(); i++) {
+
+			//Allocate descriptorset for descLayout and store it inside sets variable.
+			finalOutPut_Descriptorsets.push_back(poolManager->allocateDescriptor(descLayout));
+
+		}
+
+		std::vector<std::shared_ptr<VK_Objects::DescriptorSetLayout>> descriptors;
+		descriptors.push_back(std::move(descLayout));
+
+
+		//Create Pipeline
+		std::unique_ptr<VK_Objects::Shader> vert = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::VERTEX_SHADER, Utils::readFile("Shaders\\presentation\\vert.spv"));
+		std::unique_ptr<VK_Objects::Shader> frag = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::FRAGMENT_SHADER, Utils::readFile("Shaders\\presentation\\frag.spv"));
+
+		std::vector<VkPushConstantRange> pushConstants;
+
+		std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstants);
+
+		VK_Objects::PipelineProperties pipelineInfo{};
+
+		std::vector<VK_Objects::ATRIBUTES> atributes = { };
+
+		std::vector<std::vector<VK_Objects::ATRIBUTES>>att{ atributes };
+
+		pipelineInfo.atributes = att;
+		pipelineInfo.colorAttachmentsCount = 1;
+		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+		pipelineInfo.dephTest = 0;
+		pipelineInfo.depthBias = 0;
+		pipelineInfo.rdpass = &renderpass->passes["SWAPCHAIN_RENDERPASS"]->vk_renderpass;
+		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		pipelineInfo.vertexOffsets = { 0 };
+		pipelineInfo.subpass = 0;
+
+		std::unique_ptr<VK_Objects::Pipeline> SWAPCHAIN_PIPELINE = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move(vert), std::move(frag), pipelineInfo);
+		SWAPCHAIN_PIPELINE->id = "SWAPCHAIN_PIPELINE";
+
+		pipelineManager["SWAPCHAIN_PIPELINE"] = std::move(SWAPCHAIN_PIPELINE);
+
+	}
 }
 
 void Render::creteCommandBuffer() {
@@ -944,7 +1244,16 @@ void Render::createMaterials()
 	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
 	path.roughnessMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
 
-	materialManager["teste"] = std::make_unique<Engine::Material>(&device, "teste", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	materialManager["Samus"] = std::make_unique<Engine::Material>(&device, "Samus", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	
+	path.diffuseMap = "Assets\\road\\FourLaneRoadPatches02_2K_BaseColor.png";
+	path.metallicMap = "Assets\\black.png";
+	path.normalMap = "Assets\\road\\FourLaneRoadPatches02_2K_Normal.png";
+	path.roughnessMap = "Assets\\road\\FourLaneRoadPatches02_2K_Roughness.png";
+
+	materialManager["Road"] = std::make_unique<Engine::Material>(&device, "Road", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+
+
 }
 
 void Render::createScene()
@@ -953,32 +1262,28 @@ void Render::createScene()
 	SceneGraph& sceneGraph = scene.sceneGraph;
 
 	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Samus");
-	std::shared_ptr<Engine::Entity> mesh2 = std::make_shared<Engine::Entity>("Cyberpunk Car");
+	std::shared_ptr<Engine::Entity> mesh2 = std::make_shared<Engine::Entity>("Floor");
 
 	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
-	camera = std::dynamic_pointer_cast<Engine::Camera>(camera_entity);
 
-	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(camera, "camController");
+	main_camera = std::dynamic_pointer_cast<Engine::Camera>(camera_entity);
+
+	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(main_camera, "camController");
+
 	camera_entity->attachComponent(cameraController);
-
-	camera->transform.setPosition(-5, 5, -5);
-	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "icaro\\ds", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
-	mesh2->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "icaro\\ds", "Assets\\BTech.fbx", &device, transferPool.get()));
-
-
-	//std::shared_ptr<Engine::Mesh> m = std::dynamic_pointer_cast<Engine::Mesh>((*it)->getComponent(Engine::COMPONENT_TYPE::MESH));
-	std::shared_ptr<Engine::Mesh> m1 = std::dynamic_pointer_cast<Engine::Mesh>(mesh1->getComponent(Engine::COMPONENT_TYPE::MESH));
-	std::shared_ptr<Engine::Mesh> m2 = std::dynamic_pointer_cast<Engine::Mesh>(mesh2->getComponent(Engine::COMPONENT_TYPE::MESH));
+	
+	main_camera->logComponents();
+	main_camera->transform.setPosition(-5, 5, -5);
+	
+	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "icaro\\ds","Samus", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
+	mesh2->attachComponent(std::make_shared<Engine::Mesh>(mesh2, "icaro\\ds","Road", "Assets\\floor.fbx", &device, transferPool.get()));
 
 	mesh1->transform.setPosition(glm::vec3(0));
 	mesh1->transform.setScale(glm::vec3(.4));
 	mesh1->transform.setRotation(0, 90, 90);
-	mesh1->transform.updateModelMatrix(nullptr);
 
-	mesh2->transform.setPosition(glm::vec3(glm::vec3(0, 0, 15)));
-	mesh2->transform.setScale(glm::vec3(.01));
-
-	mesh2->transform.updateModelMatrix(nullptr);
+	mesh2->transform.setPosition(glm::vec3(glm::vec3(0, -1, 0)));
+	mesh2->transform.setScale(glm::vec3(.1,1.0,.1));
 
 	std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
 	std::shared_ptr<Node> node2 = std::make_shared<Node>(mesh2);
@@ -989,6 +1294,9 @@ void Render::createScene()
 	sceneGraph.addNode(cameraNode);
 
 	mainSCene = std::move(scene);
+	mainSCene.sceneGraph.updateSceneGraph();
+
+
 }
 
 
@@ -1009,7 +1317,6 @@ void Render::separateSceneObjects(std::shared_ptr<Node> node)
 		if ((e1)->getComponent(Engine::COMPONENT_TYPE::SCRIPT)) {
 
 			std::shared_ptr<Engine::Script> m = std::dynamic_pointer_cast<Engine::Script>((e1)->getComponent(Engine::COMPONENT_TYPE::SCRIPT));
-			std::cout << m->getId() << std::endl;
 			scriptManager.insertScript(m);
 
 		}
@@ -1021,7 +1328,6 @@ void Render::separateSceneObjects(std::shared_ptr<Node> node)
 			separateSceneObjects(*it);
 			it++;
 		}
-	
 
 }
 
@@ -1106,19 +1412,39 @@ void Render::renderUI(uint32_t imageIndex)
 	ImGui_ImplVulkan_NewFrame();
 	ImGui::NewFrame();
 
-
 	//UI Desing
+	ImGui::Begin("Kalm");
+	ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
-	mainSCene.sceneGraph.buildUI(mainSCene.sceneGraph.root);
+	if (ImGui::BeginTabBar("Inspector", tab_bar_flags))
+	{
+		if (ImGui::BeginTabItem("Scene Graph"))
+		{
+			glm::vec3 p = light1.position;
+			ImGui::InputFloat3("Position", (float*)glm::value_ptr(p));
+			light1.position = p;
+			ImGui::InputFloat("Dist", &dist);
+			ImGui::InputFloat2("Nearfar", (float*)glm::value_ptr(nearFar));
 
+			mainSCene.sceneGraph.buildUI(mainSCene.sceneGraph.root);
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Scene Settings"))
+		{
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Scene Profilling"))
+		{
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
+
+	ImGui::End();
 
 	ImGui::ShowDemoWindow();
 
 	ImGui::Render();
-
-
-
-
 
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), imGuiCmds[imageIndex]);
 
@@ -1130,25 +1456,28 @@ void Render::renderUI(uint32_t imageIndex)
 
 
 
+void Render::updateSceneGraph()
+{
+	mainSCene.sceneGraph.updateSceneGraph();
+}
+
+
 void Render::updateUniforms(uint32_t imageIndex)
 {
 	VP t;
-	t.view = camera->getViewMatrix();
-	t.projection = camera->getProjectionMatrix();
+	t.view = main_camera->getViewMatrix();
+	t.projection = main_camera->getProjectionMatrix();
 
 
 	viewProjectionBuffers[imageIndex]->udpate(t);
 
 	LightUniform lightUbo;
 
-	LightUbo light1;
-	light1.color = glm::vec3(1);
-	lightUbo.invProj = glm::inverse(camera->getProjectionMatrix());
+	lightUbo.invProj = glm::inverse(main_camera->getProjectionMatrix());
 
-	light1.position = glm::vec3(400);
 
-	lightUbo.camera = camera->transform.getPosition();
-	lightUbo.invView = glm::inverse(camera->getViewMatrix());
+	lightUbo.camera = main_camera->transform.getPosition();
+	lightUbo.invView = glm::inverse(main_camera->getViewMatrix());
 	mainLight = light1;
 	lightUbo.light[0] = light1;
 	lightUniformBuffers[imageIndex]->udpate(lightUbo);
@@ -1156,11 +1485,11 @@ void Render::updateUniforms(uint32_t imageIndex)
 	glm::vec3 lightDireciton = glm::normalize(mainLight.position);
 
 	//glm::mat4 depthViewMatrix = lookAt(  (camera->eulerDir.front * camera->shadowDistance + lightDireciton* shadowMapPass.lightDistance) , camera->eulerDir.front *2.f , glm::vec3(0.0, -1.0, 0.0));
-	glm::mat4 depthViewMatrix = lookAt(lightDireciton * 5.f, glm::vec3(0), glm::vec3(0.0, 1.0, 0.0));
+	glm::mat4 depthViewMatrix = lookAt(normalize(light1.position) * dist, glm::vec3(0), glm::vec3(0.0, 1.0, 0.0));
 
-	std::array<float, 6> boundingBox = camera->calculateFrustumInLightSpace(depthViewMatrix);
+	std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix);
 
-	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], .0f, 8.f);
+	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], nearFar.x,nearFar.y);
 
 	glm::mat4 lightMatrix = depthProjectionMatrix * depthViewMatrix;
 

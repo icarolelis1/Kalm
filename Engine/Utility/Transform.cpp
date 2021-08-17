@@ -52,7 +52,7 @@ void Engine::Transform::increasePos(glm::vec3 p)
 	position += p;
 }
 
-void Engine::Transform::updateModelMatrix(Transform* parent)
+void Engine::Transform::updateModelMatrix(Transform& parent)
 {
 	glm::mat4 identity(1.0f);
 	identity = glm::translate(identity, position);
@@ -62,11 +62,24 @@ void Engine::Transform::updateModelMatrix(Transform* parent)
 	identity = glm::scale(identity, scale);
 	identity = glm::translate(identity, glm::vec3(0));
 
-	if (parent != nullptr) {
-		glm::mat4 parentModel = parent->getModelMatrix();
-		model = parentModel * identity;
-	}
-	else {
-		model = identity;
-	}
+	glm::mat4 parentModel = parent.getModelMatrix();
+	model = parentModel * identity;
+
+	
+
+}
+
+void Engine::Transform::updateModelMatrix()
+{
+	glm::mat4 identity(1.0f);
+	identity = glm::translate(identity, position);
+	identity = glm::rotate(identity, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+	identity = glm::rotate(identity, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+	identity = glm::rotate(identity, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+	identity = glm::scale(identity, scale);
+	identity = glm::translate(identity, glm::vec3(0));
+
+
+	model = identity;
+	
 }

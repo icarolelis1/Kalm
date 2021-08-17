@@ -6,9 +6,9 @@ Engine::Entity::Entity(const char* _name):name(_name)
 
 void Engine::Entity::start()
 {
-	Components::iterator it = components.begin();
+	Components::iterator it = componentContainer.components.begin();
 	
-	while (it != components.end()) {
+	while (it != componentContainer.components.end()) {
 		it->second->start();
 		it++;
 
@@ -17,9 +17,9 @@ void Engine::Entity::start()
 
 void Engine::Entity::update(float timeStep)
 {
-	Components::iterator it = components.begin();
+	Components::iterator it = componentContainer.components.begin();
 
-	while (it != components.end()) {
+	while (it != componentContainer.components.end()) {
 		it->second->update(timeStep);
 		it++;
 
@@ -55,19 +55,29 @@ std::shared_ptr<Engine::Component> Engine::Entity::getComponent(Engine::COMPONEN
 
 void Engine::Entity::buildUiRepresentation()
 {
-	Components::iterator it = components.begin();
+	
+
+	Components::iterator it = componentContainer.components.begin();
 
 
-	while (it != components.end()) {
+	while (it != componentContainer.components.end()) {
+
+	
 
 		if (ImGui::TreeNode(it->second->getId().c_str())) {
+			ImGui::PushID(it->second->getId().c_str());
 			it->second->buildUi();
-
+			ImGui::PopID();
 			ImGui::TreePop();
 		}
 		it++;
 
 	}
+}
+
+void Engine::Entity::logComponents()
+{
+	componentContainer.listComponents();
 }
 
 

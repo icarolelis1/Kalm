@@ -30,7 +30,8 @@ namespace Engine {
 		void increasePos(float x, float y, float z);
 		void increasePos(glm::vec3 p);
 
-		void updateModelMatrix(Transform * parent);
+		void updateModelMatrix(Transform & parent);
+		void updateModelMatrix();
 
 	private:
 		glm::mat4 model;

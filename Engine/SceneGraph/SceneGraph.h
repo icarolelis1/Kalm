@@ -15,7 +15,7 @@ public:
 	std::list< std::shared_ptr<Node>> childs;
 
 	std::shared_ptr<Engine::Entity> entity;
-	std::weak_ptr<Node> parent;
+	std::shared_ptr<Node> parent;
 
 
 };
@@ -30,10 +30,15 @@ public:
 	void addNode(std::shared_ptr<Node> entity);
 	void addNode(std::shared_ptr<Node> p1, std::shared_ptr<Node> p2);
 
-	void buildUI(std::shared_ptr<Node> node);
-
-
+	void buildUI(std::shared_ptr<Node> node );
 	std::shared_ptr<Node> root;
+
+	void updateSceneGraph();
+
+
+private:
+
+	void updateTransforms(std::shared_ptr<Node> node);
 
 
 private:

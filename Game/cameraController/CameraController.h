@@ -15,7 +15,7 @@
 		void buildUi();
 
 	private:
-		double velocity = .04f;
+		float velocity = .04f;
 		void updateDirections();
 		float YAW = 90;
 		float PITCH = -60;

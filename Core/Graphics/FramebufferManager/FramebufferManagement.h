@@ -24,6 +24,9 @@ public:
 	Attachments g_bufferImages;
 	Attachments interface_images;
 	Attachments depth_bufferImages;
+	Attachments bloomImages;
+	Attachments deferreLighting_Images;
+
 	Framebuffers framebuffers;
 
 
@@ -34,8 +37,10 @@ private:
 	void createAttachemnts(VkExtent2D extent);
 	void createGBufferAttachments(VkExtent2D extent);
 	void createDepthMapAttachment(VkExtent2D extent);
-	void createSwapChainAttachment(VK_Objects::SwapChain* swapChain);
+	void createDeferredLightingAttachment(VK_Objects::SwapChain* swapChain);
 	void createInterfaceAttachments(VK_Objects::SwapChain* swapChain);
+	void createBloomAttachments(VK_Objects::SwapChain* swapChain);
+	void createSwapChainAttachment(VK_Objects::SwapChain* swapChain);
 
 	void createFramebuffers(VkExtent2D extent);
 

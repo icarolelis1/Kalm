@@ -2,7 +2,7 @@
 layout (location = 0 ) in vec2 TexCoords ;
 
 layout (location = 0 ) out vec4 Color;
-
+layout (location = 1) out vec4 Brightness;
 
 struct LightUbo {
 
@@ -107,7 +107,7 @@ vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
     
  
 
-	vec3 lightColor = lightUbo.lights[ind].lightColor ;
+	vec3 lightColor = lightUbo.lights[ind].lightColor*1.6f ;
 
 	vec3 color = vec3(0);
 
@@ -206,7 +206,7 @@ void main(){
     vec4 fragPosLight = (lightUbo.invView * lightUbo.invProj)* vec4(WorldPos,1.0) ;
     vec3 L = normalize(lightUbo.lights[0].position - WorldPos);
 
-    float shadow = shadowCalculation(fragPosLight,0.);
+    float shadow = shadowCalculation(fragPosLight,0.04);
 
     vec3 V = normalize(lightUbo.camera - WorldPos);
     vec3 R = reflect(V, N); 
@@ -249,12 +249,26 @@ void main(){
 
     vec3 ambient = (kD * diffuse  + specular ) ;
     color = vec3(Lo+ambient)  ;
- color = uncharted2_filmic(color);
-   	color = pow(color, vec3(1./2.2));
-    
 
-    Color = mix(vec4(.3),vec4(color,1.0),w);
+
+    Color = mix(vec4(irradiance,1.0),vec4(color,1.0),w);
 
 	
+    float level =14.;
+    if((0.2126*color.r) + (0.7152*color.g) + (0.0722*color.b) > level)
+    {
+
+	    float brightenRatio = 1.0 / max(max(color.r, color.g), color.b);
+	    Brightness = vec4(color*brightenRatio,1.);
+
+    } 
+
+    else
+
+    {
+
+    Brightness = vec4(0);
+
+    }
 
 }

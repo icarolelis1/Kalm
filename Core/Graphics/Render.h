@@ -70,7 +70,8 @@ class Render
 
 public:
 	Render();
-
+	glm::vec2 nearFar;
+	float dist;
 	void initiateResources(Utils::WindowHandler *windowHandler, uint32_t WIDTH, uint32_t HEIGHT);
 
 
@@ -84,6 +85,8 @@ private:
 	void createRenderpass();
 	void createRenderContexts();
 	void createShadowMap(VkCommandBuffer &commandBuffer,uint32_t imageIndex);
+	void createBloom(VkCommandBuffer& commandBuffer, uint32_t imageIndex);
+
 	void createPipeline();
 	void creteCommandBuffer();
 
@@ -122,7 +125,7 @@ private:
 	VK_Objects::PCommandPool transferPool;
 	VK_Objects::PCommandPool dynamicPool;
 
-	std::shared_ptr<Engine::Camera> camera;
+	std::shared_ptr<Engine::Camera> main_camera;
 	LightUbo mainLight;
 
 
@@ -132,6 +135,10 @@ private:
 	std::vector<VK_Objects::Descriptorset> modelMatrix_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> deferredShading_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> enviromentData_Descriptorsets;
+	std::vector<VK_Objects::Descriptorset> verticalBlur_Descriptorsets;
+	std::vector<VK_Objects::Descriptorset> horizontalBlur_Descriptorsets;
+	std::vector<VK_Objects::Descriptorset> finalOutPut_Descriptorsets;
+
 
 	std::vector<VK_Objects::Descriptorset> light_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> lightProjection_Descriptorset;
@@ -147,10 +154,12 @@ private:
 	MaterialManager materialManager;
 
 
+	void updateSceneGraph();
 	void updateUniforms(uint32_t imageIndex);
 	void updateDynamicUniformBuffer(uint32_t imageIndex);
 	Game::Scene mainSCene;
 	glm::vec3 mainLightPos = glm::vec3(400);
+	LightUbo light1;
 
 	float lastFrameTIme = 0;
 	float frameTime;
