@@ -216,8 +216,6 @@ void Render::createRenderContexts()
 
 
 
-
-
 	RENDER::Thread t1;
 	uint32_t n = swapChain.getNumberOfImages();
 
@@ -422,19 +420,23 @@ void Render::createRenderContexts()
 
 		vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
 
+
 		VkDescriptorSet descriptorsets[1] = { globalData_Descriptorsets[i].getDescriptorSetHandle()};
 		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 1, descriptorsets, 0, NULL);
 
 		vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
 
+		std::string currentTag = meshes[0]->getMaterialTag();
 		for (int j = 0; j < meshes.size(); j++) {
 
-			uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
-			VkDescriptorSet ddd[1] = { materialManager[meshes[j]->getMaterialTag().c_str()]->getDescriptorsetAtIndex(i) };
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &ddd[0], 1, 0);
+			if (currentTag != meshes[j]->getMaterialTag() || j ==0) {
+				currentTag = meshes[j]->getMaterialTag();
+				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &materialManager[currentTag]->getDescriptorsetAtIndex(i), 0, NULL);
+			}
+			
 
-			int x = 1;
-			int y;
+
+			uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
 
 			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(),2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
 
@@ -1422,6 +1424,7 @@ void Render::renderUI(uint32_t imageIndex)
 		{
 			glm::vec3 p = light1.position;
 			ImGui::InputFloat3("Position", (float*)glm::value_ptr(p));
+			ImGui::InputFloat3("Color", (float*)glm::value_ptr(light1.color));
 			light1.position = p;
 			ImGui::InputFloat("Dist", &dist);
 			ImGui::InputFloat2("Nearfar", (float*)glm::value_ptr(nearFar));
@@ -1607,7 +1610,7 @@ Render::~Render()
 		buffer.reset();
 	}
 
-	std::unordered_map<const char*, std::unique_ptr<Engine::Material>>::iterator itM = materialManager.begin();
+	std::unordered_map<std::string, std::unique_ptr<Engine::Material>>::iterator itM = materialManager.begin();
 
 	while (itM != materialManager.end()) {
 

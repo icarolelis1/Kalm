@@ -251,11 +251,11 @@ void main(){
     color = vec3(Lo+ambient)  ;
 
 
-    Color = mix(vec4(irradiance,1.0),vec4(color,1.0),w);
+    Color = mix(vec4(irradiance*10000,1.0),vec4(color,1.0),w);
 
 	
     float level =14.;
-    if((0.2126*color.r) + (0.7152*color.g) + (0.0722*color.b) > level)
+    if((0.2126*Color.r) + (0.7152*Color.g) + (0.0722*Color.b) > level)
     {
 
 	    float brightenRatio = 1.0 / max(max(color.r, color.g), color.b);

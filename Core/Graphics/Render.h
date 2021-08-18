@@ -29,7 +29,7 @@ using Meshes = std::vector<std::shared_ptr<Engine::Mesh>>;
 
 using PipelineManager = std::unordered_map<const char*, std::unique_ptr<VK_Objects::Pipeline>>;
 
-using MaterialManager = std::unordered_map<const char*, std::unique_ptr<Engine::Material>>; 
+using MaterialManager = std::unordered_map<std::string, std::unique_ptr<Engine::Material>>; 
 
 struct VP {
 

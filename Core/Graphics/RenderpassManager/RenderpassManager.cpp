@@ -114,7 +114,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	//Single Attachment
 	renderpassProperties.attachments.resize(4);
 
-	VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
+	VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
 
 	VK_Objects::RenderAttachment depthAttachment;
 	depthAttachment.description.format = device->getSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -150,7 +150,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	metallicRoughnessAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VK_Objects::RenderAttachment NormalsAttachment;
-	NormalsAttachment.description.format = format;
+	NormalsAttachment.description.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	NormalsAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
 	NormalsAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	NormalsAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -165,7 +165,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 
 
 	VK_Objects::RenderAttachment albedoAttachment;
-	albedoAttachment.description.format = format;
+	albedoAttachment.description.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	albedoAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
 	albedoAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	albedoAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

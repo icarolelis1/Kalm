@@ -64,5 +64,5 @@ float metallic =   texture(metallicMap,TexCoords ).r ;
 float roughness =    texture(roughnessMap, TexCoords ).g ;
 Albedo =  vec4(pow(texture( diffuseMap, TexCoords).xyz  ,vec3(2.2)),1.0);
 
-MetallicRoughness= vec2(metallic,roughness);
+MetallicRoughness= vec2(0 ,roughness);
 }
