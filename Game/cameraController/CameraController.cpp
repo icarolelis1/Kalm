@@ -43,6 +43,18 @@ void CameraController::update(float timeStep)
 		PITCH -= velocity * timeStep;
 	}
 
+	auto offset = 40;
+	Engine::CursorPos cursorPos = Window::mouse.getCursorPos();
+
+	if (Window::mouse.getMouseACtionStatus(GLFW_MOUSE_BUTTON_2, GLFW_PRESS)) {
+		if (cursorPos.x >= 1920 - offset) { camera->transform.increasePos(velocity * camera->eulerDirections.right); }
+		if (cursorPos.x <= offset) camera->transform.increasePos(-velocity * camera->eulerDirections.right);
+
+		if (cursorPos.y >= 1055 - offset) camera->transform.increasePos(-velocity * glm::normalize(glm::vec3(camera->eulerDirections.front.x, 0, camera->eulerDirections.front.z) * glm::cos(glm::radians(-90 - PITCH))));
+		if (cursorPos.y <= (offset)) camera->transform.increasePos(velocity * glm::normalize(glm::vec3(camera->eulerDirections.front.x, 0, camera->eulerDirections.front.z) * glm::cos(glm::radians(-90 - PITCH))));
+	}
+
+
 	updateDirections();
 	
 

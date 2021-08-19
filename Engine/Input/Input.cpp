@@ -1,9 +1,10 @@
 #include "Input.h"
 
-Engine::Mouse& Engine::Mouse::getInstance()
+Engine::Mouse& Engine::Mouse::getInstance(GLFWwindow * _window)
 {
 	
 	static Mouse instance;
+	instance.window = _window;
 	return instance;
 }
 
@@ -22,6 +23,33 @@ void Engine::Mouse::mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	y = yoffset;
 	lastX = xpos;
 	lastY = ypos;
+}
+
+bool Engine::Mouse::getMouseACtionStatus(int button, int action)
+{
+
+
+	return (glfwGetMouseButton(window, button) == action);
+	
+
+
+}
+
+void Engine::Mouse::setWindowHandler(GLFWwindow* _window)
+{
+	window = _window;
+}
+
+Engine::CursorPos Engine::Mouse::getCursorPos()
+{
+	CursorPos p = { lastX,lastY };
+	return p;
+
+}
+
+GLFWmousebuttonfun Engine::Mouse::mouse_button_callback(GLFWwindow* window, int x, int z, int y)
+{
+	return GLFWmousebuttonfun();
 }
 
 Engine::KeyBoard::KeyBoard()

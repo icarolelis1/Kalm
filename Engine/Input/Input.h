@@ -3,6 +3,11 @@
 #include <iostream>
 namespace Engine {
 
+	typedef struct {
+		double x;
+		double y;
+	}CursorPos;
+
 	class KeyBoard {
 	public:
 		KeyBoard();
@@ -21,12 +26,17 @@ namespace Engine {
 	class Mouse {
 		
 	public:
-		static Mouse& getInstance();
+		static Mouse& getInstance(GLFWwindow* _window);
 
 		void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+		bool getMouseACtionStatus(int button, int action);
+		void setWindowHandler(GLFWwindow* _window);
 		
+		
+		CursorPos getCursorPos();
 
-	
+		GLFWmousebuttonfun mouse_button_callback(GLFWwindow* window, int x, int z, int y);
+		GLFWwindow* window;
 
 	private:
 		float x;
@@ -34,7 +44,6 @@ namespace Engine {
 		float lastX;
 		float lastY;
 		bool initialized = false;
-
 	};
 
 	class InputManager {

@@ -16,9 +16,6 @@ void Window::initiateWindow(WindowProperties& properties)
 
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos){
-
-}
 Utils::WindowHandler* Window::getWindowHandler()
 {
 	return windowHandler;
@@ -34,13 +31,18 @@ void Window::createWindow()
 	
 	keyboard.setWindowHandle(windowHandler);
 	
+	mouse.setWindowHandler(windowHandler);
+
 	glfwSetWindowUserPointer(windowHandler, this);
 
 	auto f = [](GLFWwindow* window, double xpos, double ypos) {
 		static_cast<Window*>(glfwGetWindowUserPointer(window))->mouse.mouse_callback(window, xpos, ypos);
 	};
+	auto mouse_btn_callBack = [](GLFWwindow* window, int x,int y,int z) {
+		static_cast<Window*>(glfwGetWindowUserPointer(window))->mouse.mouse_button_callback(window, x, y, z);
+	};
 	glfwSetCursorPosCallback(windowHandler, f);
-
+	glfwSetMouseButtonCallback( windowHandler,mouse_btn_callBack);
 
 }
 

@@ -214,8 +214,6 @@ void Render::createRenderContexts()
 	VK_Objects::CubeMap irradianceMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
 	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 
-
-
 	RENDER::Thread t1;
 	uint32_t n = swapChain.getNumberOfImages();
 
@@ -812,7 +810,16 @@ void Render::createPipeline()
 	std::unique_ptr<VK_Objects::Shader> vert = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::VERTEX_SHADER, Utils::readFile("Shaders\\gBufferComposition\\vert.spv"));
 	std::unique_ptr<VK_Objects::Shader> frag = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::FRAGMENT_SHADER, Utils::readFile("Shaders\\gBufferComposition\\frag.spv"));
 
+	struct {
+		glm::vec2 texOffset;
+		float rough_multiplier;
+	}pushData;
+
 	std::vector<VkPushConstantRange> pushConstants;
+	pushConstants.resize(1);
+	pushConstants[0].offset = 0;
+	pushConstants[0].size = sizeof(pushData);
+	pushConstants[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
 	std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstants);
 
