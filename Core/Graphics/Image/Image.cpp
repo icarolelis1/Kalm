@@ -89,7 +89,7 @@ VK_Objects::Image::Image(const VK_Objects::Device* _device, const char* path, Vk
 
 	if (useMaxNumMips) {
 
-		numMips = maxMips < 5 ? maxMips : 5;
+		numMips = maxMips < 10 ? maxMips : 10;
 	}
 
 
@@ -204,7 +204,7 @@ VK_Objects::Image::~Image()
 uint32_t VK_Objects::Image::getMaximumMips()
 {
 	uint32_t maxMips =  static_cast<uint32_t>(std::floor(std::log2(std::max(vk_extent.width, vk_extent.height)))) + 1;
-	 maxMips =  maxMips < 5 ? maxMips : 5;
+	 maxMips =  maxMips < 10 ? maxMips : 10;
 	 return maxMips;
 
 }
