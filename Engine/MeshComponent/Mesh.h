@@ -30,7 +30,7 @@ namespace Engine {
 	class Mesh : public Component{
 
 	public:
-		Mesh(std::shared_ptr<Engine::Entity> entity, const char *id,const char* file,const VK_Objects::Device *_device,VK_Objects::CommandPool* pool);
+		Mesh(std::shared_ptr<Engine::Entity> entity, const char *id,const char* materiaTag, const char* file,const VK_Objects::Device *_device,VK_Objects::CommandPool* pool);
 		
 		void awake();
 
@@ -50,7 +50,9 @@ namespace Engine {
 
 		void setUpdateOnEveryFrameNextFrame(bool value);
 
-		Transform transform;
+		void setMaterialRag(std::string& tag);
+
+		std::string getMaterialTag();
 
 		~Mesh();
 
@@ -59,6 +61,7 @@ namespace Engine {
 		void createVertexBuffer(VkCommandBuffer cmd);
 		void createIndexBuffer(VkCommandBuffer cmd);
 
+		std::string materialTag;
 
 		VK_Objects::PBuffer vertexBuffer;
 		VK_Objects::PBuffer indexBuffer;

@@ -11,6 +11,8 @@ VK_Objects::Image::Image(const Device* _device, uint32_t Width, uint32_t Height,
 
 		numMips = getMaximumMips();
 	}
+	vk_extent.width = Width;
+	vk_extent.height = Height;
 
 	VkImageCreateInfo imageInfo = {};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -80,12 +82,14 @@ VK_Objects::Image::Image(const VK_Objects::Device* _device, const char* path, Vk
 
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	vk_extent.width = texWidth;
+	vk_extent.height = texHeight;
 
 	const uint32_t maxMips = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
 	if (useMaxNumMips) {
 
-		numMips = maxMips;
+		numMips = maxMips < 5 ? maxMips : 5;
 	}
 
 
@@ -199,7 +203,10 @@ VK_Objects::Image::~Image()
 
 uint32_t VK_Objects::Image::getMaximumMips()
 {
-	return static_cast<uint32_t>(std::floor(std::log2(std::max(vk_extent.width, vk_extent.height)))) + 1;
+	uint32_t maxMips =  static_cast<uint32_t>(std::floor(std::log2(std::max(vk_extent.width, vk_extent.height)))) + 1;
+	 maxMips =  maxMips < 5 ? maxMips : 5;
+	 return maxMips;
+
 }
 
 
@@ -350,6 +357,10 @@ namespace Vk_Functions{
 		vkFreeCommandBuffers(device.getLogicalDevice(),pool.getPoolHanndle(), 1, &cmd->getCommandBufferHandle());
 	}
 
+	void copyBufferToImage(VkBuffer& buffer, VkImage image, VkDevice device, VkCommandPool pool, uint32_t width, uint32_t height, uint32_t baseLayer, uint32_t layerCount)
+	{
+	}
+
 	void generateMips(const VK_Objects::Device* device, VK_Objects::Image* image, VK_Objects::CommandPool* commandPool, uint32_t numMips)
 	{
 		VkCommandBuffer	 cmd = commandPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY)->getCommandBufferHandle();
@@ -420,6 +431,7 @@ namespace Vk_Functions{
 			if (mipHeight > 1) mipHeight /= 2;
 
 		}
+
 		//Transition the last mip
 		barrier.subresourceRange.baseMipLevel = numMips - 1;
 		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;

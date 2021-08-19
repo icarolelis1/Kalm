@@ -87,14 +87,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependences\GLFW64\include;$(SolutionDir)Dependencies\include;C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\ImGui;$(SolutionDir)Dependencies\GLFW64\include;$(SolutionDir)Dependencies\include;C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Dependences\GLFW64\lib-vc2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)glfw3.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -104,7 +104,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\assimp\include;$(SolutionDir)Dependencies\glm\glm;$(SolutionDir)Dependencies\stb_image;$(SolutionDir)Dependencies\GLFW64\include;$(SolutionDir)Game\;$(SolutionDir)Engine\;$(SolutionDir)Core\;$(SolutionDir)Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\ImGui;$(SolutionDir)Dependencies\assimp\include;$(SolutionDir)Dependencies\glm\glm;$(SolutionDir)Dependencies\stb_image;$(SolutionDir)Dependencies\GLFW64\include;$(SolutionDir)Game\;$(SolutionDir)Engine\;$(SolutionDir)Core\;$(SolutionDir)Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
@@ -168,6 +168,12 @@
     <ClCompile Include="Core\Graphics\Thread\Thread.cpp" />
     <ClCompile Include="Core\Graphics\VulkanFramework.cpp" />
     <ClCompile Include="Core\Graphics\Window.cpp" />
+    <ClCompile Include="Dependencies\ImGui\imgui.cpp" />
+    <ClCompile Include="Dependencies\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="Dependencies\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="Dependencies\ImGui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="Dependencies\ImGui\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="Dependencies\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Engine\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Components\Component.cpp" />
     <ClCompile Include="Engine\Entity\Entity.cpp" />
@@ -204,6 +210,14 @@
     <ClInclude Include="Core\Graphics\VulkanDef.h" />
     <ClInclude Include="Core\Graphics\VulkanFramework.h" />
     <ClInclude Include="Core\Graphics\Window.h" />
+    <ClInclude Include="Dependencies\ImGui\imconfig.h" />
+    <ClInclude Include="Dependencies\ImGui\imgui.h" />
+    <ClInclude Include="Dependencies\ImGui\imgui_impl_glfw.h" />
+    <ClInclude Include="Dependencies\ImGui\imgui_impl_vulkan.h" />
+    <ClInclude Include="Dependencies\ImGui\imgui_internal.h" />
+    <ClInclude Include="Dependencies\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="Dependencies\ImGui\imstb_textedit.h" />
+    <ClInclude Include="Dependencies\ImGui\imstb_truetype.h" />
     <ClInclude Include="Dependencies\stb_image\stb_image.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
@@ -222,6 +236,7 @@
     <ClInclude Include="Kalm.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="Shaders\Common\frag.frag" />
     <None Include="Shaders\Common\vert.vert" />
     <None Include="Shaders\deferredLighting\frag.frag" />

@@ -6,16 +6,6 @@ layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 InUv;
 
 
-/*
-layout(set =0 , binding = 0) uniform UniformBufferObject1{
-
-	
-	mat4 view;
-	mat4 projection;
-
-}ubo_VP;
-
-*/
 
 layout(set =1 , binding = 0) uniform UniformBufferObject2{
 
@@ -25,19 +15,12 @@ layout(set =1 , binding = 0) uniform UniformBufferObject2{
 
 }ubo_M;
 
+	
 
-struct LightUbo {
-
-	vec3 position;
-	vec3 color;
-	float type;
-
-};
 
 layout(set = 0, binding = 0) uniform UniformBuffLight{
 
 	mat4 lightMatrix;
-	
 }ubo_L;
 
 

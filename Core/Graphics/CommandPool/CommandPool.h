@@ -40,6 +40,7 @@ namespace VK_Objects {
 		CommandPool(const Device& _device, POOL_TYPE type, VkCommandPoolCreateFlags  flags);
 		
 		std::unique_ptr<VK_Objects::CommandBuffer> requestCommandBuffer(VkCommandBufferLevel level)const;
+		VkCommandBuffer requestCommandBufferVK(VkCommandBufferLevel level) const;
 
 		CommandPool(CommandPool&) = delete;
 

@@ -17,17 +17,19 @@
 #include <Scene/Scene.h>
 #include <Graphics/Thread/Thread.h>
 
+
 #ifndef GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #endif
 
 constexpr bool DEBUG_ = true;
+constexpr bool UI_RENDER = true;
 
 using Meshes = std::vector<std::shared_ptr<Engine::Mesh>>;
 
 using PipelineManager = std::unordered_map<const char*, std::unique_ptr<VK_Objects::Pipeline>>;
 
-using MaterialManager = std::unordered_map<const char*, std::unique_ptr<Engine::Material>>; 
+using MaterialManager = std::unordered_map<std::string, std::unique_ptr<Engine::Material>>; 
 
 struct VP {
 
@@ -68,7 +70,8 @@ class Render
 
 public:
 	Render();
-
+	glm::vec2 nearFar;
+	float dist;
 	void initiateResources(Utils::WindowHandler *windowHandler, uint32_t WIDTH, uint32_t HEIGHT);
 
 
@@ -82,6 +85,8 @@ private:
 	void createRenderpass();
 	void createRenderContexts();
 	void createShadowMap(VkCommandBuffer &commandBuffer,uint32_t imageIndex);
+	void createBloom(VkCommandBuffer& commandBuffer, uint32_t imageIndex);
+
 	void createPipeline();
 	void creteCommandBuffer();
 
@@ -92,15 +97,22 @@ private:
 
 	void createScene();
 
-	void separateSceneObjects();
+	void separateSceneObjects(std::shared_ptr<Node> node);
 	void getEntityScripts();
 	void getEntityMeshes();
+	void createImGuiInterface();
+
+	void renderUI(uint32_t imageIndex);
+
 
 	VK_Objects::Instance instance;
 	VK_Objects::Device device;
 	VK_Objects::Surface surface;
 	VK_Objects::SwapChain swapChain;
 	VK_Objects::SDescriptorPoolManager poolManager;
+	VK_Objects::SDescriptorPoolManager dynamicDEscriptorPoolManager;
+
+
 	std::vector<VK_Objects::SBuffer> viewProjectionBuffers;
 	std::vector<VK_Objects::SBuffer> modelBuffers;
 	std::vector<VK_Objects::SBuffer> lightUniformBuffers;
@@ -111,8 +123,9 @@ private:
 	size_t modelBuffersSize;
 	VK_Objects::PCommandPool graphicsPool;
 	VK_Objects::PCommandPool transferPool;
+	VK_Objects::PCommandPool dynamicPool;
 
-	std::shared_ptr<Engine::Camera> camera;
+	std::shared_ptr<Engine::Camera> main_camera;
 	LightUbo mainLight;
 
 
@@ -122,6 +135,10 @@ private:
 	std::vector<VK_Objects::Descriptorset> modelMatrix_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> deferredShading_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> enviromentData_Descriptorsets;
+	std::vector<VK_Objects::Descriptorset> verticalBlur_Descriptorsets;
+	std::vector<VK_Objects::Descriptorset> horizontalBlur_Descriptorsets;
+	std::vector<VK_Objects::Descriptorset> finalOutPut_Descriptorsets;
+
 
 	std::vector<VK_Objects::Descriptorset> light_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> lightProjection_Descriptorset;
@@ -131,15 +148,18 @@ private:
 
 	//RenderPasses renderpasses;
 
+	std::vector<VkCommandBuffer> imGuiCmds;
 	Engine::ScriptManager scriptManager;
 	std::unique_ptr<Game::RenderpassManager> renderpass;
 	MaterialManager materialManager;
 
 
+	void updateSceneGraph();
 	void updateUniforms(uint32_t imageIndex);
 	void updateDynamicUniformBuffer(uint32_t imageIndex);
 	Game::Scene mainSCene;
-
+	glm::vec3 mainLightPos = glm::vec3(400);
+	LightUbo light1;
 
 	float lastFrameTIme = 0;
 	float frameTime;

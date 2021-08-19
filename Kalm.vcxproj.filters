@@ -130,6 +130,9 @@
     <Filter Include="Arquivos de Recurso\Engine\EventSystem">
       <UniqueIdentifier>{a51eec93-5f57-4696-a922-01cfb6bbc5c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Arquivos de Recurso\Core\ImGuiInterface">
+      <UniqueIdentifier>{b7042350-4b44-4582-a7a2-f8be59af2117}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Kalm.cpp">
@@ -227,6 +230,24 @@
     </ClCompile>
     <ClCompile Include="Game\Scene\Scene.cpp">
       <Filter>Arquivos de Recurso\Game\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\ImGui\imgui.cpp">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\ImGui\imgui_demo.cpp">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\ImGui\imgui_draw.cpp">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\ImGui\imgui_impl_glfw.cpp">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\ImGui\imgui_impl_vulkan.cpp">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\ImGui\imgui_widgets.cpp">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -335,6 +356,30 @@
     <ClInclude Include="Game\Scene\Scene.h">
       <Filter>Arquivos de Recurso\Game\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Dependencies\ImGui\imconfig.h">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\ImGui\imgui.h">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\ImGui\imgui_impl_glfw.h">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\ImGui\imgui_impl_vulkan.h">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\ImGui\imgui_internal.h">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\ImGui\imstb_rectpack.h">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\ImGui\imstb_textedit.h">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\ImGui\imstb_truetype.h">
+      <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common\frag.frag">
@@ -355,5 +400,6 @@
     <None Include="Shaders\deferredLighting\frag.frag">
       <Filter>Arquivos de Recurso\Shaders\deferredLIghting</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

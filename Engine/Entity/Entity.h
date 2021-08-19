@@ -2,6 +2,8 @@
 #include <iostream>
 #include "Components/Component.h"
 #include "Utility/Transform.h"
+
+#include "imgui.h"
 namespace Engine {
 
 	struct ComponentContainer {
@@ -42,6 +44,7 @@ namespace Engine {
 				it++;
 			}
 		};
+
 		void  destroy() {
 
 			std::map<std::string, std::shared_ptr<Component> >::iterator it;
@@ -85,12 +88,16 @@ namespace Engine {
 
 		virtual void update(float timeStep);
 		void attachComponent(std::shared_ptr<Engine::Component> component);
+		const char* getName();
 
 		std::shared_ptr<Engine::Component> getComponent(std::string name);
 		std::shared_ptr<Engine::Component> getComponent(Engine::COMPONENT_TYPE componentType);
-		Transform transform;
+
+		void buildUiRepresentation();
+		void logComponents();
 
 		Transform transform;
+
 
 
 	protected:
@@ -98,7 +105,6 @@ namespace Engine {
 		bool displayOnInspector = true;
 
 
-		Engine::Components components;
 		const char* name;
 
 	private:

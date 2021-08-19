@@ -20,31 +20,37 @@ void CameraController::update(float timeStep)
 
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_W)) {
 
-		camera->transform.increasePos(camera->eulerDirections.front * timeStep * .04f);
+		camera->transform.increasePos(camera->eulerDirections.front * timeStep * velocity);
 
 	}
 	
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_S)) {
 
-		camera->transform.increasePos(-camera->eulerDirections.front * timeStep * .04f);
+		camera->transform.increasePos(-camera->eulerDirections.front * timeStep * velocity);
 	}
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_A)) {
-		YAW += .04f * timeStep;
+		YAW += velocity * timeStep;
 	}
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_D)) {
 		YAW -= .04f * timeStep;
 	}
 
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_R)) {
-		PITCH += .04f * timeStep;
+		PITCH += velocity * timeStep;
 	}
 
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_F)) {
-		PITCH -= .04f * timeStep;
+		PITCH -= velocity * timeStep;
 	}
 
 	updateDirections();
 	
+
+}
+
+void CameraController::buildUi()
+{
+	ImGui::InputFloat("Camera Velocity", &velocity);
 
 }
 

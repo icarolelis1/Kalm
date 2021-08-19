@@ -2,7 +2,7 @@
 
 #include <map>
 #include <memory>
-#define MAX_SETS 40
+#define MAX_SETS 45
 
 namespace VK_Objects {
 	
@@ -38,7 +38,11 @@ namespace VK_Objects {
 		Descriptorset allocateDescriptor(SDescriptorsetLayout _descriptorLayout);
 
 		~DescriptorPoolManager();
+
+		void initiatePool();
 	
+		VkDescriptorPool getDescriptorPoolHandle();
+
 	private:
 		const Device* device;
 		std::vector<std::unique_ptr<DescriptorPool>> pools;

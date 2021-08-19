@@ -12,8 +12,10 @@
 		void awake();
 		void start();
 		void update(float timeStep);
+		void buildUi();
 
 	private:
+		float velocity = .04f;
 		void updateDirections();
 		float YAW = 90;
 		float PITCH = -60;
