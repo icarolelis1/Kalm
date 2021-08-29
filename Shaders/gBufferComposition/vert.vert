@@ -22,12 +22,6 @@ float time;
 
 }ubo_VP;
 
-layout( push_constant ) uniform constants
-{
-	vec2 texOffset;
-	float roughness_multiplier;
-} pushData;
-
 
 layout(set =2,binding = 0) uniform UniformModelMatrix{
 

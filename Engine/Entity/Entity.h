@@ -6,11 +6,11 @@
 #include "imgui.h"
 namespace Engine {
 
+		using ComponentContainerInstance = std::map<std::string, std::shared_ptr<Component>>;
 	struct ComponentContainer {
-
 	public:
 		ComponentContainer() {};
-		std::map<std::string, std::shared_ptr<Component> >components;
+		std::map<std::string, std::shared_ptr<Component>> components;
 
 		std::shared_ptr<Component> getComponent(std::string name) {
 			return components[name];
@@ -76,6 +76,9 @@ namespace Engine {
 
 		}
 
+		const ComponentContainerInstance getAllComponents()const {
+			return components;
+		}
 
 	};
 
@@ -93,6 +96,7 @@ namespace Engine {
 		std::shared_ptr<Engine::Component> getComponent(std::string name);
 		std::shared_ptr<Engine::Component> getComponent(Engine::COMPONENT_TYPE componentType);
 
+		Engine::ComponentContainerInstance getAllComponents();
 		void buildUiRepresentation();
 		void logComponents();
 

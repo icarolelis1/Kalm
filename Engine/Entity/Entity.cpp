@@ -53,6 +53,13 @@ std::shared_ptr<Engine::Component> Engine::Entity::getComponent(Engine::COMPONEN
 	else return NULL;
 }
 
+
+
+Engine::ComponentContainerInstance Engine::Entity::getAllComponents()
+{
+	return componentContainer.getAllComponents();
+}
+
 void Engine::Entity::buildUiRepresentation()
 {
 	

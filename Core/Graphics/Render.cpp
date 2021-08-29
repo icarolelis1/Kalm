@@ -425,14 +425,17 @@ void Render::createRenderContexts()
 		vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
 
 		std::string currentTag = meshes[0]->getMaterialTag();
+
 		for (int j = 0; j < meshes.size(); j++) {
 
 			if (currentTag != meshes[j]->getMaterialTag() || j ==0) {
 				currentTag = meshes[j]->getMaterialTag();
+
+		
+
 				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &materialManager[currentTag]->getDescriptorsetAtIndex(i), 0, NULL);
 			}
 			
-
 
 			uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
 
@@ -503,7 +506,6 @@ void Render::createRenderContexts()
 
 
 	meshes[0]->setUpdateOnEveryFrameNextFrame(1);
-	meshes[1]->setUpdateOnEveryFrameNextFrame(1);
 
 
 	while (!glfwWindowShouldClose(w)) {
@@ -521,14 +523,7 @@ void Render::createRenderContexts()
 		glfwSetWindowTitle(window, ss.str().c_str());
 		scriptManager.update(frameTime);
 
-
-		ModelMatrix m;
-
-		//m.model = glm::mat4(1.0f);
-		//m.model = glm::scale(m.model, glm::vec3(.05));
-
-	//	mvpBuffers[r1->draw()]->udpate(t);
-		//r1->draw();
+		
 
 		{
 
@@ -541,9 +536,6 @@ void Render::createRenderContexts()
 
 				std::cout << result << std::endl;
 			};
-
-
-
 
 			//swapChain->update();
 			updateSceneGraph();
@@ -565,7 +557,6 @@ void Render::createRenderContexts()
 			submitInfo.waitSemaphoreCount = 1;
 			submitInfo.pWaitSemaphores = waitSemaphores;
 			submitInfo.pWaitDstStageMask = waitStages;
-
 
 			VkCommandBuffer cmd = r1->persistentCommandBuffers[imageIndex]->getCommandBufferHandle();
 
@@ -601,9 +592,6 @@ void Render::createRenderContexts()
 			else if (result != VK_SUCCESS) {
 				throw std::runtime_error("failed to present swap chain image!");
 			}
-
-
-
 			r1->currentFrameIndex = (r1->currentFrameIndex + 1) % 3;
 
 		}
@@ -816,10 +804,7 @@ void Render::createPipeline()
 	}pushData;
 
 	std::vector<VkPushConstantRange> pushConstants;
-	pushConstants.resize(1);
-	pushConstants[0].offset = 0;
-	pushConstants[0].size = sizeof(pushData);
-	pushConstants[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
 
 	std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstants);
 
@@ -1248,20 +1233,13 @@ void Render::createDynamicUniformBuffers()
 void Render::createMaterials()
 {
 	Engine::FilesPath path;
-	path.diffuseMap = "Assets\\samus\\textures\\base_baseColor.png";
-	path.metallicMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
-	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
-	path.roughnessMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
-
-	materialManager["Samus"] = std::make_unique<Engine::Material>(&device, "Samus", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
-	
-	path.diffuseMap = "Assets\\road\\FourLaneRoadPatches02_2K_BaseColor.png";
+	path.diffuseMap = "Assets\\wet-road\\SingleLaneRoadWet01_MR_3K\\SingleLaneRoadWet01_3K_BaseColor.png";
 	path.metallicMap = "Assets\\black.png";
-	path.normalMap = "Assets\\road\\FourLaneRoadPatches02_2K_Normal.png";
-	path.roughnessMap = "Assets\\road\\FourLaneRoadPatches02_2K_Roughness.png";
+	path.normalMap = "Assets\\wet-road\\SingleLaneRoadWet01_MR_3K\\SingleLaneRoadWet01_3K_Normal.png";
+	path.roughnessMap = "Assets\\wet-road\\SingleLaneRoadWet01_MR_3K\\SingleLaneRoadWet01_3K_Roughness.png";
 
-	materialManager["Road"] = std::make_unique<Engine::Material>(&device, "Road", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
-
+	materialManager["ScenarioMaterial"] = std::make_unique<Engine::Material>(&device, "SceneMaterial", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	
 
 }
 
@@ -1270,8 +1248,9 @@ void Render::createScene()
 	Game::Scene scene;
 	SceneGraph& sceneGraph = scene.sceneGraph;
 
-	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Samus");
-	std::shared_ptr<Engine::Entity> mesh2 = std::make_shared<Engine::Entity>("Floor");
+	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Scene");
+
+	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("Player");
 
 	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
 
@@ -1280,28 +1259,27 @@ void Render::createScene()
 	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(main_camera, "camController");
 
 	camera_entity->attachComponent(cameraController);
+
+	main_camera->transform.setPosition(-.44, 1.351, -14.5);
 	
-	main_camera->logComponents();
-	main_camera->transform.setPosition(-5, 5, -5);
-	
-	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "icaro\\ds","Samus", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
-	mesh2->attachComponent(std::make_shared<Engine::Mesh>(mesh2, "icaro\\ds","Road", "Assets\\floor.fbx", &device, transferPool.get()));
+	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Scenario","ScenarioMaterial", "Assets\\samus\\scene.glb", &device, transferPool.get()));
+	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "PlayerMesh", "ScenarioMaterial", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
 
-	mesh1->transform.setPosition(glm::vec3(0));
-	mesh1->transform.setScale(glm::vec3(.4));
-	mesh1->transform.setRotation(0, 90, 90);
+	mesh1->transform.setPosition(glm::vec3(0,-.8,0));
+	mesh1->transform.setScale(glm::vec3(2,.5,10));
+	mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);
 
-	mesh2->transform.setPosition(glm::vec3(glm::vec3(0, -1, 0)));
-	mesh2->transform.setScale(glm::vec3(.1,1.0,.1));
+	Player->transform.setPosition(glm::vec3(0, .8, 0));
+	Player->transform.setScale(glm::vec3(1, 1, 1));
+	Player->transform.rotate(glm::vec3(1, 0, 0),450.0);
 
-	std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
-	std::shared_ptr<Node> node2 = std::make_shared<Node>(mesh2);
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
+	std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
+	std::shared_ptr<Node> node2 = std::make_shared<Node>(Player);
 
+	sceneGraph.addNode(cameraNode);
 	sceneGraph.addNode(node1);
 	sceneGraph.addNode(node2);
-	sceneGraph.addNode(cameraNode);
-
 	mainSCene = std::move(scene);
 	mainSCene.sceneGraph.updateSceneGraph();
 
@@ -1442,6 +1420,33 @@ void Render::renderUI(uint32_t imageIndex)
 		if (ImGui::BeginTabItem("Scene Settings"))
 		{
 			ImGui::EndTabItem();
+			if (ImGui::Button("Save")) {
+				std::fstream saveFile;
+				std::fstream saveStateCurrent;
+				std::ifstream inputFile("SceneState.txt");
+			
+				
+				saveStateCurrent.open("SceneState.txt", std::ios::out|std::ios::trunc|std::ios::in);
+
+				if (saveStateCurrent.is_open()) {
+
+					mainSCene.sceneGraph.saveState( mainSCene.sceneGraph.root, saveStateCurrent);
+					auto cam = main_camera->getComponent(Engine::COMPONENT_TYPE::SCRIPT);
+		
+
+					cam->loadState(saveStateCurrent);
+
+					saveStateCurrent.close();
+
+				}
+
+				
+				if (ImGui::BeginPopupModal("Save to File", NULL)) {
+					ImGui::Text("Scene State is saved\n");
+					ImGui::EndPopup();
+				}
+
+			}
 		}
 		if (ImGui::BeginTabItem("Scene Profilling"))
 		{
@@ -1559,7 +1564,7 @@ void Render::updateDynamicUniformBuffer(uint32_t imageIndex)
 	}
 	for (int i = 0; i < meshes.size(); i++) {
 
-		if (meshes[i]->shouldUpdateOnThisFrame()) {
+		if (true) {
 
 			glm::mat4* m0 = (glm::mat4*)((uint64_t)modelMatrixes.model + dynamicAlignment * i);
 

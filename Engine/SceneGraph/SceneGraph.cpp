@@ -46,14 +46,17 @@ void SceneGraph::buildUI(std::shared_ptr<Node> node)
 
 		glm::vec3 position = node->entity->transform.getPosition();
 		glm::vec3 scale = node->entity->transform.getScale();
+		glm::vec3 rotation = node->entity->transform.getRotation();
 
 		ImGui::InputFloat3("Position", (float*)glm::value_ptr(position));
+		ImGui::InputFloat3("Rotation", (float*)glm::value_ptr(rotation));
 		ImGui::InputFloat3("Scale", (float*)glm::value_ptr(scale));
 
 		ImGui::Spacing();
 
 		node->entity->transform.setPosition(position);
 		node->entity->transform.setScale(scale);
+		node->entity->transform.setRotation(rotation);
 
 		ImGui::PopID();
 
@@ -72,6 +75,29 @@ void SceneGraph::buildUI(std::shared_ptr<Node> node)
 void SceneGraph::updateSceneGraph()
 {
 	updateTransforms(root);
+}
+
+void SceneGraph::saveState(std::shared_ptr<Node> node, std::fstream& saveFile)
+{
+	glm::vec3 p = node->entity->transform.getPosition();
+	saveFile << node->entity->getName() << std::endl;
+	saveFile << "Position : " << p.x << " " << p.y << " " << p.z << std::endl;
+	std::list<std::shared_ptr<Node>>::iterator it = node->childs.begin();
+
+	Engine::ComponentContainerInstance instance = node->entity->getAllComponents();
+	Engine::ComponentContainerInstance::iterator it_components = instance.begin();
+	saveFile << "Components\n";	
+	while (it_components != instance.end()) {
+		it_components->second->saveState(saveFile);
+
+		it_components++;
+	}
+
+	while (it != node->childs.end()) {
+
+		saveState(*it,saveFile);
+		it++;
+	}
 }
 
 void SceneGraph::updateTransforms(std::shared_ptr<Node> node)

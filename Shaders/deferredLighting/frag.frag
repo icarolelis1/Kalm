@@ -251,7 +251,7 @@ void main(){
     color = vec3(Lo+ambient)  ;
 
 
-    Color = mix(vec4(irradiance*10000,1.0),vec4(color,1.0),w);
+    Color = mix(vec4(irradiance*1000,1.0),vec4(color,1.0),w);
 
 	
     float level =14.;

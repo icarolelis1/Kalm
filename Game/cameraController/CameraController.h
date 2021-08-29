@@ -13,12 +13,15 @@
 		void start();
 		void update(float timeStep);
 		void buildUi();
+		void saveState(std::fstream & file);
+		void loadState(std::fstream& file);
 
 	private:
+		void resetCamera();
 		float velocity = .04f;
 		void updateDirections();
 		float YAW = 90;
-		float PITCH = -60;
+		float PITCH = 0;
 		float ROLL;
 		std::shared_ptr<Engine::Camera> camera;
 

@@ -150,7 +150,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	metallicRoughnessAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VK_Objects::RenderAttachment NormalsAttachment;
-	NormalsAttachment.description.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	NormalsAttachment.description.format = VK_FORMAT_R16G16B16A16_SFLOAT;
 	NormalsAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
 	NormalsAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	NormalsAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -165,7 +165,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 
 
 	VK_Objects::RenderAttachment albedoAttachment;
-	albedoAttachment.description.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	albedoAttachment.description.format = VK_FORMAT_R8G8B8A8_UNORM;
 	albedoAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
 	albedoAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	albedoAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -194,18 +194,17 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 		
 	subpass.dependencies[0].srcSubpass =		VK_SUBPASS_EXTERNAL;
 	subpass.dependencies[0].dstSubpass =		0;
-	subpass.dependencies[0].srcStageMask =		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpass.dependencies[0].srcStageMask =		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 	subpass.dependencies[0].dstStageMask =		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	subpass.dependencies[0].srcAccessMask =		VK_ACCESS_MEMORY_READ_BIT;
 	subpass.dependencies[0].dstAccessMask =		VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;;
 	subpass.dependencies[0].dependencyFlags=	VK_DEPENDENCY_BY_REGION_BIT;
 
-
 	subpass.dependencies[1].srcSubpass = 0;
 	subpass.dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-	subpass.dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	subpass.dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	subpass.dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpass.dependencies[1].srcAccessMask = VK_ACCESS_SHADER_READ_BIT ;;
+	subpass.dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;;
 	subpass.dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 	subpass.dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -252,7 +251,7 @@ void Game::RenderpassManager::createDeferredLightingRenderPass(VkExtent2D extent
 	deferredLightingAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VK_Objects::RenderAttachment brightnessAttachment;
-	brightnessAttachment.description.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+	brightnessAttachment.description.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	brightnessAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
 	brightnessAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	brightnessAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

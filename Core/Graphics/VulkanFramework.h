@@ -685,7 +685,7 @@ namespace VK_Objects {
 		VkPresentModeKHR choosePresentationMode(std::vector< VkPresentModeKHR>& presentModes) {
 			//We look for mailBox which is the one with highest FPS
 			for (const auto& presentMode : presentModes) {
-				if (presentMode == VK_PRESENT_MODE_FIFO_KHR) {
+				if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 					std::cout << "\nPRESENTATION MODE : VK_PRESENT_MODE_MAILBOX_KHR \n";
 					return presentMode;
 				}

@@ -59,7 +59,7 @@ vec3 gaussianBlurHorizontal(){
 	vec3 result = texture(mainImage,texCoord).rgb * weight[0];
 
      vec2 tex_offset = 1.0 / textureSize(verticalBlur, 0); // gets size of single texel
-	 tex_offset*=3;
+	 tex_offset*=4;
 
 	for(int i=1;i<5;i++){
 
