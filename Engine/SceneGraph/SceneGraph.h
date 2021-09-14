@@ -34,6 +34,8 @@ public:
 	std::shared_ptr<Node> root;
 
 	void updateSceneGraph();
+	void saveState(std::shared_ptr<Node> root, std::fstream& saveFile);
+	
 
 
 private:

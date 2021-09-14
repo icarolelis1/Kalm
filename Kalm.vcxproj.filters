@@ -127,17 +127,23 @@
     <Filter Include="Arquivos de Recurso\Game\Scene">
       <UniqueIdentifier>{2f6ee5eb-a7d0-4167-bb5f-f49ab1aa01f4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Arquivos de Recurso\Engine\EventSystem">
-      <UniqueIdentifier>{a51eec93-5f57-4696-a922-01cfb6bbc5c9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Arquivos de Recurso\Core\ImGuiInterface">
       <UniqueIdentifier>{b7042350-4b44-4582-a7a2-f8be59af2117}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Event">
+      <UniqueIdentifier>{88cce7c5-3973-42c7-b003-9b81ff631b23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Collisor">
+      <UniqueIdentifier>{c412bbec-993b-4f13-b736-b56771875545}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Collisor\NewFilter1">
+      <UniqueIdentifier>{6b403442-7fcf-4798-ba7d-f6d329abcc96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Collisor\sphereCollisor">
+      <UniqueIdentifier>{a4741e4f-6b44-481a-a2f7-5d9ce24659df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Kalm.cpp">
-      <Filter>Arquivos de Origem</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Graphics\Render.cpp">
       <Filter>Arquivos de Recurso\Core\Graphics</Filter>
     </ClCompile>
@@ -248,6 +254,15 @@
     </ClCompile>
     <ClCompile Include="Dependencies\ImGui\imgui_widgets.cpp">
       <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="Kalm.cpp">
+      <Filter>Arquivos de Recurso</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Collisor\Collisor.cpp">
+      <Filter>Arquivos de Recurso\Engine\Collisor</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Collisor\sphere\SphereCollisor.cpp">
+      <Filter>Arquivos de Recurso\Engine\Collisor\sphereCollisor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -380,6 +395,15 @@
     <ClInclude Include="Dependencies\ImGui\imstb_truetype.h">
       <Filter>Arquivos de Recurso\Core\ImGuiInterface</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Event\Event.h">
+      <Filter>Arquivos de Recurso\Engine\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Collisor\Collisor.h">
+      <Filter>Arquivos de Recurso\Engine\Collisor</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Collisor\sphere\SphereCollisor.h">
+      <Filter>Arquivos de Recurso\Engine\Collisor\sphereCollisor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common\frag.frag">
@@ -401,5 +425,7 @@
       <Filter>Arquivos de Recurso\Shaders\deferredLIghting</Filter>
     </None>
     <None Include="cpp.hint" />
+    <None Include="Shaders\presentation\shader.frag" />
+    <None Include="Shaders\presentation\shader.vert" />
   </ItemGroup>
 </Project>

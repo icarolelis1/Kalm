@@ -12,6 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <Graphics/GraphicsUtil/GraphicsUtility.h>
 #include "Utility/Transform.h"
+
 namespace Engine {
 
 	struct MeshPart {
@@ -25,6 +26,12 @@ namespace Engine {
 		glm::vec3 pos;
 		glm::vec3 normal;
 		glm::vec2 uv;
+	};
+
+	struct Tex_data{
+		glm::vec2 texOffset = glm::vec2(1);;
+		float roughnessMultiplier = 1;
+
 	};
 
 	class Mesh : public Component{
@@ -54,6 +61,10 @@ namespace Engine {
 
 		std::string getMaterialTag();
 
+		void setTexParameter(glm::vec2 v, float r);
+
+		Tex_data getTexData();
+
 		~Mesh();
 
 	private:
@@ -68,7 +79,7 @@ namespace Engine {
 
 		const char* file;
 		const VK_Objects::Device* device;
-		
+		Tex_data tex_data;
 		//Assimp scene data
 		const aiScene* scene;
 		Assimp::Importer importer;

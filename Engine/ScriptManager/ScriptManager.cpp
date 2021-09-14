@@ -32,7 +32,7 @@ void Engine::ScriptManager::insertScript(std::shared_ptr<Engine::Script> script)
 		std::cout << "pp\n";
 		if (it->first == script->getId()) {
 		
-			std::cout << " Invalid name for  Scriptn "<<it->first<<" is already taken\n";
+			std::cout << " Invalid name for  Script "<<it->first<<" is already taken\n";
 			return;
 		}
 		it++;

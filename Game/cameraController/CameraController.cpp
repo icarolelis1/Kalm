@@ -17,6 +17,12 @@ void CameraController::start()
 
 void CameraController::update(float timeStep)
 {
+	if (Window::keyboard.getKeyPressed(GLFW_KEY_W)) {
+
+		camera->transform.increasePos(camera->eulerDirections.front * timeStep * velocity);
+
+	}
+
 
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_W)) {
 
@@ -43,6 +49,18 @@ void CameraController::update(float timeStep)
 		PITCH -= velocity * timeStep;
 	}
 
+	if (Window::keyboard.getKeyPressed(GLFW_KEY_SPACE)) {
+		camera->transform.increasePos(-camera->eulerDirections.up * timeStep * velocity/5.0f);
+	}
+
+	else if (Window::keyboard.getKeyPressed(GLFW_KEY_C)) {
+		camera->transform.increasePos(camera->eulerDirections.up * timeStep * velocity / 5.0f);
+	}
+
+	if (Window::keyboard.getKeyPressed(GLFW_KEY_1)) {
+		resetCamera();
+	}
+
 	auto offset = 40;
 	Engine::CursorPos cursorPos = Window::mouse.getCursorPos();
 
@@ -63,7 +81,38 @@ void CameraController::update(float timeStep)
 void CameraController::buildUi()
 {
 	ImGui::InputFloat("Camera Velocity", &velocity);
+	ImGui::InputFloat("Yaw", &YAW);
+	ImGui::InputFloat("Pitc", &PITCH);
 
+	ImGui::InputFloat3("Right", (float*)glm::value_ptr(camera->eulerDirections.right));
+	ImGui::InputFloat3("Front", (float*)glm::value_ptr(camera->eulerDirections.front));
+	ImGui::InputFloat3("Up", (float*)glm::value_ptr(camera->eulerDirections.front));
+
+
+}
+
+void CameraController::saveState(std::fstream& file)
+{
+	
+	file << "YAW : " << YAW << std::endl;
+	file << "PITCH : " << PITCH << std::endl;
+	file << "velocity : " << velocity << std::endl;
+}
+
+void CameraController::loadState(std::fstream& file)
+{
+	std::string s;
+	while (file>>s) {
+		std::cout << s << std::endl;
+
+	}
+}
+
+void CameraController::resetCamera()
+{
+	//camera->transform.setPosition(-.44, 1.351, -14.5);
+	//YAW = 90;
+	//PITCH = 0;
 }
 
 void CameraController::updateDirections()
@@ -77,4 +126,5 @@ void CameraController::updateDirections()
 	glm::vec3 WorldUp = glm::vec3(0, -1, 0);
 	camera->eulerDirections.right = glm::normalize(glm::cross(camera->eulerDirections.front, WorldUp));
 	camera->eulerDirections.up = glm::normalize(glm::cross(camera->eulerDirections.right, camera->eulerDirections.front));
+
 }

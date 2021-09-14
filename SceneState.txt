@@ -1,0 +1,12 @@
+Root
+Position : 0 0 0
+Components
+Scene
+Position : 0 0 0
+Components
+MainCamera
+Position : 0 0 0
+Components
+YAW : 90
+PITCH : 0
+velocity : 0.04
