@@ -51,7 +51,7 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 	swapChain.prepareSwapChain(WIDTH, HEIGHT, device, &surface, format, windowHandler, queueSharingMode);
 	//Create First renderpass;
 	createRenderpass();
-	framebuffersManager = std::make_unique<FramebufferManagement>(&device, &swapChain, renderpass->passes);
+	framebuffersManager = std::make_unique<FramebufferManagement>(&device, &swapChain, renderpass->passes,device.getMaxUsableSampleCount());
 
 	createPipeline();
 	createCommandPools();
@@ -99,6 +99,11 @@ void Render::createInstance()
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 	auto layers = debuger.getValidationLayers();
 
+	std::cout << "Current layers \n";
+	for (auto layer : layers) {
+		std::cout << layer << std::endl;
+	}
+
 	if (DEBUG_) {
 
 		//Layers
@@ -135,7 +140,7 @@ void Render::prepareDevice(VK_Objects::Surface surface)
 
 void Render::createRenderpass()
 {
-	renderpass = std::make_unique<Game::RenderpassManager>(&device, &swapChain, swapChain.getExtent());
+	renderpass = std::make_unique<Game::RenderpassManager>(&device, &swapChain, swapChain.getExtent(),device.getMaxUsableSampleCount());
 
 	/*
 	VkExtent2D e = swapChain.getExtent();
@@ -400,6 +405,7 @@ void Render::createRenderContexts()
 
 		createShadowMap(commandBuffers[i]->getCommandBufferHandle(), i);
 
+
 		renderpass->passes["G_BUFFER"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
 
 		VkViewport viewport = {};
@@ -426,25 +432,25 @@ void Render::createRenderContexts()
 
 		std::string currentTag = meshes[0]->getMaterialTag();
 
-		for (int j = 0; j < meshes.size(); j++) {
+			for (int j = 0; j < meshes.size(); j++) {
 
-			if (currentTag != meshes[j]->getMaterialTag() || j ==0) {
-				currentTag = meshes[j]->getMaterialTag();
+				if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
+					currentTag = meshes[j]->getMaterialTag();
+
+
+
+					vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &materialManager[currentTag]->getDescriptorsetAtIndex(i), 0, NULL);
+				}
+
+
+				uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
+
+				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
+
+				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle());
+			}
 
 		
-
-				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &materialManager[currentTag]->getDescriptorsetAtIndex(i), 0, NULL);
-			}
-			
-
-			uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
-
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(),2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
-
-			meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle());
-		}
-
-
 		renderpass->passes["G_BUFFER"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
 
 		{
@@ -462,6 +468,12 @@ void Render::createRenderContexts()
 			renderpass->passes["DEFERRED_LIGHTING"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
 
 		}
+		
+
+		VkMemoryBarrier barrierInfo{};
+		barrierInfo.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		barrierInfo.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		barrierInfo.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 
 		createBloom(commandBuffers[i]->getCommandBufferHandle(), i);
 
@@ -483,6 +495,7 @@ void Render::createRenderContexts()
 			vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
 
 
+
 			renderpass->passes["SWAPCHAIN_RENDERPASS"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
 
 			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineHandle());
@@ -494,6 +507,8 @@ void Render::createRenderContexts()
 			vkCmdDraw(commandBuffers[i]->getCommandBufferHandle(), 3, 1, 0, 0);
 
 			renderpass->passes["SWAPCHAIN_RENDERPASS"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
+
+
 		}
 
 
@@ -562,7 +577,7 @@ void Render::createRenderContexts()
 
 			VkCommandBuffer cmds[2] = {cmd,imGuiCmds[imageIndex] };
 
-			submitInfo.commandBufferCount = 2;
+			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &cmds[0];
 
 			VkSemaphore signalSemaphores[] = { r1->frames[r1->currentFrameIndex]->getRenderFinishedSemaphore() };
@@ -816,7 +831,7 @@ void Render::createPipeline()
 
 	pipelineInfo.atributes = att;
 	pipelineInfo.colorAttachmentsCount = 3;
-	pipelineInfo.cullMode = VK_CULL_MODE_NONE;
+	pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 	pipelineInfo.dephTest = 1;
 	pipelineInfo.depthBias = 0;
 	pipelineInfo.rdpass = &renderpass->passes["G_BUFFER"]->vk_renderpass;
@@ -1002,9 +1017,9 @@ void Render::createPipeline()
 
 		pipelineInfo.atributes = att;
 		pipelineInfo.colorAttachmentsCount = 1;
-		pipelineInfo.cullMode = VK_CULL_MODE_NONE;
+		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 		pipelineInfo.dephTest = 1;
-		pipelineInfo.depthBias = 0;
+		pipelineInfo.depthBias = 1;
 		pipelineInfo.rdpass = &renderpass->passes["SHADOW_MAP"]->vk_renderpass;
 		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pipelineInfo.vertexOffsets = { 0 };
@@ -1178,7 +1193,7 @@ void Render::createPipeline()
 		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pipelineInfo.vertexOffsets = { 0 };
 		pipelineInfo.subpass = 0;
-
+		pipelineInfo.samples = device.getMaxUsableSampleCount();
 		std::unique_ptr<VK_Objects::Pipeline> SWAPCHAIN_PIPELINE = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move(vert), std::move(frag), pipelineInfo);
 		SWAPCHAIN_PIPELINE->id = "SWAPCHAIN_PIPELINE";
 
@@ -1233,13 +1248,20 @@ void Render::createDynamicUniformBuffers()
 void Render::createMaterials()
 {
 	Engine::FilesPath path;
-	path.diffuseMap = "Assets\\wet-road\\SingleLaneRoadWet01_MR_3K\\SingleLaneRoadWet01_3K_BaseColor.png";
+	path.diffuseMap = "Assets\\samus\\textures\\base_baseColor.png";
 	path.metallicMap = "Assets\\black.png";
-	path.normalMap = "Assets\\wet-road\\SingleLaneRoadWet01_MR_3K\\SingleLaneRoadWet01_3K_Normal.png";
-	path.roughnessMap = "Assets\\wet-road\\SingleLaneRoadWet01_MR_3K\\SingleLaneRoadWet01_3K_Roughness.png";
-
-	materialManager["ScenarioMaterial"] = std::make_unique<Engine::Material>(&device, "SceneMaterial", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
+	path.roughnessMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
 	
+	materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	
+	path.diffuseMap = "Assets\\cobbleStone\\textures\\Cobblestone04_2K_BaseColor.png";
+	path.metallicMap = "Assets\\black.png";
+	path.normalMap = "Assets\\cobbleStone\\textures\\Cobblestone04_2K_Normal.png";
+	path.roughnessMap = "Assets\\cobbleStone\\textures\\Cobblestone04_2K_Roughness.png";
+
+	materialManager["CobbleStone"] = std::make_unique<Engine::Material>(&device, "CobbleStone", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+
 
 }
 
@@ -1254,6 +1276,8 @@ void Render::createScene()
 
 	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
 
+	std::shared_ptr<Engine::Component> sphereCollisor = std::make_shared<Engine::SphereCollsior>(Player, 1.0f, glm::vec3(0), "PlayerCol");
+
 	main_camera = std::dynamic_pointer_cast<Engine::Camera>(camera_entity);
 
 	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(main_camera, "camController");
@@ -1262,11 +1286,11 @@ void Render::createScene()
 
 	main_camera->transform.setPosition(-.44, 1.351, -14.5);
 	
-	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Scenario","ScenarioMaterial", "Assets\\samus\\scene.glb", &device, transferPool.get()));
-	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "PlayerMesh", "ScenarioMaterial", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
+	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Scenario",     "CobbleStone", "Assets\\samus\\scene.glb", &device, transferPool.get()));
+	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "PlayerMesh", "Player", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
 
 	mesh1->transform.setPosition(glm::vec3(0,-.8,0));
-	mesh1->transform.setScale(glm::vec3(2,.5,10));
+	mesh1->transform.setScale(glm::vec3(1.0f));
 	mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);
 
 	Player->transform.setPosition(glm::vec3(0, .8, 0));
@@ -1290,7 +1314,7 @@ void Render::createScene()
 void Render::separateSceneObjects(std::shared_ptr<Node> node)
 {
 
-
+	 
 	std::shared_ptr<Engine::Entity> e1 = node->entity;
 
 
@@ -1493,18 +1517,21 @@ void Render::updateUniforms(uint32_t imageIndex)
 
 	lightUbo.camera = main_camera->transform.getPosition();
 	lightUbo.invView = glm::inverse(main_camera->getViewMatrix());
-	mainLight = light1;
+	//mainLight = light1;
 	lightUbo.light[0] = light1;
 	lightUniformBuffers[imageIndex]->udpate(lightUbo);
 
-	glm::vec3 lightDireciton = glm::normalize(mainLight.position);
+
+	glm::vec3 lightDireciton = glm::normalize(light1.position);
 
 	//glm::mat4 depthViewMatrix = lookAt(  (camera->eulerDir.front * camera->shadowDistance + lightDireciton* shadowMapPass.lightDistance) , camera->eulerDir.front *2.f , glm::vec3(0.0, -1.0, 0.0));
-	glm::mat4 depthViewMatrix = lookAt(normalize(light1.position) * dist, glm::vec3(0), glm::vec3(0.0, 1.0, 0.0));
+	glm::mat4 depthViewMatrix = lookAt(normalize(light1.position) * dist, glm::vec3(0), glm::vec3(0.0, -1.0, 0.0));
 
 	std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix);
 
-	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], nearFar.x,nearFar.y);
+	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3],.1f,10.f);
+
+	//std::cout << boundingBox[0] << " " << boundingBox[2] << " " << boundingBox[3] << " " << boundingBox[4] << std::endl;
 
 	glm::mat4 lightMatrix = depthProjectionMatrix * depthViewMatrix;
 

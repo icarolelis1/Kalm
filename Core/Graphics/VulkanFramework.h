@@ -14,7 +14,8 @@ namespace VK_Objects {
 
 	// STANDARD LUNGARG validation layer
 	static const std::vector<const char*> validationLayers = {
-		"VK_LAYER_KHRONOS_validation"
+		"VK_LAYER_KHRONOS_validation",
+
 
 	};
 
@@ -236,6 +237,9 @@ namespace VK_Objects {
 
 
 				vk_physicalDevice = bestDevice;
+				msaaSamples = getMaxUsableSampleCount();
+				std::cout << msaaSamples << std::endl;
+
 			}
 
 
@@ -246,6 +250,21 @@ namespace VK_Objects {
 			VkPhysicalDeviceProperties props;
 			vkGetPhysicalDeviceProperties(vk_physicalDevice, &props);
 			return props.limits.minUniformBufferOffsetAlignment;
+		}
+
+		VkSampleCountFlagBits getMaxUsableSampleCount() {
+			VkPhysicalDeviceProperties physicalDeviceProperties;
+			vkGetPhysicalDeviceProperties(vk_physicalDevice, &physicalDeviceProperties);
+
+			VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+			if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+			if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+			if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+			if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+			if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+			if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+			return VK_SAMPLE_COUNT_1_BIT;
 		}
 
 		int scorePhysicalDevice(VkPhysicalDevice device, VkPhysicalDeviceFeatures features, VkPhysicalDeviceMemoryProperties memProperties, Surface surface) {
@@ -511,6 +530,7 @@ namespace VK_Objects {
 		VkPhysicalDeviceMemoryProperties vk_MemoryProperties;
 		VkPhysicalDeviceFeatures vk_PhysicalDevicefeatures;
 
+		VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
 
 	};

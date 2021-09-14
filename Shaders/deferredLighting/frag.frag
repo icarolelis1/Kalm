@@ -187,7 +187,6 @@ vec3 uncharted2_filmic(vec3 v)
 
 
 
-
 void main(){
 
     

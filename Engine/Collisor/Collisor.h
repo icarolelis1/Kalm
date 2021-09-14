@@ -21,15 +21,15 @@ namespace Engine {
 		void start();
 		void update(float deltaTime);
 		Collisor(std::shared_ptr<Engine::Entity> _entity, glm::vec3 posOffset, const char* name);
-		sMesh getCollisorMeshRepresentation();
+		virtual sMesh getCollisorMeshRepresentation() const;
 		sEntity getEntity();
 		void setLocalPos(glm::vec3);
 		void registerCollisionEvent(const std::function<void(Engine::Collisor& col)> f);
 		void notifyCollision(Engine::Collisor& other);
-		bool testCollision(Collisor& c);
-		COLLISOR_TYPE getCollisorType();
-		glm::vec3 getCollisorPosition();
-
+		bool testCollision(Collisor& c) const;
+		COLLISOR_TYPE getCollisorType()const ;
+		glm::vec3 getCollisorPosition() const;
+		void awake();
 
 	private:
 
@@ -37,11 +37,14 @@ namespace Engine {
 		Engine::Publisher<Engine::Collisor&> publisher;
 		sEntity meshEntity;
 		Transform transform;
-		sMesh mesh;
 		glm::vec3 collisorPosition;
 		std::string collisorMeshPrefix;
 		COLLISOR_TYPE collisorType;
 		glm::vec3 localPosition;
 		sEntity entity;
+
+	protected:
+		sMesh mesh;
+
 	};
 }

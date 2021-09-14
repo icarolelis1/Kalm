@@ -176,6 +176,7 @@
     <ClCompile Include="Dependencies\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Engine\Camera\Camera.cpp" />
     <ClCompile Include="Engine\Collisor\Collisor.cpp" />
+    <ClCompile Include="Engine\Collisor\sphere\SphereCollisor.cpp" />
     <ClCompile Include="Engine\Components\Component.cpp" />
     <ClCompile Include="Engine\Entity\Entity.cpp" />
     <ClCompile Include="Engine\Input\Input.cpp" />
@@ -224,6 +225,7 @@
     </ClInclude>
     <ClInclude Include="Engine\Camera\Camera.h" />
     <ClInclude Include="Engine\Collisor\Collisor.h" />
+    <ClInclude Include="Engine\Collisor\sphere\SphereCollisor.h" />
     <ClInclude Include="Engine\Components\Component.h" />
     <ClInclude Include="Engine\Entity\Entity.h" />
     <ClInclude Include="Engine\Event\Event.h" />
@@ -246,6 +248,8 @@
     <None Include="Shaders\deferredLighting\vert.vert" />
     <None Include="Shaders\gBufferComposition\frag.frag" />
     <None Include="Shaders\gBufferComposition\vert.vert" />
+    <None Include="Shaders\presentation\shader.frag" />
+    <None Include="Shaders\presentation\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -12,7 +12,7 @@ namespace Engine {
 
 	}
 
-	sMesh Collisor::getCollisorMeshRepresentation()
+	sMesh Collisor::getCollisorMeshRepresentation() const
 	{
 		return mesh;
 	}
@@ -55,25 +55,28 @@ namespace Engine {
 
 	}
 
-
 	void Collisor::notifyCollision(Engine::Collisor& other)
 	{
 		publisher.trigger(other);
 	}
 
-	bool Collisor::testCollision(Collisor& c)
+	bool Collisor::testCollision(Collisor& c) const
 	{
 		return false;
 	}
 
-	COLLISOR_TYPE Collisor::getCollisorType()
+	COLLISOR_TYPE Collisor::getCollisorType() const
 	{
 		return collisorType;
 	}
 
-	glm::vec3 Collisor::getCollisorPosition()
+	glm::vec3 Collisor::getCollisorPosition() const 
 	{
 		return collisorPosition;
+	}
+
+	void Collisor::awake()
+	{
 	}
 
 
@@ -298,4 +301,4 @@ namespace Engine {
 	//
 	//	}
 	//
-	//}
+	}

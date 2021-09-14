@@ -110,9 +110,9 @@ void CameraController::loadState(std::fstream& file)
 
 void CameraController::resetCamera()
 {
-	camera->transform.setPosition(-.44, 1.351, -14.5);
-	YAW = 90;
-	PITCH = 0;
+	//camera->transform.setPosition(-.44, 1.351, -14.5);
+	//YAW = 90;
+	//PITCH = 0;
 }
 
 void CameraController::updateDirections()

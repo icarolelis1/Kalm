@@ -167,6 +167,7 @@ namespace VK_Objects {
 		bool alphablending = false;
 		VkShaderModule vertShaderModule;
 		VkShaderModule fragShaderModule;
+		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 	};
 
 	enum class SHADER_TYPE {

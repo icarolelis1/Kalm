@@ -136,6 +136,12 @@
     <Filter Include="Arquivos de Recurso\Engine\Collisor">
       <UniqueIdentifier>{c412bbec-993b-4f13-b736-b56771875545}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Collisor\NewFilter1">
+      <UniqueIdentifier>{6b403442-7fcf-4798-ba7d-f6d329abcc96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Collisor\sphereCollisor">
+      <UniqueIdentifier>{a4741e4f-6b44-481a-a2f7-5d9ce24659df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Graphics\Render.cpp">
@@ -254,6 +260,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Collisor\Collisor.cpp">
       <Filter>Arquivos de Recurso\Engine\Collisor</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Collisor\sphere\SphereCollisor.cpp">
+      <Filter>Arquivos de Recurso\Engine\Collisor\sphereCollisor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -392,6 +401,9 @@
     <ClInclude Include="Engine\Collisor\Collisor.h">
       <Filter>Arquivos de Recurso\Engine\Collisor</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Collisor\sphere\SphereCollisor.h">
+      <Filter>Arquivos de Recurso\Engine\Collisor\sphereCollisor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common\frag.frag">
@@ -413,5 +425,7 @@
       <Filter>Arquivos de Recurso\Shaders\deferredLIghting</Filter>
     </None>
     <None Include="cpp.hint" />
+    <None Include="Shaders\presentation\shader.frag" />
+    <None Include="Shaders\presentation\shader.vert" />
   </ItemGroup>
 </Project>

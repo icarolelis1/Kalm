@@ -45,11 +45,13 @@ VK_Objects::Pipeline::Pipeline(const Device& _device, std::shared_ptr<PipelineLa
 	VkPipelineDepthStencilStateCreateInfo depthStencilState = initializers::pipelineDepthStencilStateCreateInfo(info.dephTest, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
 
 	if (info.alphablending) {
+
 		depthStencilState.depthWriteEnable = VK_FALSE;
+
 	}
 
 	VkPipelineViewportStateCreateInfo viewportState = initializers::pipelineViewportStateCreateInfo(1, 1, VK_DYNAMIC_STATE_VIEWPORT);
-	VkPipelineMultisampleStateCreateInfo multisampleState = initializers::pipelineMultisampleStateCreateInfo(VK_SAMPLE_COUNT_1_BIT);
+	VkPipelineMultisampleStateCreateInfo multisampleState = initializers::pipelineMultisampleStateCreateInfo(info.samples);
 	std::vector<VkDynamicState> dynamicStateEnables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	VkPipelineDynamicStateCreateInfo dynamicState = initializers::pipelineDynamicStateCreateInfo(dynamicStateEnables);
 
