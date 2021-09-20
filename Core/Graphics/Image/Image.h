@@ -11,7 +11,7 @@ namespace VK_Objects {
 		class Image {
 		public:
 
-			Image(const Device* device, uint32_t Width, uint32_t Height, ImageFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageCreateFlags flags, VkImageAspectFlags aspectFlags, uint32_t arrayLayers = 1, bool useMaxNumMips = 0);
+			Image(const Device* device, uint32_t Width, uint32_t Height, ImageFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageCreateFlags flags, VkImageAspectFlags aspectFlags, uint32_t arrayLayers = 1, bool useMaxNumMips = 0, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
 
 			Image(const Device* device, uint32_t Width, uint32_t Height, VkImage& image, VkImageView& view);
 

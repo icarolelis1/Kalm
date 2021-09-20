@@ -16,7 +16,8 @@
 #include <Graphics/FramebufferManager/FramebufferManagement.h>
 #include <Scene/Scene.h>
 #include <Graphics/Thread/Thread.h>
-
+#include <Collisor/sphere/SphereCollisor.h>
+#include <fstream>
 
 #ifndef GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
@@ -126,7 +127,6 @@ private:
 	VK_Objects::PCommandPool dynamicPool;
 
 	std::shared_ptr<Engine::Camera> main_camera;
-	LightUbo mainLight;
 
 
 	VkSampler sampler_Testing;

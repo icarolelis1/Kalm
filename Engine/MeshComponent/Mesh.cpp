@@ -41,7 +41,6 @@ void Engine::Mesh::draw(VkCommandBuffer& cmd)
 	VkDeviceSize offsets[1] = { 0 };
 	vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->getBufferHandle(), offsets);
 	vkCmdBindIndexBuffer(cmd, indexBuffer->getBufferHandle(), 0, VK_INDEX_TYPE_UINT32);
-	std::cout << entity->transform.getPosition().z << std::endl;
 
 	for (uint32_t i = 0; i < meshes.size(); i++) {
 
@@ -69,6 +68,17 @@ void Engine::Mesh::setMaterialRag(std::string& tag)
 std::string Engine::Mesh::getMaterialTag()
 {
 	return materialTag;
+}
+
+void Engine::Mesh::setTexParameter(glm::vec2 v, float r)
+{
+	tex_data.texOffset = v;
+	tex_data.roughnessMultiplier = r;
+}
+
+Engine::Tex_data Engine::Mesh::getTexData()
+{
+	return tex_data;
 }
 
 void Engine::Mesh::setUpdateOnNextFrame(bool value) {
@@ -107,7 +117,6 @@ void Engine::Mesh::loadMeshes()
 		meshes[i].indexBase = indexBase;
 		meshes[i].vertexOffset = vertexOffset;
 		meshes[i].indexCount = aMesh->mNumFaces * 3;
-
 		for (size_t j = 0; j < aMesh->mNumVertices; j++) {
 
 			Vertex vertex;

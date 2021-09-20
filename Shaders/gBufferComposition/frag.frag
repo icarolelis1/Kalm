@@ -11,8 +11,6 @@ layout(location = 2) in vec3 WorldPos;
 
 
 
-
-
 layout (location = 0 ) out vec4 Albedo;
 layout (location = 1 ) out vec2 MetallicRoughness;
 layout (location = 2 ) out vec4 Normal;
@@ -53,6 +51,8 @@ vec3 getNormalFromMap(vec2 scaleFactor)
 
 
 
+
+
 void main()
 {
 
@@ -60,9 +60,9 @@ void main()
 
 
 Normal = vec4(getNormalFromMap(vec2(1.0)),1.0);
-float metallic =   texture(metallicMap,TexCoords ).r ;
-float roughness =    texture(roughnessMap, TexCoords ).g ;
+float metallic =   texture( roughnessMap ,TexCoords  ).r ;
+float roughness =    texture( roughnessMap , TexCoords ).r ;
 Albedo =  vec4(pow(texture( diffuseMap, TexCoords).xyz  ,vec3(2.2)),1.0);
 
-MetallicRoughness= vec2(0 ,roughness);
+MetallicRoughness= vec2(metallic ,roughness);
 }

@@ -10,13 +10,14 @@ namespace Game {
 	class RenderpassManager {
 	public:
 
-		RenderpassManager(const VK_Objects::Device* _device,VK_Objects::SwapChain* swapChain ,VkExtent2D extent);
+		RenderpassManager(const VK_Objects::Device* _device,VK_Objects::SwapChain* swapChain ,VkExtent2D extent, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
 		void createRenderpasses(VkExtent2D extent);
 
 		RenderPasses passes;
 
 
 	private:
+		VkSampleCountFlagBits sampleCount;
 		VK_Objects::SwapChain* swapChain;
 		void createShadowMapRenderpass(VkExtent2D extent);
 		void createGBufferRenderpass(VkExtent2D extent);

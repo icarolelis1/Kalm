@@ -25,6 +25,8 @@ namespace Engine {
 		virtual void start()=0;
 		virtual void update(float timeStep)=0;
 		virtual void buildUi();
+		virtual void saveState(std::fstream& file);
+		virtual void loadState(std::fstream& file);
 		COMPONENT_TYPE getTypeOfComponent();
 
 	protected:

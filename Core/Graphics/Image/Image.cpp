@@ -3,7 +3,7 @@
 #include "Graphics/RenderContext/RenderContext.h"
 
 
-VK_Objects::Image::Image(const Device* _device, uint32_t Width, uint32_t Height, ImageFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageCreateFlags flags, VkImageAspectFlags aspectFlags, uint32_t arrayLayers, bool useMaxNumMips):device(_device)
+VK_Objects::Image::Image(const Device* _device, uint32_t Width, uint32_t Height, ImageFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageCreateFlags flags, VkImageAspectFlags aspectFlags, uint32_t arrayLayers, bool useMaxNumMips,VkSampleCountFlagBits samples):device(_device)
 {
 	uint32_t numMips = 1;
 
@@ -26,7 +26,7 @@ VK_Objects::Image::Image(const Device* _device, uint32_t Width, uint32_t Height,
 	imageInfo.tiling = tiling;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	imageInfo.usage = usage;
-	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.samples = samples;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	imageInfo.flags = flags;
 

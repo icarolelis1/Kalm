@@ -18,7 +18,7 @@ class FramebufferManagement
 
 
 public: 
-	FramebufferManagement(VK_Objects::Device* device  ,VK_Objects::SwapChain * swapChain, Game::RenderPasses  renderpasses);
+	FramebufferManagement(VK_Objects::Device* device  ,VK_Objects::SwapChain * swapChain, Game::RenderPasses  renderpasses,VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
 	
 
 	Attachments g_bufferImages;
@@ -26,6 +26,7 @@ public:
 	Attachments depth_bufferImages;
 	Attachments bloomImages;
 	Attachments deferreLighting_Images;
+	Attachments msaa_Images;
 
 	Framebuffers framebuffers;
 
@@ -41,11 +42,12 @@ private:
 	void createInterfaceAttachments(VK_Objects::SwapChain* swapChain);
 	void createBloomAttachments(VK_Objects::SwapChain* swapChain);
 	void createSwapChainAttachment(VK_Objects::SwapChain* swapChain);
+	VK_Objects::PImage msaaImage;
 
 	void createFramebuffers(VkExtent2D extent);
 
 	const VK_Objects::Device* device;
-
+	VkSampleCountFlagBits maxSampleCount;
 	Attachments attachments;
 	Game::RenderPasses renderpasses;
 };

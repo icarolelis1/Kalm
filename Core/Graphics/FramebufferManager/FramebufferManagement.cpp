@@ -1,12 +1,13 @@
 #include "FramebufferManagement.h"
 
-FramebufferManagement::FramebufferManagement( VK_Objects::Device * _device , VK_Objects::SwapChain* swapChain, Game::RenderPasses _renderpasses):device(_device),spChain(swapChain),renderpasses(_renderpasses)
+FramebufferManagement::FramebufferManagement( VK_Objects::Device * _device , VK_Objects::SwapChain* swapChain, Game::RenderPasses _renderpasses,VkSampleCountFlagBits _samples):device(_device),spChain(swapChain),renderpasses(_renderpasses),maxSampleCount(_samples)
 {
 	createAttachemnts(swapChain->getExtent());
 	createDeferredLightingAttachment(swapChain);
 	createInterfaceAttachments(swapChain);
 	createBloomAttachments(swapChain);
 	createSwapChainAttachment(swapChain);
+
 }
 
 void FramebufferManagement::createAttachemnts(VkExtent2D extent)
@@ -21,11 +22,11 @@ void FramebufferManagement::createGBufferAttachments(VkExtent2D extent)
 	//Image(const Device* device, uint32_t Width, uint32_t Height, ImageFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageCreateFlags flags, VkImageAspectFlags aspectFlags, uint32_t arrayLayers = 1, bool useMaxNumMips = 0);
 	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
-	VK_Objects::PImage normals = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |VK_IMAGE_USAGE_SAMPLED_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1,0 );
+	VK_Objects::PImage normals = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |VK_IMAGE_USAGE_SAMPLED_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1,0 );
 
-	VK_Objects::PImage albedo = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+	VK_Objects::PImage albedo = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
 	
-	VK_Objects::PImage metallicRoughness = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R8G8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+	VK_Objects::PImage metallicRoughness = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
 
 	VkFormat depthFormat = device->getSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
 		VK_IMAGE_TILING_OPTIMAL,
@@ -89,7 +90,7 @@ void FramebufferManagement::createDeferredLightingAttachment(VK_Objects::SwapCha
 	VkExtent2D extent = swapChain->getExtent();
 
 	VK_Objects::PImage deferredLightingImage = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
-	VK_Objects::PImage brightnessImage = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+	VK_Objects::PImage brightnessImage = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
 
 	for (int i = 0; i < n; i++) {
 
@@ -174,6 +175,7 @@ void FramebufferManagement::createSwapChainAttachment(VK_Objects::SwapChain* swa
 
 	VkExtent2D extent = swapChain->getExtent();
 	VkFormat format = swapChain->getFormat();
+	msaaImage = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT| VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0,maxSampleCount);
 
 
 	int n = spChain->getNumberOfImages();
@@ -181,14 +183,14 @@ void FramebufferManagement::createSwapChainAttachment(VK_Objects::SwapChain* swa
 	for (int i = 0; i < n; i++) {
 
 
-		VkImageView attachments[1] = { swapChain->getViews()[i] };
+		VkImageView attachments[2] = { *msaaImage->getVkImageViewHandle(), swapChain->getViews()[i] };
 
-		framebuffers["SWAPCHAIN_FRAMEBUFFER"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device, 1, attachments, renderpasses["SWAPCHAIN_RENDERPASS"], extent)));
+		framebuffers["SWAPCHAIN_FRAMEBUFFER"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device, 2, attachments, renderpasses["SWAPCHAIN_RENDERPASS"], extent)));
 
 	}
 
 	//Move the created images to g_bufferImages unordered map.
-
+	//msaa_Images["MSAA_IMAGES"] = std::move(msaaImage);
 
 
 }
