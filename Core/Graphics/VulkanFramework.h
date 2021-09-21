@@ -373,6 +373,7 @@ namespace VK_Objects {
 			deviceInfo.enabledLayerCount = static_cast<uint32_t>(VK_Objects::validationLayers.size());
 			deviceInfo.ppEnabledLayerNames = VK_Objects::validationLayers.data();
 
+
 			VkResult result = vkCreateDevice(vk_physicalDevice, &deviceInfo, nullptr, &vk_Device);
 
 			if (result != VK_SUCCESS) {
@@ -551,10 +552,11 @@ namespace VK_Objects {
 			createSwapchainViews(device);
 		}
 
+
 		void prepareSwapChain(uint32_t WIDTH, uint32_t HEIGHT, Device device, Surface *surface, ImageFormat& desiredFormat, GLFWwindow* window, QueueSharingMode& queueSharingMode) {
 
-			properties.extent.width = WIDTH;
-			properties.extent.height = HEIGHT;
+			properties.extent.width = 2024;
+			properties.extent.height = 2024;
 
 			querySwapChainProperties(device, *surface, desiredFormat, window);
 			createSwapChain(device, *surface, queueSharingMode);

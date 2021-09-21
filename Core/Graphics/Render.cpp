@@ -21,12 +21,11 @@ void alignedFree(void* data)
 #endif
 }
 
-//vk_ stands for any vulkan abstraction
 Render::Render()
 {
-	light1.color = glm::vec3(1.0f);	light1.position = glm::vec3(glm::vec3(900, 1400, 300));
-	nearFar = glm::vec2(.1f, 100.f);
-	dist = 70.0f;
+	light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(-900, 1400, 0));
+	nearFar = glm::vec2(.1f, 115.f);
+	dist = 115;
 
 }
 
@@ -51,7 +50,7 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 	swapChain.prepareSwapChain(WIDTH, HEIGHT, device, &surface, format, windowHandler, queueSharingMode);
 	//Create First renderpass;
 	createRenderpass();
-	framebuffersManager = std::make_unique<FramebufferManagement>(&device, &swapChain, renderpass->passes,device.getMaxUsableSampleCount());
+	framebuffersManager = std::make_unique<FramebufferManagement>(&device, &swapChain, renderpass->passes);
 
 	createPipeline();
 	createCommandPools();
@@ -69,6 +68,7 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 //Creation of Instance
 void Render::createInstance()
 {
+
 	VkInstanceCreateInfo instanceInfo{};
 	instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 
@@ -140,7 +140,7 @@ void Render::prepareDevice(VK_Objects::Surface surface)
 
 void Render::createRenderpass()
 {
-	renderpass = std::make_unique<Game::RenderpassManager>(&device, &swapChain, swapChain.getExtent(),device.getMaxUsableSampleCount());
+	renderpass = std::make_unique<Game::RenderpassManager>(&device, &swapChain, swapChain.getExtent());
 
 	/*
 	VkExtent2D e = swapChain.getExtent();
@@ -207,7 +207,7 @@ void Render::createRenderContexts()
 	//SKYBOX AND ENVIROMENT 
 
 	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Ref.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Arches_E_PineTree\\Arches_E_PineTree_3k.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
 
 	VK_Objects::CubeMap envMAp(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
@@ -217,9 +217,9 @@ void Render::createRenderContexts()
 	Vk_Functions::generatBRDFLut(&device, brdfLut, *transferPool.get(), *graphicsPool.get(), poolManager);
 
 	VK_Objects::CubeMap irradianceMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Arches_E_PineTree\\Arches_E_PineTree_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 
-	RENDER::Thread t1;
+	
 	uint32_t n = swapChain.getNumberOfImages();
 
 	//Create Resources
@@ -281,7 +281,7 @@ void Render::createRenderContexts()
 
 
 		std::vector<VkDescriptorImageInfo> imageInfo;
-		imageInfo.resize(3);
+		imageInfo.resize(4);
 
 		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo[0].imageView = *framebuffersManager->g_bufferImages["ALBEDO"]->getVkImageViewHandle();
@@ -295,6 +295,9 @@ void Render::createRenderContexts()
 		imageInfo[2].imageView = *framebuffersManager->g_bufferImages["NORMALS"]->getVkImageViewHandle();
 		imageInfo[2].sampler = sampler_Testing;
 
+		imageInfo[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[3].imageView = *framebuffersManager->g_bufferImages["EMISSION"]->getVkImageViewHandle();
+		imageInfo[3].sampler = sampler_Testing;
 
 		deferredShading_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
 
@@ -330,6 +333,26 @@ void Render::createRenderContexts()
 
 	}
 
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	//samplerInfo.anisotropyEnable = VK_TRUE;
+	//samplerInfo.maxAnisotropy = 4;
+	samplerInfo.maxLod = 10;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+
+	if (vkCreateSampler(device.getLogicalDevice(), &samplerInfo, device.getAllocator(), &sampler_streatch) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture sampler!");
+	}
 
 
 	for (int i = 0; i < enviromentData_Descriptorsets.size(); i++) {
@@ -340,9 +363,9 @@ void Render::createRenderContexts()
 		std::vector<VkDescriptorImageInfo> imageInfo;
 		imageInfo.resize(5);
 
-		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-		imageInfo[0].imageView = *framebuffersManager->depth_bufferImages["DEPTH"]->getVkImageViewHandle();
-		imageInfo[0].sampler = sampler_Testing;
+		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[0].imageView = *framebuffersManager->depth_bufferImages["DEPTH_SQUARED"]->getVkImageViewHandle();
+		imageInfo[0].sampler = sampler_streatch;
 
 		imageInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo[1].imageView = irradianceMap.getVkViewHandle();
@@ -388,6 +411,7 @@ void Render::createRenderContexts()
 
 
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
+	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[0]);
@@ -577,7 +601,7 @@ void Render::createRenderContexts()
 
 			VkCommandBuffer cmds[2] = {cmd,imGuiCmds[imageIndex] };
 
-			submitInfo.commandBufferCount = 1;
+			submitInfo.commandBufferCount = 2;
 			submitInfo.pCommandBuffers = &cmds[0];
 
 			VkSemaphore signalSemaphores[] = { r1->frames[r1->currentFrameIndex]->getRenderFinishedSemaphore() };
@@ -601,8 +625,21 @@ void Render::createRenderContexts()
 			result = vkQueuePresentKHR(device.getQueueHandle(VK_Objects::QUEUE_TYPE::PRESENT), &presentInfo);
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+				
+				std::cout << "SwapChain Recreation ... \n";
+				int w, h = 0;
+				glfwGetFramebufferSize(window, &w, &h);
+				while (w == 0 || h == 0) {
+					glfwGetFramebufferSize(window, &w, &h);
 
-				//recreateSwapChain();
+					glfwWaitEvents();
+				}
+				
+				vkQueueWaitIdle(device.getQueueHandle(VK_Objects::QUEUE_TYPE::GRAPHICS))	;
+				VK_Objects::ImageFormat imageFormat = VK_Objects::ImageFormat::VK_FORMAT_B8G8R8A8_UNORM;
+				VK_Objects::QueueSharingMode queueSharingMode = device.getQueueSharingMode();
+
+				swapChain.prepareSwapChain(1920, 1055, device, &surface, imageFormat, window, queueSharingMode);
 			}
 			else if (result != VK_SUCCESS) {
 				throw std::runtime_error("failed to present swap chain image!");
@@ -614,6 +651,7 @@ void Render::createRenderContexts()
 	}
 
 	vkDeviceWaitIdle(device.getLogicalDevice());
+	vkDestroySampler(device.getLogicalDevice(), sampler_streatch, nullptr);
 	ImGui_ImplVulkan_Shutdown();
 
 	vkDestroySampler(device.getLogicalDevice(), sampler_Testing, nullptr);
@@ -643,14 +681,14 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 
 	VkViewport viewport = {};
 
-	viewport.width = static_cast<uint32_t>(e.width);
-	viewport.height = static_cast<uint32_t>(e.width);
+	viewport.width = static_cast<uint32_t>(2024);
+	viewport.height = static_cast<uint32_t>(2024);
 
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D rect = {};
-	rect.extent.width = static_cast<uint32_t>(e.width);
-	rect.extent.height = static_cast<uint32_t>(e.height);
+	rect.extent.width = static_cast<uint32_t>(2024);
+	rect.extent.height = static_cast<uint32_t>(2024);
 	rect.offset = { 0,0 };
 
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -756,21 +794,26 @@ void Render::createPipeline()
 	diffuseTextureResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	diffuseTextureResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
-	VK_Objects::ShaderResource metallicMapResource{};
-	metallicMapResource.binding = static_cast<uint32_t>(1);
-	metallicMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-	metallicMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+	VK_Objects::ShaderResource emissionMapResource{};
+	emissionMapResource.binding = static_cast<uint32_t>(1);
+	emissionMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	emissionMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
 	VK_Objects::ShaderResource roughnessMapResource{};
 	roughnessMapResource.binding = static_cast<uint32_t>(2);
 	roughnessMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	roughnessMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
+
+	VK_Objects::ShaderResource metallicMapResource{};
+	metallicMapResource.binding = static_cast<uint32_t>(3);
+	metallicMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	metallicMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
 	VK_Objects::ShaderResource normalMapResource{};
-	normalMapResource.binding = static_cast<uint32_t>(3);
+	normalMapResource.binding = static_cast<uint32_t>(4);
 	normalMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	normalMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
-
 
 
 	VK_Objects::ShaderResource modelMatrix{};
@@ -786,7 +829,7 @@ void Render::createPipeline()
 
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resources);
 
-	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource, metallicMapResource, roughnessMapResource, normalMapResource };
+	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource,emissionMapResource, metallicMapResource, roughnessMapResource, normalMapResource };
 
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayoutMaterial = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resourceMaterial);
 
@@ -830,7 +873,7 @@ void Render::createPipeline()
 	std::vector<std::vector<VK_Objects::ATRIBUTES>>att{ atributes };
 
 	pipelineInfo.atributes = att;
-	pipelineInfo.colorAttachmentsCount = 3;
+	pipelineInfo.colorAttachmentsCount = 4;
 	pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 	pipelineInfo.dephTest = 1;
 	pipelineInfo.depthBias = 0;
@@ -862,8 +905,16 @@ void Render::createPipeline()
 		normalsInput.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 		normalsInput.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
+		VK_Objects::ShaderResource emissionMapResource{};
+		emissionMapResource.binding = static_cast<uint32_t>(3);
+		emissionMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		emissionMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+
+
+
 		//Create shader resource and Allocate Descriptorsets 
-		std::vector<VK_Objects::ShaderResource> resourcess = { albedoResourceInput , metallicRoughnessInput , normalsInput };
+		std::vector<VK_Objects::ShaderResource> resourcess = { albedoResourceInput , metallicRoughnessInput , normalsInput,emissionMapResource };
 
 		std::shared_ptr<VK_Objects::DescriptorSetLayout> descriptorsetForMaterial = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resourcess);
 
@@ -1193,7 +1244,6 @@ void Render::createPipeline()
 		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pipelineInfo.vertexOffsets = { 0 };
 		pipelineInfo.subpass = 0;
-		pipelineInfo.samples = device.getMaxUsableSampleCount();
 		std::unique_ptr<VK_Objects::Pipeline> SWAPCHAIN_PIPELINE = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move(vert), std::move(frag), pipelineInfo);
 		SWAPCHAIN_PIPELINE->id = "SWAPCHAIN_PIPELINE";
 
@@ -1249,18 +1299,21 @@ void Render::createMaterials()
 {
 	Engine::FilesPath path;
 	path.diffuseMap = "Assets\\samus\\textures\\base_baseColor.png";
-	path.metallicMap = "Assets\\black.png";
+	path.emissionMap = "Assets\\samus\\textures\\emission.png";
 	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
-	path.roughnessMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
-	
+	path.roughnessMap = "Assets\\samus\\textures\\base_baseColor-R.png";
+	path.metallicMap = "Assets\\samus\\textures\\base_baseColor-M.png";
+
+
 	materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 	
-	path.diffuseMap = "Assets\\cobbleStone\\textures\\Cobblestone04_2K_BaseColor.png";
-	path.metallicMap = "Assets\\black.png";
-	path.normalMap = "Assets\\cobbleStone\\textures\\Cobblestone04_2K_Normal.png";
-	path.roughnessMap = "Assets\\cobbleStone\\textures\\Cobblestone04_2K_Roughness.png";
+	path.diffuseMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_albedo.png";
+	path.emissionMap = "Assets\\black.png";
+	path.normalMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_normal-dx.png"; 
+	path.metallicMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_metallic.png";
+	path.roughnessMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_roughness.png";
 
-	materialManager["CobbleStone"] = std::make_unique<Engine::Material>(&device, "CobbleStone", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	materialManager["MetallicTile"] = std::make_unique<Engine::Material>(&device, "MetallicTile", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 
 
 }
@@ -1270,7 +1323,9 @@ void Render::createScene()
 	Game::Scene scene;
 	SceneGraph& sceneGraph = scene.sceneGraph;
 
-	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Scene");
+	sceneGraph.root->entity->transform.setScale(glm::vec3(.7, 1., .7));
+
+	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Tile1");
 
 	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("Player");
 
@@ -1286,16 +1341,16 @@ void Render::createScene()
 
 	main_camera->transform.setPosition(-.44, 1.351, -14.5);
 	
-	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Scenario",     "CobbleStone", "Assets\\samus\\scene.glb", &device, transferPool.get()));
+	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Tile1", "MetallicTile", "Assets\\tiles\\Flat-Ground\\tile1.glb", &device, transferPool.get()));
 	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "PlayerMesh", "Player", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
 
-	mesh1->transform.setPosition(glm::vec3(0,-.8,0));
-	mesh1->transform.setScale(glm::vec3(1.0f));
+	mesh1->transform.setPosition(glm::vec3(0,0,0));
+	mesh1->transform.setScale(glm::vec3(5.0f));
 	mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);
 
 	Player->transform.setPosition(glm::vec3(0, .8, 0));
 	Player->transform.setScale(glm::vec3(1, 1, 1));
-	Player->transform.rotate(glm::vec3(1, 0, 0),450.0);
+	Player->transform.setRotation(-180, 90, 90);
 
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
 	std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
@@ -1314,7 +1369,6 @@ void Render::createScene()
 void Render::separateSceneObjects(std::shared_ptr<Node> node)
 {
 
-	 
 	std::shared_ptr<Engine::Entity> e1 = node->entity;
 
 
@@ -1434,6 +1488,8 @@ void Render::renderUI(uint32_t imageIndex)
 			glm::vec3 p = light1.position;
 			ImGui::InputFloat3("Position", (float*)glm::value_ptr(p));
 			ImGui::InputFloat3("Color", (float*)glm::value_ptr(light1.color));
+			ImGui::InputFloat4("Ortho", (float*)glm::value_ptr(ortho));
+
 			light1.position = p;
 			ImGui::InputFloat("Dist", &dist);
 			ImGui::InputFloat2("Nearfar", (float*)glm::value_ptr(nearFar));
@@ -1507,7 +1563,6 @@ void Render::updateUniforms(uint32_t imageIndex)
 	t.view = main_camera->getViewMatrix();
 	t.projection = main_camera->getProjectionMatrix();
 
-
 	viewProjectionBuffers[imageIndex]->udpate(t);
 
 	LightUniform lightUbo;
@@ -1519,21 +1574,25 @@ void Render::updateUniforms(uint32_t imageIndex)
 	lightUbo.invView = glm::inverse(main_camera->getViewMatrix());
 	//mainLight = light1;
 	lightUbo.light[0] = light1;
-	lightUniformBuffers[imageIndex]->udpate(lightUbo);
 
 
 	glm::vec3 lightDireciton = glm::normalize(light1.position);
 
 	//glm::mat4 depthViewMatrix = lookAt(  (camera->eulerDir.front * camera->shadowDistance + lightDireciton* shadowMapPass.lightDistance) , camera->eulerDir.front *2.f , glm::vec3(0.0, -1.0, 0.0));
-	glm::mat4 depthViewMatrix = lookAt(normalize(light1.position) * dist, glm::vec3(0), glm::vec3(0.0, -1.0, 0.0));
+	glm::mat4 depthViewMatrix = lookAt(normalize(light1.position)*dist , glm::vec3(0), glm::vec3(0.0, -1.0, 0.0));
 
-	std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix);
+	//std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix);
 
-	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3],.1f,10.f);
-
-	//std::cout << boundingBox[0] << " " << boundingBox[2] << " " << boundingBox[3] << " " << boundingBox[4] << std::endl;
+	//glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], nearFar.x, nearFar.y);
+	glm::mat4 depthProjectionMatrix = glm::ortho(ortho.x, ortho.y, ortho.z, ortho.w, nearFar.x, nearFar.y);
 
 	glm::mat4 lightMatrix = depthProjectionMatrix * depthViewMatrix;
+	lightUbo.lightMatrix = lightMatrix;
+
+	main_camera->setFarplane(nearFar.y);
+	main_camera->setNearPlane(nearFar.x);
+	
+	lightUniformBuffers[imageIndex]->udpate(lightUbo);
 
 	lightProjectionUniformBuffers[imageIndex]->udpate(lightMatrix);
 
@@ -1541,43 +1600,7 @@ void Render::updateUniforms(uint32_t imageIndex)
 	//Update the uniform buffers that hold model projection, which is stored in one large buffer per frame.
 	updateDynamicUniformBuffer(imageIndex);
 
-	//Update Dynamic Uniform Buffersf
-	/*
-	if (!modelBuffers[imageIndex]->isMapped()) {
-		vkMapMemory(device.getLogicalDevice(), modelBuffers[imageIndex]->getMemoryHandle(), 0, modelBuffersSize, 0, &modelBuffers[imageIndex]->mapPointer);
-		modelBuffers[imageIndex]->setMapped(true);
 
-	}
-	glm::mat4 model1;
-	model1 = glm::mat4(1.0f);
-	model1 =  glm::scale(model1, glm::vec3(.05));
-
-	glm::mat4 model2;
-	model2 = glm::mat4(1.0f);
-	model2 = glm::translate(model2, glm::vec3(glm::sin(glfwGetTime()*.5)*5.f,.0,9));
-	model2 = glm::scale(model2, glm::vec3(.05));
-
-	std::vector<glm::mat4>models = { model1,model2 };
-
-
-	glm::mat4* m = (glm::mat4*)((uint64_t)modelMatrixes.model);
-
-	*m = model1;
-	glm::mat4* m0 = (glm::mat4*)((uint64_t)modelMatrixes.model + dynamicAlignment);
-
-	*m0 = model2;
-
-	memcpy(modelBuffers[imageIndex]->mapPointer, modelMatrixes.model,modelBuffersSize);
-
-	// Flush to make changes visible to the host
-	VkMappedMemoryRange memoryRange{};
-	memoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-	memoryRange.memory = modelBuffers[imageIndex]->getMemoryHandle();
-	memoryRange.size = dynamicAlignment;
-	memoryRange.offset = 0;
-
-	vkFlushMappedMemoryRanges(device.getLogicalDevice(), 1, &memoryRange);
-	*/
 }
 
 void Render::updateDynamicUniformBuffer(uint32_t imageIndex)

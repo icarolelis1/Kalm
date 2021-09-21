@@ -9,22 +9,27 @@ Engine::Material::Material(const VK_Objects::Device* _device, std::string _id, F
 	diffuseTextureResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	diffuseTextureResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
-	VK_Objects::ShaderResource metallicMapResource{};
-	metallicMapResource.binding = static_cast<uint32_t>(1);
-	metallicMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-	metallicMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+	VK_Objects::ShaderResource emissionMapResources{};
+	emissionMapResources.binding = static_cast<uint32_t>(1);
+	emissionMapResources.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	emissionMapResources.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
 	VK_Objects::ShaderResource roughnessMapResource{};
 	roughnessMapResource.binding = static_cast<uint32_t>(2);
 	roughnessMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	roughnessMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
+	VK_Objects::ShaderResource metallicnessMapResource{};
+	metallicnessMapResource.binding = static_cast<uint32_t>(3);
+	metallicnessMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	metallicnessMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
 	VK_Objects::ShaderResource normalMapResource{};
-	normalMapResource.binding = static_cast<uint32_t>(3);
+	normalMapResource.binding = static_cast<uint32_t>(4);
 	normalMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	normalMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
-	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource, metallicMapResource, roughnessMapResource, normalMapResource };
+	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource, emissionMapResources, roughnessMapResource,metallicnessMapResource, normalMapResource };
 
 	//Create a descriptorsetLayout with all the materials textures
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayoutMaterial = std::make_shared<VK_Objects::DescriptorSetLayout>(device, resourceMaterial);
@@ -42,19 +47,22 @@ Engine::Material::Material(const VK_Objects::Device* _device, std::string _id, F
 	
 	//Create textures
 	images["DIFFUSE_TEXTURE"] =   std::make_unique<VK_Objects::Image>(device, texturePaths.diffuseMap.c_str() , VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
-	images["METALLIC_TEXTURE"] =  std::make_unique<VK_Objects::Image>(device, texturePaths.metallicMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
-	images["ROUGHNESS_TEXTURE"] = std::make_unique<VK_Objects::Image>(device, texturePaths.diffuseMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
+	images["EMISSION_TEXTURE"] =  std::make_unique<VK_Objects::Image>(device, texturePaths.emissionMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
+	images["ROUGHNESS_TEXTURE"] = std::make_unique<VK_Objects::Image>(device, texturePaths.roughnessMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
+	images["METALLIC_TEXTURE"] = std::make_unique<VK_Objects::Image>(device, texturePaths.metallicMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, 0, *transferCommandPool, 1, true);
 	images["NORMAL_TEXTURE"] =    std::make_unique<VK_Objects::Image>(device, texturePaths.normalMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM,  VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
 
 	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["DIFFUSE_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["DIFFUSE_TEXTURE"]->getMaximumMips());
-	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["METALLIC_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["METALLIC_TEXTURE"]->getMaximumMips());
+	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["EMISSION_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["EMISSION_TEXTURE"]->getMaximumMips());
 	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["ROUGHNESS_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["ROUGHNESS_TEXTURE"]->getMaximumMips());
+	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["METALLIC_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["METALLIC_TEXTURE"]->getMaximumMips());
 	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["NORMAL_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["NORMAL_TEXTURE"]->getMaximumMips());
 
 	uint32_t n = images["DIFFUSE_TEXTURE"]->getMaximumMips();
 	Vk_Functions::generateMips(device, images["DIFFUSE_TEXTURE"].get(), graphicsCommandPool, images["DIFFUSE_TEXTURE"]->getMaximumMips());
-	Vk_Functions::generateMips(device, images["METALLIC_TEXTURE"].get(), graphicsCommandPool, images["METALLIC_TEXTURE"]->getMaximumMips());
+	Vk_Functions::generateMips(device, images["EMISSION_TEXTURE"].get(), graphicsCommandPool, images["EMISSION_TEXTURE"]->getMaximumMips());
 	Vk_Functions::generateMips(device, images["ROUGHNESS_TEXTURE"].get(), graphicsCommandPool, images["ROUGHNESS_TEXTURE"]->getMaximumMips());
+	Vk_Functions::generateMips(device, images["METALLIC_TEXTURE"].get(), graphicsCommandPool, images["METALLIC_TEXTURE"]->getMaximumMips());
 	Vk_Functions::generateMips(device, images["NORMAL_TEXTURE"].get(), graphicsCommandPool, images["NORMAL_TEXTURE"]->getMaximumMips());
 
 
@@ -68,14 +76,14 @@ Engine::Material::Material(const VK_Objects::Device* _device, std::string _id, F
 
 
 		std::vector<VkDescriptorImageInfo> imageInfo;
-		imageInfo.resize(4);
+		imageInfo.resize(5);
 
 		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo[0].imageView =  *images["DIFFUSE_TEXTURE"]->getVkImageViewHandle();
 		imageInfo[0].sampler = globalSampler;
 
 		imageInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[1].imageView = *images["METALLIC_TEXTURE"]->getVkImageViewHandle();
+		imageInfo[1].imageView = *images["EMISSION_TEXTURE"]->getVkImageViewHandle();
 		imageInfo[1].sampler = globalSampler;
 
 		imageInfo[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -83,8 +91,13 @@ Engine::Material::Material(const VK_Objects::Device* _device, std::string _id, F
 		imageInfo[2].sampler = globalSampler;
 
 		imageInfo[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[3].imageView = *images["NORMAL_TEXTURE"]->getVkImageViewHandle();
+		imageInfo[3].imageView = *images["METALLIC_TEXTURE"]->getVkImageViewHandle();
 		imageInfo[3].sampler = globalSampler;
+
+
+		imageInfo[4].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[4].imageView = *images["NORMAL_TEXTURE"]->getVkImageViewHandle();
+		imageInfo[4].sampler = globalSampler;
 
 		descriptorsets[i].updateDescriptorset(index, imageInfo);
 	}
