@@ -12,6 +12,7 @@ namespace Engine {
 
 		std::string diffuseMap;
 		std::string emissionMap;
+		std::string metallicMap;
 		std::string roughnessMap;
 		std::string normalMap;
 

@@ -3,7 +3,8 @@
 layout(set = 1, binding = 0) uniform sampler2D diffuseMap;
 layout(set = 1, binding = 1) uniform sampler2D emissionMap;
 layout(set = 1, binding = 2) uniform sampler2D roughnessMap;
-layout(set = 1, binding = 3) uniform sampler2D normalMap;
+layout(set = 1, binding = 3) uniform sampler2D metallicnessMap ;
+layout(set = 1, binding = 4) uniform sampler2D normalMap;
 
 layout(location = 0) in vec3 Normals;
 layout(location = 1) in vec2 TexCoords;
@@ -61,10 +62,10 @@ void main()
 
 Normal = vec4(getNormalFromMap(vec2(1.0)),1.0);
 vec3 em =   texture( emissionMap ,TexCoords  ).rgb ;
-vec2  metRoughness =    texture( roughnessMap , TexCoords ).xy ;
+vec2  metRoughness =   vec2(texture( metallicnessMap, TexCoords ).x, texture( roughnessMap , TexCoords ).x) ;
 Albedo =  vec4(pow(texture( diffuseMap, TexCoords).xyz  ,vec3(2.2)),1.0);
 
-MetallicRoughness= vec2(0. , metRoughness.y);
+MetallicRoughness= vec2(metRoughness.x , metRoughness.y);
 Emission  = vec4(em,1.0);
 
 }

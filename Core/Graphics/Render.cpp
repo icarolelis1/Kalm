@@ -23,7 +23,7 @@ void alignedFree(void* data)
 
 Render::Render()
 {
-	light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(900, 1400, -1200));
+	light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(-900, 1400, 0));
 	nearFar = glm::vec2(.1f, 115.f);
 	dist = 115;
 
@@ -794,18 +794,24 @@ void Render::createPipeline()
 	diffuseTextureResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	diffuseTextureResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
-	VK_Objects::ShaderResource metallicMapResource{};
-	metallicMapResource.binding = static_cast<uint32_t>(1);
-	metallicMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-	metallicMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+	VK_Objects::ShaderResource emissionMapResource{};
+	emissionMapResource.binding = static_cast<uint32_t>(1);
+	emissionMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	emissionMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
 	VK_Objects::ShaderResource roughnessMapResource{};
 	roughnessMapResource.binding = static_cast<uint32_t>(2);
 	roughnessMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	roughnessMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
+
+	VK_Objects::ShaderResource metallicMapResource{};
+	metallicMapResource.binding = static_cast<uint32_t>(3);
+	metallicMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	metallicMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
 	VK_Objects::ShaderResource normalMapResource{};
-	normalMapResource.binding = static_cast<uint32_t>(3);
+	normalMapResource.binding = static_cast<uint32_t>(4);
 	normalMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	normalMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
@@ -823,7 +829,7 @@ void Render::createPipeline()
 
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resources);
 
-	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource, metallicMapResource, roughnessMapResource, normalMapResource };
+	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource,emissionMapResource, metallicMapResource, roughnessMapResource, normalMapResource };
 
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayoutMaterial = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resourceMaterial);
 
@@ -1295,16 +1301,19 @@ void Render::createMaterials()
 	path.diffuseMap = "Assets\\samus\\textures\\base_baseColor.png";
 	path.emissionMap = "Assets\\samus\\textures\\emission.png";
 	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
-	path.roughnessMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
-	
+	path.roughnessMap = "Assets\\samus\\textures\\base_baseColor-R.png";
+	path.metallicMap = "Assets\\samus\\textures\\base_baseColor-M.png";
+
+
 	materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 	
-	//path.diffuseMap = "Assets\\Rock\\textures\\Rock09_2K_BaseColor.png";
-	//path.emissionMap = "Assets\\black.png";
-	//path.normalMap = "Assets\\Rock\\textures\\Rock09_2K_Normal.png"; 
-	//path.roughnessMap = "Assets\\Rock\\textures\\Rock09_2K_Roughness.png";
-	//
-	//materialManager["CobbleStone"] = std::make_unique<Engine::Material>(&device, "CobbleStone", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	path.diffuseMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_albedo.png";
+	path.emissionMap = "Assets\\black.png";
+	path.normalMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_normal-dx.png"; 
+	path.metallicMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_metallic.png";
+	path.roughnessMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_roughness.png";
+
+	materialManager["MetallicTile"] = std::make_unique<Engine::Material>(&device, "MetallicTile", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 
 
 }
@@ -1316,7 +1325,7 @@ void Render::createScene()
 
 	sceneGraph.root->entity->transform.setScale(glm::vec3(.7, 1., .7));
 
-	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Scene");
+	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Tile1");
 
 	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("Player");
 
@@ -1332,23 +1341,23 @@ void Render::createScene()
 
 	main_camera->transform.setPosition(-.44, 1.351, -14.5);
 	
-	//mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Scenario",     "CobbleStone", "Assets\\samus\\scene.glb", &device, transferPool.get()));
+	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Tile1", "MetallicTile", "Assets\\tiles\\Flat-Ground\\tile1.glb", &device, transferPool.get()));
 	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "PlayerMesh", "Player", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
 
-	//mesh1->transform.setPosition(glm::vec3(0,-.8,0));
-	//mesh1->transform.setScale(glm::vec3(1.0f));
-	//mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);
+	mesh1->transform.setPosition(glm::vec3(0,0,0));
+	mesh1->transform.setScale(glm::vec3(5.0f));
+	mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);
 
 	Player->transform.setPosition(glm::vec3(0, .8, 0));
 	Player->transform.setScale(glm::vec3(1, 1, 1));
-	Player->transform.setRotation(-90, 0, 0);
+	Player->transform.setRotation(-180, 90, 90);
 
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
 	std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
 	std::shared_ptr<Node> node2 = std::make_shared<Node>(Player);
 
 	sceneGraph.addNode(cameraNode);
-	//'sceneGraph.addNode(node1);
+	sceneGraph.addNode(node1);
 	sceneGraph.addNode(node2);
 	mainSCene = std::move(scene);
 	mainSCene.sceneGraph.updateSceneGraph();
