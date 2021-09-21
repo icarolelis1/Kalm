@@ -11,7 +11,7 @@ namespace Engine {
 	struct FilesPath {
 
 		std::string diffuseMap;
-		std::string metallicMap;
+		std::string emissionMap;
 		std::string roughnessMap;
 		std::string normalMap;
 

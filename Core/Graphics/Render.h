@@ -56,6 +56,7 @@ struct LightUniform {
 	glm::mat4 invProj;
 	alignas(16) glm::vec3 camera;
 	LightUbo light[1];
+	glm::mat4 lightMatrix;
 };
 
 class Render
@@ -71,8 +72,9 @@ class Render
 
 public:
 	Render();
-	glm::vec2 nearFar;
-	float dist;
+	glm::vec2 nearFar = glm::vec2(.1f,103.f);
+	glm::vec4 ortho = glm::vec4(10,-10,-10,10);
+	float dist = 103;
 	void initiateResources(Utils::WindowHandler *windowHandler, uint32_t WIDTH, uint32_t HEIGHT);
 
 
@@ -130,6 +132,7 @@ private:
 
 
 	VkSampler sampler_Testing;
+	VkSampler sampler_streatch;
 
 	std::vector<VK_Objects::Descriptorset> globalData_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> modelMatrix_Descriptorsets;

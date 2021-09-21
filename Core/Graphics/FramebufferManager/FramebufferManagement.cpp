@@ -2,6 +2,7 @@
 
 FramebufferManagement::FramebufferManagement( VK_Objects::Device * _device , VK_Objects::SwapChain* swapChain, Game::RenderPasses _renderpasses,VkSampleCountFlagBits _samples):device(_device),spChain(swapChain),renderpasses(_renderpasses),maxSampleCount(_samples)
 {
+	std::cout << swapChain->getExtent().width << std::endl;
 	createAttachemnts(swapChain->getExtent());
 	createDeferredLightingAttachment(swapChain);
 	createInterfaceAttachments(swapChain);
@@ -27,6 +28,8 @@ void FramebufferManagement::createGBufferAttachments(VkExtent2D extent)
 	VK_Objects::PImage albedo = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
 	
 	VK_Objects::PImage metallicRoughness = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+	
+	VK_Objects::PImage emissionAttachment = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
 
 	VkFormat depthFormat = device->getSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
 		VK_IMAGE_TILING_OPTIMAL,
@@ -34,18 +37,14 @@ void FramebufferManagement::createGBufferAttachments(VkExtent2D extent)
 
 	VK_Objects::PImage depthImage = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT|VK_IMAGE_USAGE_SAMPLED_BIT , VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_DEPTH_BIT, 1, 0);
 
-
-	//Framebuffer(VK_Objects::Device * _device, VkImageView & view, VK_Objects::Renderpass * renderpass, VkExtent2D _extent);
-
-	//Creates one Framebuffer per image on SwapChain
 	int n = spChain->getNumberOfImages();
 
 	for (int i = 0; i < n; i++) {
 	
 
-		VkImageView attachments[4] = { *albedo->getVkImageViewHandle(), *metallicRoughness->getVkImageViewHandle(), *normals->getVkImageViewHandle(),*depthImage->getVkImageViewHandle() };
+		VkImageView attachments[5] = { *albedo->getVkImageViewHandle(), *metallicRoughness->getVkImageViewHandle(), *normals->getVkImageViewHandle(),*emissionAttachment->getVkImageViewHandle(),  *depthImage->getVkImageViewHandle() };
 	
-		framebuffers["G_BUFFER"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device,4,attachments,renderpasses["G_BUFFER"],extent)));
+		framebuffers["G_BUFFER"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device,5,attachments,renderpasses["G_BUFFER"],extent)));
 	
 	}
 
@@ -53,19 +52,24 @@ void FramebufferManagement::createGBufferAttachments(VkExtent2D extent)
 	g_bufferImages["NORMALS"] = std::move(normals);
 	g_bufferImages["ALBEDO"] = std::move(albedo);
 	g_bufferImages["METALLICROUGHNESS"] = std::move(metallicRoughness);
+	g_bufferImages["EMISSION"] = std::move(emissionAttachment);
 	g_bufferImages["DEPTH"] = std::move(depthImage);
 
 
 }
 
-void FramebufferManagement::createDepthMapAttachment(VkExtent2D extent)
+void FramebufferManagement::createDepthMapAttachment(VkExtent2D _extent)
 {
+	VkExtent2D extent;
+	extent.width = 2024;
+	extent.height = 2024;
+
 	VkFormat format = device->getSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
 	VK_Objects::PImage depth = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_DEPTH_BIT, 1, 0);
-	VK_Objects::PImage depthSquared = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT| VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+	VK_Objects::PImage depthSquared = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, VK_FORMAT_R32G32_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT| VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
 
 	int n = spChain->getNumberOfImages();
 	for (int i = 0; i < n; i++) {
@@ -175,7 +179,6 @@ void FramebufferManagement::createSwapChainAttachment(VK_Objects::SwapChain* swa
 
 	VkExtent2D extent = swapChain->getExtent();
 	VkFormat format = swapChain->getFormat();
-	msaaImage = std::make_unique<VK_Objects::Image>(device, extent.width, extent.height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT| VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0,maxSampleCount);
 
 
 	int n = spChain->getNumberOfImages();
@@ -183,9 +186,9 @@ void FramebufferManagement::createSwapChainAttachment(VK_Objects::SwapChain* swa
 	for (int i = 0; i < n; i++) {
 
 
-		VkImageView attachments[2] = { *msaaImage->getVkImageViewHandle(), swapChain->getViews()[i] };
+		VkImageView attachments[1] = { swapChain->getViews()[i] };
 
-		framebuffers["SWAPCHAIN_FRAMEBUFFER"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device, 2, attachments, renderpasses["SWAPCHAIN_RENDERPASS"], extent)));
+		framebuffers["SWAPCHAIN_FRAMEBUFFER"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device, 1, attachments, renderpasses["SWAPCHAIN_RENDERPASS"], extent)));
 
 	}
 
