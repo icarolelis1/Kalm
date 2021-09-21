@@ -32,6 +32,21 @@ void Engine::Camera::update(float timeStep)
 {
 }
 
+void Engine::Camera::setFarplane(float t)
+{
+	farPlane = t;
+}
+
+void Engine::Camera::setNearPlane(float t)
+{
+	nearPlane = t;
+}
+
+glm::vec3 Engine::Camera::getCenter()
+{
+	return center;
+}
+
 std::array<float, 6> Engine::Camera::calculateFrustumInLightSpace(glm::mat4 lightMatrix)
 {
 	std::array<glm::vec3, 8> corners = calculateFrustumConers();
@@ -63,8 +78,8 @@ std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers()
 {
 	fov = 45.0f;
 	float tan = glm::tan(glm::radians(fov / 2.));
-	float aspectRatio = 1920 / 1080;
-	float farPlane = transform.getPosition().y + 4.f;
+	float aspectRatio = 1924 / 1055;
+	float farPlane = this->farPlane;
 	float heightNear = 2 * tan * nearPlane;
 	float widthNear = heightNear * aspectRatio;
 	float heightFar = 2 * tan * farPlane;
@@ -72,7 +87,10 @@ std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers()
 
 	glm::vec3 centerNear = transform.getPosition() + eulerDirections.front * nearPlane;
 	glm::vec3 centerFar = transform.getPosition() + eulerDirections.front * farPlane;
+	center = (centerNear + centerFar) /glm::vec3(2.0f);
 
+	//std::cout << "Center : " << centerFar.x<<" "<<centerFar.y<<" "<<centerFar.z << std::endl;
+	//std::cout << "FARPLANE " << farPlane << std::endl;
 	std::array<glm::vec3, 8> corners;
 
 	//Near corners

@@ -19,10 +19,13 @@ void Game::RenderpassManager::createRenderpasses(VkExtent2D extent )
 
 }
 
-void Game::RenderpassManager::createShadowMapRenderpass(VkExtent2D extent)
+void Game::RenderpassManager::createShadowMapRenderpass(VkExtent2D extent_)
 {
 	//Creates a renderpass for variance shadow map. Two float values will be stored.
 
+	VkExtent2D extent;
+	extent.width = 2024;
+	extent.height = 2024;
 	std::unique_ptr<VK_Objects::Renderpass> shadowMapRenderpass = std::make_unique<VK_Objects::Renderpass>(device, "SHADOW_MAP", extent);
 
 	VK_Objects::RenderpassProperties renderpassProperties;
@@ -51,7 +54,7 @@ void Game::RenderpassManager::createShadowMapRenderpass(VkExtent2D extent)
 	depthAttachment.reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VK_Objects::RenderAttachment squaredDepthAttachment;
-	squaredDepthAttachment.description.format =VK_FORMAT_R16_SFLOAT;
+	squaredDepthAttachment.description.format =VK_FORMAT_R32G32_SFLOAT;
 	squaredDepthAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
 	squaredDepthAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	squaredDepthAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -112,7 +115,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	VK_Objects::RenderpassProperties renderpassProperties;
 
 	//Single Attachment
-	renderpassProperties.attachments.resize(4);
+	renderpassProperties.attachments.resize(5);
 
 	VkFormat format = VK_FORMAT_R32G32B32A32_SFLOAT;
 
@@ -131,7 +134,7 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	depthAttachment.description.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	depthAttachment.description.flags = 0;
 
-	depthAttachment.reference.attachment = 3;
+	depthAttachment.reference.attachment = 4;
 	depthAttachment.reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 
@@ -182,11 +185,26 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	subpass.description.resize(1);
 	subpass.dependencies.resize(1);
 
-	VkAttachmentReference pColorAttachments[3] = {  albedoAttachment.reference , metallicRoughnessAttachment.reference , NormalsAttachment.reference };
+
+	VK_Objects::RenderAttachment emissionAttachment;
+	emissionAttachment.description.format = VK_FORMAT_R8G8B8A8_UNORM;
+	emissionAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
+	emissionAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	emissionAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	emissionAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	emissionAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	emissionAttachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	emissionAttachment.description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	emissionAttachment.description.flags = 0;
+
+	emissionAttachment.reference.attachment = 3;
+	emissionAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference pColorAttachments[4] = {  albedoAttachment.reference , metallicRoughnessAttachment.reference , NormalsAttachment.reference,emissionAttachment.reference };
 
 
 	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.description[0].colorAttachmentCount = 3;
+	subpass.description[0].colorAttachmentCount = 4;
 	subpass.description[0].pColorAttachments = pColorAttachments; 
 	subpass.description[0].pDepthStencilAttachment = &depthAttachment.reference;
 
@@ -204,7 +222,8 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	renderpassProperties.attachments[0] = albedoAttachment;
 	renderpassProperties.attachments[1] = metallicRoughnessAttachment;
 	renderpassProperties.attachments[2] = NormalsAttachment;
-	renderpassProperties.attachments[3] = depthAttachment;
+	renderpassProperties.attachments[3] = emissionAttachment;
+	renderpassProperties.attachments[4] = depthAttachment;
 
 	gbufferRenderpass->properties = renderpassProperties;
 	gbufferRenderpass->subpass = subpass;
@@ -497,39 +516,23 @@ void Game::RenderpassManager::createSwapChainRenderPass(VkExtent2D extent)
 	VK_Objects::RenderpassProperties renderpassProperties;
 
 
-	renderpassProperties.attachments.resize(2);
+	renderpassProperties.attachments.resize(1);
 
 	VkFormat format = swapChain->getFormat();
 
 	VK_Objects::RenderAttachment renderpassAttachment;
 	renderpassAttachment.description.format = format;
-	renderpassAttachment.description.samples = sampleCount;
+	renderpassAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
 	renderpassAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	renderpassAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	renderpassAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	renderpassAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	renderpassAttachment.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	renderpassAttachment.description.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	renderpassAttachment.description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	renderpassAttachment.description.flags = 0;
-
-	VK_Objects::RenderAttachment renderpassResolveAttachment;
-	renderpassResolveAttachment.description.format = format;
-	renderpassResolveAttachment.description.samples = VK_SAMPLE_COUNT_1_BIT;
-	renderpassResolveAttachment.description.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	renderpassResolveAttachment.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	renderpassResolveAttachment.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	renderpassResolveAttachment.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	renderpassResolveAttachment.description.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	renderpassResolveAttachment.description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	renderpassResolveAttachment.description.flags = 0;
-
 
 	renderpassAttachment.reference.attachment = 0;
 	renderpassAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-
-	renderpassResolveAttachment.reference.attachment = 1;
-	renderpassResolveAttachment.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 
 	VK_Objects::Subpass subpass;
@@ -541,7 +544,6 @@ void Game::RenderpassManager::createSwapChainRenderPass(VkExtent2D extent)
 	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.description[0].colorAttachmentCount = 1;
 	subpass.description[0].pColorAttachments = &renderpassAttachment.reference;
-	subpass.description[0].pResolveAttachments = &renderpassResolveAttachment.reference;
 
 	subpass.dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
 	subpass.dependencies[0].dstSubpass = 0;
@@ -551,7 +553,6 @@ void Game::RenderpassManager::createSwapChainRenderPass(VkExtent2D extent)
 	subpass.dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 	renderpassProperties.attachments[0] = renderpassAttachment;
-	renderpassProperties.attachments[1] = renderpassResolveAttachment;
 
 	swapChainRenderpass->properties = renderpassProperties;
 	swapChainRenderpass->subpass = subpass;

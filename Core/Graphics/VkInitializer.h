@@ -460,6 +460,7 @@ namespace initializers {
 		VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo{};
 		pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		pipelineMultisampleStateCreateInfo.rasterizationSamples = rasterizationSamples;
+		pipelineMultisampleStateCreateInfo.minSampleShading = .2f;
 		pipelineMultisampleStateCreateInfo.flags = flags;
 		return pipelineMultisampleStateCreateInfo;
 	}

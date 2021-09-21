@@ -9,22 +9,22 @@ Engine::Material::Material(const VK_Objects::Device* _device, std::string _id, F
 	diffuseTextureResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	diffuseTextureResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
-	VK_Objects::ShaderResource metallicMapResource{};
-	metallicMapResource.binding = static_cast<uint32_t>(1);
-	metallicMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-	metallicMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+	VK_Objects::ShaderResource emissionMapResources{};
+	emissionMapResources.binding = static_cast<uint32_t>(1);
+	emissionMapResources.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	emissionMapResources.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
-	VK_Objects::ShaderResource roughnessMapResource{};
-	roughnessMapResource.binding = static_cast<uint32_t>(2);
-	roughnessMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-	roughnessMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+	VK_Objects::ShaderResource metRoughnessMapResource{};
+	metRoughnessMapResource.binding = static_cast<uint32_t>(2);
+	metRoughnessMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	metRoughnessMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
 	VK_Objects::ShaderResource normalMapResource{};
 	normalMapResource.binding = static_cast<uint32_t>(3);
 	normalMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	normalMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
-	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource, metallicMapResource, roughnessMapResource, normalMapResource };
+	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource, emissionMapResources, metRoughnessMapResource, normalMapResource };
 
 	//Create a descriptorsetLayout with all the materials textures
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayoutMaterial = std::make_shared<VK_Objects::DescriptorSetLayout>(device, resourceMaterial);
@@ -42,7 +42,7 @@ Engine::Material::Material(const VK_Objects::Device* _device, std::string _id, F
 	
 	//Create textures
 	images["DIFFUSE_TEXTURE"] =   std::make_unique<VK_Objects::Image>(device, texturePaths.diffuseMap.c_str() , VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
-	images["METALLIC_TEXTURE"] =  std::make_unique<VK_Objects::Image>(device, texturePaths.metallicMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
+	images["METALLIC_TEXTURE"] =  std::make_unique<VK_Objects::Image>(device, texturePaths.emissionMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
 	images["ROUGHNESS_TEXTURE"] = std::make_unique<VK_Objects::Image>(device, texturePaths.diffuseMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
 	images["NORMAL_TEXTURE"] =    std::make_unique<VK_Objects::Image>(device, texturePaths.normalMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM,  VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
 

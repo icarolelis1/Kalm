@@ -17,14 +17,15 @@ layout(set = 0, binding = 0) uniform UniformBuffLight{
 
 	mat4 invView;
 	mat4 invProj;
-    vec3 camera;
+    	vec3 camera;
 	LightUbo lights[1];
+	mat4 lightMatrix;	
 
 }lightUbo;
 
 const float PI = 3.14159265359;
 
-layout(set = 1,  binding = 0) uniform sampler2D shadowMapImage;
+layout(set = 1,  binding = 0) uniform sampler2D shadowMapImage ;
 layout(set = 1,  binding = 1) uniform samplerCube irradianceMap;
 layout(set = 1,  binding = 2) uniform samplerCube  prefilterMap;
 layout(set = 1,  binding = 3) uniform sampler2D brdfLUT;
@@ -33,6 +34,7 @@ layout (set = 1, binding = 4) uniform sampler2D depthMap;
 layout (set = 2, binding = 0) uniform sampler2D Albedo;
 layout (set = 2, binding = 1) uniform sampler2D MetallicRoughness;
 layout (set = 2, binding = 2) uniform sampler2D Normal;
+layout (set = 2, binding = 3) uniform sampler2D emissionMap ;
 
 
 
@@ -130,33 +132,27 @@ vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
     {
         vec3 projCoords = fragPosLightSpace.xyz / vec3(fragPosLightSpace.w);
 
-        projCoords = (projCoords * 0.5) + vec3(0.5);
+        projCoords = (projCoords * .5) + vec3(.5);
 
-        float closestDepth = (texture(depthMap, projCoords.xy).x * .5) + .5;
+        vec2 moments = (texture(shadowMapImage , projCoords.xy).xy*.5) + vec2(.5);
 
-        float currentDepth = projCoords.z;
+	     float currentDepth = projCoords.z;
 
-        float shadow = 0.0;
-        
-        vec2 texelSize = 1/textureSize(depthMap,0);
-        
-        for(int x = -2;x<=2;x++){
-            for(int y = -2;y<=2;y++){
-                float pcdepth = texture(depthMap,projCoords.xy + vec2(x,y) * texelSize).r * .5 + .5;
-                if(currentDepth +bias> pcdepth)shadow+=.1;
-                else{
-                    shadow+=1.;
-                }
-            
-            }
-        
-        }
+                if(currentDepth > moments.x){
+			
+			float variance = moments.y-(moments.x*moments.x);
+			variance = max(variance,0.00002);
+			float d = currentDepth - moments.x;
+			float p_max = variance/(variance+d*d);
 
-        return shadow/8.;
+		return p_max;
+}
+
+          
+
+        return 1;
        
 
-       // if(currentDepth > closestDepth  )return 0.1;
-       //return 1.;
     }
 
 vec3 uncharted2_tonemap_partial(vec3 x)
@@ -202,10 +198,10 @@ void main(){
     float roughness =  texture(MetallicRoughness,vec2(TexCoords.x,TexCoords.y)).g;   
 
     vec3 WorldPos = getPositionFromDepth(texture(depthMap,TexCoords).r); 
-    vec4 fragPosLight = (lightUbo.invView * lightUbo.invProj)* vec4(WorldPos,1.0) ;
+    vec4 fragPosLight = (lightUbo.lightMatrix)* vec4(WorldPos,1.0) ;
     vec3 L = normalize(lightUbo.lights[0].position - WorldPos);
 
-    float shadow = shadowCalculation(fragPosLight,0.04);
+    float shadow = shadowCalculation(fragPosLight,0.003);
 
     vec3 V = normalize(lightUbo.camera - WorldPos);
     vec3 R = reflect(V, N); 
@@ -234,7 +230,7 @@ void main(){
 
 	vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 	vec3 reflection = prefilteredReflection(R, roughness).rgb; 	
-	vec3 irradiance = texture(irradianceMap,N).rgb ;
+	vec3 irradiance = texture(irradianceMap,N*vec3(1,-1,1)).rgb ;
 
     vec3 diffuse = ( irradiance )* (albedo);
 
@@ -247,18 +243,17 @@ void main(){
 	kD *= 1.0 - metallic;
 
     vec3 ambient = (kD * diffuse  + specular ) ;
-    color = vec3(Lo+ambient)  ;
+    color = vec3(Lo*shadow  +ambient) +texture(emissionMap,TexCoords).rgb*10000 ;
 
 
-    Color = mix(vec4(irradiance*1000,1.0),vec4(color,1.0),w);
-
+    Color = mix(vec4(irradiance,1.0),vec4(color,1.0),w);  
 	
     float level =14.;
     if((0.2126*Color.r) + (0.7152*Color.g) + (0.0722*Color.b) > level)
     {
 
 	    float brightenRatio = 1.0 / max(max(color.r, color.g), color.b);
-	    Brightness = vec4(color*brightenRatio,1.);
+	    Brightness = vec4(color*brightenRatio,1.0)  ;
 
     } 
 
