@@ -230,7 +230,7 @@ void main(){
 
 	vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 	vec3 reflection = prefilteredReflection(R, roughness).rgb; 	
-	vec3 irradiance = texture(irradianceMap,N*vec3(1,-1,1)).rgb ;
+	vec3 irradiance = texture(irradianceMap,N*vec3(1,-1,1)).rgb*1.25 ;
 
     vec3 diffuse = ( irradiance )* (albedo);
 

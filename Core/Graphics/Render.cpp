@@ -56,8 +56,8 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 	createCommandPools();
 	addMeshes();
 	createScene();
-	createMaterials();
 	separateSceneObjects(mainSCene.sceneGraph.root);
+	createMaterials();
 	createDynamicUniformBuffers();
 	if(UI_RENDER)
 	createImGuiInterface();
@@ -100,9 +100,9 @@ void Render::createInstance()
 	auto layers = debuger.getValidationLayers();
 
 	std::cout << "Current layers \n";
-	for (auto layer : layers) {
+	/*for (auto layer : layers) {
 		std::cout << layer << std::endl;
-	}
+	}*/
 
 	if (DEBUG_) {
 
@@ -207,7 +207,7 @@ void Render::createRenderContexts()
 	//SKYBOX AND ENVIROMENT 
 
 	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Arches_E_PineTree\\Arches_E_PineTree_3k.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
 
 	VK_Objects::CubeMap envMAp(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
@@ -217,7 +217,7 @@ void Render::createRenderContexts()
 	Vk_Functions::generatBRDFLut(&device, brdfLut, *transferPool.get(), *graphicsPool.get(), poolManager);
 
 	VK_Objects::CubeMap irradianceMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Arches_E_PineTree\\Arches_E_PineTree_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 
 	
 	uint32_t n = swapChain.getNumberOfImages();
@@ -460,8 +460,6 @@ void Render::createRenderContexts()
 
 				if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
 					currentTag = meshes[j]->getMaterialTag();
-
-
 
 					vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &materialManager[currentTag]->getDescriptorsetAtIndex(i), 0, NULL);
 				}
@@ -1297,23 +1295,18 @@ void Render::createDynamicUniformBuffers()
 
 void Render::createMaterials()
 {
-	Engine::FilesPath path;
-	path.diffuseMap = "Assets\\samus\\textures\\base_baseColor.png";
-	path.emissionMap = "Assets\\samus\\textures\\emission.png";
-	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
-	path.roughnessMap = "Assets\\samus\\textures\\base_baseColor-R.png";
-	path.metallicMap = "Assets\\samus\\textures\\base_baseColor-M.png";
-
-
-	materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 	
-	path.diffuseMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_albedo.png";
-	path.emissionMap = "Assets\\black.png";
-	path.normalMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_normal-dx.png"; 
-	path.metallicMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_metallic.png";
-	path.roughnessMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_roughness.png";
+	for (auto mesh : meshes) {
+		Engine::FilesPath files = mesh->getTextureFIles();
+		materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", files, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 
-	materialManager["MetallicTile"] = std::make_unique<Engine::Material>(&device, "MetallicTile", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	}
+
+
+	//materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	
+
+	//materialManager["MetallicTile"] = std::make_unique<Engine::Material>(&device, "MetallicTile", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 
 
 }
@@ -1341,23 +1334,23 @@ void Render::createScene()
 
 	main_camera->transform.setPosition(-.44, 1.351, -14.5);
 	
-	mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Tile1", "MetallicTile", "Assets\\tiles\\Flat-Ground\\tile1.glb", &device, transferPool.get()));
-	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "PlayerMesh", "Player", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
+	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "samus", "Player", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
+	//mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Tile1", "MetallicTile", "Assets\\tiles\\Flat-Ground\\tile1.glb", &device, transferPool.get()));
 
-	mesh1->transform.setPosition(glm::vec3(0,0,0));
+	/*mesh1->transform.setPosition(glm::vec3(0,0,0));
 	mesh1->transform.setScale(glm::vec3(5.0f));
-	mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);
+	mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);*/
 
 	Player->transform.setPosition(glm::vec3(0, .8, 0));
 	Player->transform.setScale(glm::vec3(1, 1, 1));
 	Player->transform.setRotation(-180, 90, 90);
 
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
-	std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
+	//std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
 	std::shared_ptr<Node> node2 = std::make_shared<Node>(Player);
 
 	sceneGraph.addNode(cameraNode);
-	sceneGraph.addNode(node1);
+	//sceneGraph.addNode(node1);
 	sceneGraph.addNode(node2);
 	mainSCene = std::move(scene);
 	mainSCene.sceneGraph.updateSceneGraph();

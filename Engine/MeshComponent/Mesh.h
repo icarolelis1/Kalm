@@ -2,6 +2,7 @@
 #include "Entity/Entity.h"
 #include "glm/vec3.hpp"
 #include "glm/vec2.hpp"
+#include <string>
 #include <Components/Component.h>
 #include <Graphics/VulkanFramework.h>
 #include <Importer.hpp>
@@ -12,6 +13,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <Graphics/GraphicsUtil/GraphicsUtility.h>
 #include "Utility/Transform.h"
+#include <Material/Material.h>
+#include <assimp/pbrmaterial.h>
 
 namespace Engine {
 
@@ -65,10 +68,13 @@ namespace Engine {
 
 		Tex_data getTexData();
 
+		Engine::FilesPath& getTextureFIles();
+
 		~Mesh();
 
 	private:
 		void loadMeshes();
+		void loadMaterial(aiMesh* aMesh);
 		void createVertexBuffer(VkCommandBuffer cmd);
 		void createIndexBuffer(VkCommandBuffer cmd);
 
@@ -86,9 +92,10 @@ namespace Engine {
 		std::vector<MeshPart> meshes;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t>indices;
-		
+		std::unique_ptr<Engine::Material> material;
 		std::shared_ptr<Engine::Entity> entity;
 		
+		Engine::FilesPath texture_paths;
 
 		bool updateTransformOnNextFrame = false;
 
