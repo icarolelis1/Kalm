@@ -17,8 +17,8 @@ layout(set = 0, binding = 0) uniform UniformBuffLight{
 
 	mat4 invView;
 	mat4 invProj;
-    	vec3 camera;
-	LightUbo lights[1];
+    vec3 camera;
+	LightUbo lights[3];
 	mat4 lightMatrix;	
 
 }lightUbo;
@@ -46,7 +46,7 @@ vec3 getPositionFromDepth(float  inDepth){
     vec4 worldSpace = ( lightUbo.invView * lightUbo.invProj) * clipSpace;
     worldSpace /= worldSpace.w;
 
-	return worldSpace.xyz;
+return worldSpace.xyz;
 
 }
 
@@ -105,11 +105,10 @@ vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
 
 
     float distance = distance(WorldPos,lightUbo.lights[ind].position);
-   
+    if(lightUbo.lights[ind].type ==1.0)
+        factor = 1.0/(distance*distance*.0002);
     
- 
-
-	vec3 lightColor = lightUbo.lights[ind].lightColor*1.6f ;
+	vec3 lightColor = lightUbo.lights[ind].lightColor *factor;
 
 	vec3 color = vec3(0);
 
@@ -186,8 +185,6 @@ vec3 uncharted2_filmic(vec3 v)
 void main(){
 
     
-
-
     vec3 albedo = texture(Albedo,vec2(TexCoords.x,TexCoords.y)).xyz ;
     float w = texture(Albedo,vec2(TexCoords)).w;
     vec3 color  =vec3(0.);
@@ -201,7 +198,7 @@ void main(){
     vec4 fragPosLight = (lightUbo.lightMatrix)* vec4(WorldPos,1.0) ;
     vec3 L = normalize(lightUbo.lights[0].position - WorldPos);
 
-    float shadow = shadowCalculation(fragPosLight,0.003);
+    float shadow = shadowCalculation(fragPosLight,0.00003);
 
     vec3 V = normalize(lightUbo.camera - WorldPos);
     vec3 R = reflect(V, N); 
@@ -216,7 +213,7 @@ void main(){
 
 
 
-    for(int i = 0; i < 1; ++i) 
+    for(int i = 0; i < 3; ++i) 
 
         {
 
@@ -246,7 +243,7 @@ void main(){
     color = vec3(Lo*shadow  +ambient) +texture(emissionMap,TexCoords).rgb*10000 ;
 
 
-    Color = mix(vec4(irradiance,1.0),vec4(color,1.0),w);  
+    Color = mix(vec4(vec3(0),1.0),vec4(color,1.0),w);  
 	
     float level =14.;
     if((0.2126*Color.r) + (0.7152*Color.g) + (0.0722*Color.b) > level)

@@ -59,7 +59,7 @@
             "emissiveTexture" : {
                 "index" : 0
             },
-            "name" : "base.001",
+            "name" : "samus_material",
             "normalTexture" : {
                 "index" : 1,
                 "scale" : 0.2813980281352997
@@ -93,14 +93,6 @@
                     },
                     "indices" : 3,
                     "material" : 0
-                },
-                {
-                    "attributes" : {
-                        "POSITION" : 4,
-                        "NORMAL" : 5,
-                        "TEXCOORD_0" : 6
-                    },
-                    "indices" : 7
                 }
             ]
         }
@@ -149,7 +141,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 50297,
+            "count" : 51604,
             "max" : [
                 1.596019983291626,
                 0.5762500166893005,
@@ -165,96 +157,42 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 50297,
+            "count" : 51604,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 50297,
+            "count" : 51604,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 201228,
-            "type" : "SCALAR"
-        },
-        {
-            "bufferView" : 4,
-            "componentType" : 5126,
-            "count" : 1307,
-            "max" : [
-                1.42917001247406,
-                0.5153999924659729,
-                4.5064802169799805
-            ],
-            "min" : [
-                -1.71983003616333,
-                -0.504610002040863,
-                1.3695000410079956
-            ],
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 5,
-            "componentType" : 5126,
-            "count" : 1307,
-            "type" : "VEC3"
-        },
-        {
-            "bufferView" : 6,
-            "componentType" : 5126,
-            "count" : 1307,
-            "type" : "VEC2"
-        },
-        {
-            "bufferView" : 7,
-            "componentType" : 5123,
-            "count" : 3102,
+            "count" : 204330,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 603564,
+            "byteLength" : 619248,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 603564,
-            "byteOffset" : 603564
+            "byteLength" : 619248,
+            "byteOffset" : 619248
         },
         {
             "buffer" : 0,
-            "byteLength" : 402376,
-            "byteOffset" : 1207128
+            "byteLength" : 412832,
+            "byteOffset" : 1238496
         },
         {
             "buffer" : 0,
-            "byteLength" : 402456,
-            "byteOffset" : 1609504
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 15684,
-            "byteOffset" : 2011960
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 15684,
-            "byteOffset" : 2027644
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 10456,
-            "byteOffset" : 2043328
-        },
-        {
-            "buffer" : 0,
-            "byteLength" : 6204,
-            "byteOffset" : 2053784
+            "byteLength" : 408660,
+            "byteOffset" : 1651328
         }
     ],
     "samplers" : [

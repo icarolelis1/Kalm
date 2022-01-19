@@ -103,7 +103,7 @@ void SceneGraph::saveState(std::shared_ptr<Node> node, std::fstream& saveFile)
 void SceneGraph::updateTransforms(std::shared_ptr<Node> node)
 {
 	if(node->parent)
-	node->entity->transform.updateModelMatrix(node->parent->entity->transform);
+		node->entity->transform.updateModelMatrix(node->parent->entity->transform);
 
 	else {
 		node->entity->transform.updateModelMatrix();

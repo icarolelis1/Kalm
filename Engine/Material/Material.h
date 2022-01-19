@@ -3,13 +3,11 @@
 #include <Graphics/Image/Image.h>
 namespace Engine {
 
-	class MaterialManager {
-
-
-	};
 
 	struct FilesPath {
 
+		int index;
+		std::string name;
 		std::string diffuseMap;
 		std::string emissionMap;
 		std::string metallicMap;

@@ -97,8 +97,8 @@ namespace Engine {
 		std::shared_ptr<Engine::Component> getComponent(Engine::COMPONENT_TYPE componentType);
 
 		Engine::ComponentContainerInstance getAllComponents();
-		void buildUiRepresentation();
-		void logComponents();
+		virtual void buildUiRepresentation();
+		virtual void logComponents();
 
 		Transform transform;
 

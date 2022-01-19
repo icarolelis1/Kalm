@@ -142,6 +142,9 @@
     <Filter Include="Arquivos de Recurso\Engine\Collisor\sphereCollisor">
       <UniqueIdentifier>{a4741e4f-6b44-481a-a2f7-5d9ce24659df}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Arquivos de Recurso\Engine\Light">
+      <UniqueIdentifier>{3c0edad2-9384-426b-9287-83bf8c449dfe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Graphics\Render.cpp">
@@ -263,6 +266,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Collisor\sphere\SphereCollisor.cpp">
       <Filter>Arquivos de Recurso\Engine\Collisor\sphereCollisor</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Light\Light.cpp">
+      <Filter>Arquivos de Recurso\Engine\Light</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -403,6 +409,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Collisor\sphere\SphereCollisor.h">
       <Filter>Arquivos de Recurso\Engine\Collisor\sphereCollisor</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Light\Light.h">
+      <Filter>Arquivos de Recurso\Engine\Light</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

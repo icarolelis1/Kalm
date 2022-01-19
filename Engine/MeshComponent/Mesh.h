@@ -16,6 +16,10 @@
 #include <Material/Material.h>
 #include <assimp/pbrmaterial.h>
 
+using PipelineManager = std::unordered_map<const char*, std::unique_ptr<VK_Objects::Pipeline>>;
+
+using MaterialManager = std::unordered_map<std::string, std::unique_ptr<Engine::Material>>;
+
 namespace Engine {
 
 	struct MeshPart {
@@ -48,7 +52,9 @@ namespace Engine {
 		
 		void update(float timeStep);
 
-		void draw(VkCommandBuffer &cmd);
+		void draw(VkCommandBuffer& cmd, PipelineManager& pipeline_manager, MaterialManager& materialmanager );
+
+		void draw(VkCommandBuffer& cmd);
 
 		bool shouldUpdateOnThisFrame();
 
@@ -68,7 +74,7 @@ namespace Engine {
 
 		Tex_data getTexData();
 
-		Engine::FilesPath& getTextureFIles();
+		std::vector<Engine::FilesPath> getTextureFIles();
 
 		~Mesh();
 
@@ -95,10 +101,12 @@ namespace Engine {
 		std::unique_ptr<Engine::Material> material;
 		std::shared_ptr<Engine::Entity> entity;
 		
-		Engine::FilesPath texture_paths;
+		std::vector<Engine::FilesPath> texture_paths;
 
 		bool updateTransformOnNextFrame = false;
 
 		bool updateTransformOnEveryFrame = false;
+
+		int internalMeshesCount = 0;
 	};
 }	

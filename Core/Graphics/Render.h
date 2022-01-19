@@ -11,6 +11,7 @@
 #include <Graphics/GraphicsUtil/GraphicsUtility.h>
 #include <MeshComponent/Mesh.h>
 #include <cameraController/CameraController.h>
+#include <Light/Light.h>
 #include <ScriptManager/ScriptManager.h>
 #include <Graphics/RenderpassManager/RenderpassManager.h>
 #include <Graphics/FramebufferManager/FramebufferManagement.h>
@@ -28,9 +29,7 @@ constexpr bool UI_RENDER = true;
 
 using Meshes = std::vector<std::shared_ptr<Engine::Mesh>>;
 
-using PipelineManager = std::unordered_map<const char*, std::unique_ptr<VK_Objects::Pipeline>>;
 
-using MaterialManager = std::unordered_map<std::string, std::unique_ptr<Engine::Material>>; 
 
 struct VP {
 
@@ -55,7 +54,7 @@ struct LightUniform {
 	glm::mat4 invView;
 	glm::mat4 invProj;
 	alignas(16) glm::vec3 camera;
-	LightUbo light[1];
+	LightUbo lights[3];
 	glm::mat4 lightMatrix;
 };
 
@@ -74,7 +73,7 @@ public:
 	Render();
 	glm::vec2 nearFar = glm::vec2(.1f,103.f);
 	glm::vec4 ortho = glm::vec4(10,-10,-10,10);
-	float dist = 103;
+	float dist = 40;
 	void initiateResources(Utils::WindowHandler *windowHandler, uint32_t WIDTH, uint32_t HEIGHT);
 
 
@@ -156,6 +155,7 @@ private:
 	std::unique_ptr<Game::RenderpassManager> renderpass;
 	MaterialManager materialManager;
 
+	LightUniform lightUbo;
 
 	void updateSceneGraph();
 	void updateUniforms(uint32_t imageIndex);
@@ -163,6 +163,9 @@ private:
 	Game::Scene mainSCene;
 	glm::vec3 mainLightPos = glm::vec3(400);
 	LightUbo light1;
+	LightUbo light2;
+	LightUbo light3;
+
 
 	float lastFrameTIme = 0;
 	float frameTime;

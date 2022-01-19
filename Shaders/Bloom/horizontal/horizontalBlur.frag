@@ -79,10 +79,10 @@ void main() {
 	
 	vec3 col = c+texture(verticalBlur,texCoord).rgb;
     //outColor = vec4(col,1.0);
-	outColor = 
-        	   vec4(col,1.);
-
-/*brightnessMatrix( brightness ) *
+	outColor = vec4(col,1.0);
+    
+/*    	  
+brightnessMatrix( brightness ) *
         		contrastMatrix( contrast ) * 
         		saturationMatrix(saturation) */
 

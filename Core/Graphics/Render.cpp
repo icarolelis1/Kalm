@@ -24,6 +24,9 @@ void alignedFree(void* data)
 Render::Render()
 {
 	light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(-900, 1400, 0));
+	light2.color = glm::vec3(.5f,.2f,.2f);	light2.position = glm::vec3(glm::vec3(-15, 3, 9)); light2.type = 1.0;
+	light3.color = glm::vec3(.3f);	light2.position = glm::vec3(glm::vec3(5, 3, -3)); light3.type = 1.0;
+
 	nearFar = glm::vec2(.1f, 115.f);
 	dist = 115;
 
@@ -340,8 +343,8 @@ void Render::createRenderContexts()
 	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	//samplerInfo.anisotropyEnable = VK_TRUE;
-	//samplerInfo.maxAnisotropy = 4;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 4;
 	samplerInfo.maxLod = 10;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -461,7 +464,6 @@ void Render::createRenderContexts()
 				if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
 					currentTag = meshes[j]->getMaterialTag();
 
-					vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &materialManager[currentTag]->getDescriptorsetAtIndex(i), 0, NULL);
 				}
 
 
@@ -469,7 +471,7 @@ void Render::createRenderContexts()
 
 				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
 
-				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle());
+				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle(),pipelineManager,materialManager);
 			}
 
 		
@@ -679,14 +681,14 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 
 	VkViewport viewport = {};
 
-	viewport.width = static_cast<uint32_t>(2024);
-	viewport.height = static_cast<uint32_t>(2024);
+	viewport.width = static_cast<uint32_t>(1920);
+	viewport.height = static_cast<uint32_t>(1080);
 
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D rect = {};
-	rect.extent.width = static_cast<uint32_t>(2024);
-	rect.extent.height = static_cast<uint32_t>(2024);
+	rect.extent.width = static_cast<uint32_t>(1920);
+	rect.extent.height = static_cast<uint32_t>(1080);
 	rect.offset = { 0,0 };
 
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -1297,9 +1299,11 @@ void Render::createMaterials()
 {
 	
 	for (auto mesh : meshes) {
-		Engine::FilesPath files = mesh->getTextureFIles();
-		materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", files, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
-
+		std::vector<Engine::FilesPath> files = mesh->getTextureFIles();
+		for (auto mat : files) {
+			if(materialManager.find(mat.name) == materialManager.end())
+				materialManager[mat.name] = std::make_unique<Engine::Material>(&device, mat.name, files[mat.index], poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+		}
 	}
 
 
@@ -1316,11 +1320,15 @@ void Render::createScene()
 	Game::Scene scene;
 	SceneGraph& sceneGraph = scene.sceneGraph;
 
+	std::shared_ptr<Engine::Entity>  sun = std::make_shared<Engine::Light>("Sun");
+
 	sceneGraph.root->entity->transform.setScale(glm::vec3(.7, 1., .7));
 
 	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Tile1");
 
-	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("Player");
+	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("samus");
+
+	std::shared_ptr<Engine::Entity> Floor = std::make_shared<Engine::Entity>("floor");
 
 	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
 
@@ -1334,27 +1342,29 @@ void Render::createScene()
 
 	main_camera->transform.setPosition(-.44, 1.351, -14.5);
 	
-	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "samus", "Player", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
-	//mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Tile1", "MetallicTile", "Assets\\tiles\\Flat-Ground\\tile1.glb", &device, transferPool.get()));
-
-	/*mesh1->transform.setPosition(glm::vec3(0,0,0));
-	mesh1->transform.setScale(glm::vec3(5.0f));
-	mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);*/
+	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "samus", "samus", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
 
 	Player->transform.setPosition(glm::vec3(0, .8, 0));
 	Player->transform.setScale(glm::vec3(1, 1, 1));
 	Player->transform.setRotation(-180, 90, 90);
 
+	Floor->attachComponent(std::make_shared<Engine::Mesh>(Floor, "floor", "floor", "Assets\\floor\\floor.gltf", &device, transferPool.get()));
+
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
-	//std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
+
 	std::shared_ptr<Node> node2 = std::make_shared<Node>(Player);
 
+	std::shared_ptr<Node> node3 = std::make_shared<Node>(sun);
+
+	std::shared_ptr<Node> node1 = std::make_shared<Node>(Floor);
+
 	sceneGraph.addNode(cameraNode);
-	//sceneGraph.addNode(node1);
+	sceneGraph.addNode(node1);
+	sceneGraph.addNode(node3);
 	sceneGraph.addNode(node2);
+
 	mainSCene = std::move(scene);
 	mainSCene.sceneGraph.updateSceneGraph();
-
 
 }
 
@@ -1476,19 +1486,18 @@ void Render::renderUI(uint32_t imageIndex)
 
 	if (ImGui::BeginTabBar("Inspector", tab_bar_flags))
 	{
-		if (ImGui::BeginTabItem("Scene Graph"))
-		{
-			glm::vec3 p = light1.position;
-			ImGui::InputFloat3("Position", (float*)glm::value_ptr(p));
-			ImGui::InputFloat3("Color", (float*)glm::value_ptr(light1.color));
-			ImGui::InputFloat4("Ortho", (float*)glm::value_ptr(ortho));
+			if (ImGui::BeginTabItem("Scene Graph"))
+			{
+				ImGui::InputFloat3("Position", (float*)glm::value_ptr(light1.position));
+				ImGui::InputFloat3("Color", (float*)glm::value_ptr(light1.color));
+				ImGui::InputFloat4("Ortho", (float*)glm::value_ptr(ortho));
 
-			light1.position = p;
-			ImGui::InputFloat("Dist", &dist);
-			ImGui::InputFloat2("Nearfar", (float*)glm::value_ptr(nearFar));
+				ImGui::InputFloat("Dist", &dist);
+				ImGui::InputFloat2("Nearfar", (float*)glm::value_ptr(nearFar));
 
-			mainSCene.sceneGraph.buildUI(mainSCene.sceneGraph.root);
-			ImGui::EndTabItem();
+				mainSCene.sceneGraph.buildUI(mainSCene.sceneGraph.root);
+				ImGui::EndTabItem();
+			
 		}
 		if (ImGui::BeginTabItem("Scene Settings"))
 		{
@@ -1558,7 +1567,6 @@ void Render::updateUniforms(uint32_t imageIndex)
 
 	viewProjectionBuffers[imageIndex]->udpate(t);
 
-	LightUniform lightUbo;
 
 	lightUbo.invProj = glm::inverse(main_camera->getProjectionMatrix());
 
@@ -1566,7 +1574,9 @@ void Render::updateUniforms(uint32_t imageIndex)
 	lightUbo.camera = main_camera->transform.getPosition();
 	lightUbo.invView = glm::inverse(main_camera->getViewMatrix());
 	//mainLight = light1;
-	lightUbo.light[0] = light1;
+	lightUbo.lights[0] = light1;
+	lightUbo.lights[1] = light2;
+	lightUbo.lights[2] = light3;
 
 
 	glm::vec3 lightDireciton = glm::normalize(light1.position);

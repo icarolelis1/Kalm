@@ -10,6 +10,7 @@ Engine::Mesh::Mesh(std::shared_ptr<Engine::Entity> _entity, const char* id, cons
 		std::cout << "error assimp : " << importer.GetErrorString() << std::endl;
 		return;
 	}
+	texture_paths.resize(scene->mNumMaterials);
 
 	loadMeshes();
 
@@ -20,6 +21,7 @@ Engine::Mesh::Mesh(std::shared_ptr<Engine::Entity> _entity, const char* id, cons
 	cmd = pool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY)->getCommandBufferHandle();
 	createIndexBuffer(cmd);	
 	vkFreeCommandBuffers(device->getLogicalDevice(), pool->getPoolHanndle(), 1, &cmd);
+
 
 }
 
@@ -35,6 +37,23 @@ void Engine::Mesh::update(float timeStep)
 {
 }
 
+void Engine::Mesh::draw(VkCommandBuffer& cmd, PipelineManager& pipeline_manager, MaterialManager& material_manager)
+{
+
+	VkDeviceSize offsets[1] = { 0 };
+	vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->getBufferHandle(), offsets);
+	vkCmdBindIndexBuffer(cmd, indexBuffer->getBufferHandle(), 0, VK_INDEX_TYPE_UINT32);
+
+	for (uint32_t i = 0; i < meshes.size(); i++) {
+		//bind invidivual material
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_manager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &material_manager[texture_paths[i].name]->getDescriptorsetAtIndex(i), 0, NULL);
+
+		vkCmdDrawIndexed(cmd, meshes[i].indexCount, 1, static_cast<uint32_t>(meshes[i].indexBase), meshes[i].vertexOffset, 0);
+
+	}
+
+}
+
 void Engine::Mesh::draw(VkCommandBuffer& cmd)
 {
 
@@ -43,7 +62,7 @@ void Engine::Mesh::draw(VkCommandBuffer& cmd)
 	vkCmdBindIndexBuffer(cmd, indexBuffer->getBufferHandle(), 0, VK_INDEX_TYPE_UINT32);
 
 	for (uint32_t i = 0; i < meshes.size(); i++) {
-
+		//bind invidivual material
 		vkCmdDrawIndexed(cmd, meshes[i].indexCount, 1, static_cast<uint32_t>(meshes[i].indexBase), meshes[i].vertexOffset, 0);
 
 	}
@@ -81,7 +100,7 @@ Engine::Tex_data Engine::Mesh::getTexData()
 	return tex_data;
 }
 
-Engine::FilesPath& Engine::Mesh::getTextureFIles()
+std::vector<Engine::FilesPath> Engine::Mesh::getTextureFIles()
 {
 	return texture_paths;
 }
@@ -119,7 +138,7 @@ void Engine::Mesh::loadMeshes()
 
 	for (unsigned int i = 0; i < meshes.size(); i++) {
 		aiMesh* aMesh = scene->mMeshes[i];
-		if(i==0)
+	
 			loadMaterial(aMesh);
 
 		meshes[i].indexBase = indexBase;
@@ -155,38 +174,34 @@ void Engine::Mesh::loadMeshes()
 
 void Engine::Mesh::loadMaterial(aiMesh *aMesh)
 {
-	std::cout << "Mesh --------------------\n";
-
-	aiString fileBaseColor, fileMetallicRoughness, emisisonMap, normalMap;
 	aiMaterial* material = scene->mMaterials[aMesh->mMaterialIndex];
+	aiString fileBaseColor, fileMetallicRoughness, emisisonMap, normalMap, name;
+	material->Get(AI_MATKEY_NAME, name);
+
+
 	material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
 	material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
 	material->GetTexture(aiTextureType_NORMALS,0, &normalMap);
 	material->GetTexture(aiTextureType_EMISSIVE,0, &emisisonMap);
 
-	std::cout << "BaseColor " << fileBaseColor.C_Str() << std::endl;
-	std::cout <<"MetallicRough "<< fileMetallicRoughness.C_Str() << std::endl;
-	std::cout << "Emission "<<emisisonMap.C_Str() << std::endl;
-	std::cout <<"Normal "<< normalMap.C_Str() << std::endl;
-
-	//path.diffuseMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_albedo.png";
-	//path.emissionMap = "Assets\\black.png";
-	//path.normalMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_normal-dx.png";
-	//path.metallicMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_metallic.png";
-	//path.roughnessMap = "Assets\\tiles\\Flat-Ground\\armor-plating1_roughness.png";
+	texture_paths[aMesh->mMaterialIndex].name = name.C_Str();
 
 
+	texture_paths[aMesh->mMaterialIndex].diffuseMap = "Assets\\" +id +"\\" + std::string(fileBaseColor.C_Str());
+	texture_paths[aMesh->mMaterialIndex].emissionMap = "Assets\\" +id+ "\\" + std::string(emisisonMap.C_Str());
+	texture_paths[aMesh->mMaterialIndex].metallicMap = "Assets\\"+id +"\\" + std::string(fileMetallicRoughness.C_Str());
+	texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets\\"+id+"\\" + std::string(fileMetallicRoughness.C_Str());
+	texture_paths[aMesh->mMaterialIndex].normalMap = "Assets\\"+id+"\\" + std::string(normalMap.C_Str());
+	texture_paths[aMesh->mMaterialIndex].index = aMesh->mMaterialIndex;
 
-	texture_paths.diffuseMap = "Assets\\" +id +"\\" + std::string(fileBaseColor.C_Str());
-	texture_paths.emissionMap = "Assets\\" +id+ "\\" + std::string(emisisonMap.C_Str());
-	texture_paths.metallicMap = "Assets\\"+id +"\\" + std::string(fileMetallicRoughness.C_Str());
-	texture_paths.roughnessMap = "Assets\\"+id+"\\" + std::string(fileMetallicRoughness.C_Str());
-	texture_paths.normalMap = "Assets\\"+id+"\\" + std::string(normalMap.C_Str());
+	if (fileBaseColor.length== 0)texture_paths[aMesh->mMaterialIndex].diffuseMap = "Assets//common/black.png";
+	if (emisisonMap.length ==0)texture_paths[aMesh->mMaterialIndex].emissionMap = "Assets//common/black.png";
+	if (fileMetallicRoughness.length ==0)texture_paths[aMesh->mMaterialIndex].metallicMap = "Assets//common/black.png";
+	if (fileMetallicRoughness.length ==0)texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets//common/black.png";
+	if (normalMap.length==0)texture_paths[aMesh->mMaterialIndex].normalMap = "Assets//common/black.png";
 
 
 }
-
-
 
 void Engine::Mesh::createVertexBuffer(VkCommandBuffer cmd)
 {
