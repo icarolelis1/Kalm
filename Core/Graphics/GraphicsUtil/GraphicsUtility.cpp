@@ -65,10 +65,10 @@ void Vk_Functions::createSampler(const VK_Objects::Device* device,VkSampler &sam
 	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	//samplerInfo.anisotropyEnable = VK_TRUE;
-	//samplerInfo.maxAnisotropy = 4;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 10;
 	samplerInfo.maxLod = 10;
-	samplerInfo.minLod = 1;
+	samplerInfo.minLod = 0;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;	

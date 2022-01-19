@@ -23,7 +23,10 @@ void alignedFree(void* data)
 
 Render::Render()
 {
-	light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(900, 1400, -1200));
+	light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(-900, 1400, 0));
+	light2.color = glm::vec3(.5f,.2f,.2f);	light2.position = glm::vec3(glm::vec3(-15, 3, 9)); light2.type = 1.0;
+	light3.color = glm::vec3(.3f);	light2.position = glm::vec3(glm::vec3(5, 3, -3)); light3.type = 1.0;
+
 	nearFar = glm::vec2(.1f, 115.f);
 	dist = 115;
 
@@ -56,8 +59,8 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 	createCommandPools();
 	addMeshes();
 	createScene();
-	createMaterials();
 	separateSceneObjects(mainSCene.sceneGraph.root);
+	createMaterials();
 	createDynamicUniformBuffers();
 	if(UI_RENDER)
 	createImGuiInterface();
@@ -100,9 +103,9 @@ void Render::createInstance()
 	auto layers = debuger.getValidationLayers();
 
 	std::cout << "Current layers \n";
-	for (auto layer : layers) {
+	/*for (auto layer : layers) {
 		std::cout << layer << std::endl;
-	}
+	}*/
 
 	if (DEBUG_) {
 
@@ -207,7 +210,7 @@ void Render::createRenderContexts()
 	//SKYBOX AND ENVIROMENT 
 
 	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Arches_E_PineTree\\Arches_E_PineTree_3k.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
 
 	VK_Objects::CubeMap envMAp(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
@@ -217,7 +220,7 @@ void Render::createRenderContexts()
 	Vk_Functions::generatBRDFLut(&device, brdfLut, *transferPool.get(), *graphicsPool.get(), poolManager);
 
 	VK_Objects::CubeMap irradianceMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Arches_E_PineTree\\Arches_E_PineTree_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
 
 	
 	uint32_t n = swapChain.getNumberOfImages();
@@ -340,8 +343,8 @@ void Render::createRenderContexts()
 	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	//samplerInfo.anisotropyEnable = VK_TRUE;
-	//samplerInfo.maxAnisotropy = 4;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 4;
 	samplerInfo.maxLod = 10;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -461,9 +464,6 @@ void Render::createRenderContexts()
 				if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
 					currentTag = meshes[j]->getMaterialTag();
 
-
-
-					vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &materialManager[currentTag]->getDescriptorsetAtIndex(i), 0, NULL);
 				}
 
 
@@ -471,7 +471,7 @@ void Render::createRenderContexts()
 
 				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
 
-				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle());
+				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle(),pipelineManager,materialManager);
 			}
 
 		
@@ -681,14 +681,14 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 
 	VkViewport viewport = {};
 
-	viewport.width = static_cast<uint32_t>(2024);
-	viewport.height = static_cast<uint32_t>(2024);
+	viewport.width = static_cast<uint32_t>(1920);
+	viewport.height = static_cast<uint32_t>(1080);
 
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D rect = {};
-	rect.extent.width = static_cast<uint32_t>(2024);
-	rect.extent.height = static_cast<uint32_t>(2024);
+	rect.extent.width = static_cast<uint32_t>(1920);
+	rect.extent.height = static_cast<uint32_t>(1080);
 	rect.offset = { 0,0 };
 
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -794,18 +794,24 @@ void Render::createPipeline()
 	diffuseTextureResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	diffuseTextureResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
-	VK_Objects::ShaderResource metallicMapResource{};
-	metallicMapResource.binding = static_cast<uint32_t>(1);
-	metallicMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-	metallicMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+	VK_Objects::ShaderResource emissionMapResource{};
+	emissionMapResource.binding = static_cast<uint32_t>(1);
+	emissionMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	emissionMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
 	VK_Objects::ShaderResource roughnessMapResource{};
 	roughnessMapResource.binding = static_cast<uint32_t>(2);
 	roughnessMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	roughnessMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
+
+	VK_Objects::ShaderResource metallicMapResource{};
+	metallicMapResource.binding = static_cast<uint32_t>(3);
+	metallicMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+	metallicMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
 	VK_Objects::ShaderResource normalMapResource{};
-	normalMapResource.binding = static_cast<uint32_t>(3);
+	normalMapResource.binding = static_cast<uint32_t>(4);
 	normalMapResource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 	normalMapResource.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
 
@@ -823,7 +829,7 @@ void Render::createPipeline()
 
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resources);
 
-	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource, metallicMapResource, roughnessMapResource, normalMapResource };
+	std::vector<VK_Objects::ShaderResource> resourceMaterial = { diffuseTextureResource,emissionMapResource, metallicMapResource, roughnessMapResource, normalMapResource };
 
 	std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayoutMaterial = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resourceMaterial);
 
@@ -1291,20 +1297,20 @@ void Render::createDynamicUniformBuffers()
 
 void Render::createMaterials()
 {
-	Engine::FilesPath path;
-	path.diffuseMap = "Assets\\samus\\textures\\base_baseColor.png";
-	path.emissionMap = "Assets\\samus\\textures\\emission.png";
-	path.normalMap = "Assets\\samus\\textures\\base_normal.png";
-	path.roughnessMap = "Assets\\samus\\textures\\base_metallicRoughness.png";
 	
-	materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	for (auto mesh : meshes) {
+		std::vector<Engine::FilesPath> files = mesh->getTextureFIles();
+		for (auto mat : files) {
+			if(materialManager.find(mat.name) == materialManager.end())
+				materialManager[mat.name] = std::make_unique<Engine::Material>(&device, mat.name, files[mat.index], poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+		}
+	}
+
+
+	//materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 	
-	//path.diffuseMap = "Assets\\Rock\\textures\\Rock09_2K_BaseColor.png";
-	//path.emissionMap = "Assets\\black.png";
-	//path.normalMap = "Assets\\Rock\\textures\\Rock09_2K_Normal.png"; 
-	//path.roughnessMap = "Assets\\Rock\\textures\\Rock09_2K_Roughness.png";
-	//
-	//materialManager["CobbleStone"] = std::make_unique<Engine::Material>(&device, "CobbleStone", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+
+	//materialManager["MetallicTile"] = std::make_unique<Engine::Material>(&device, "MetallicTile", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 
 
 }
@@ -1314,11 +1320,15 @@ void Render::createScene()
 	Game::Scene scene;
 	SceneGraph& sceneGraph = scene.sceneGraph;
 
+	std::shared_ptr<Engine::Entity>  sun = std::make_shared<Engine::Light>("Sun");
+
 	sceneGraph.root->entity->transform.setScale(glm::vec3(.7, 1., .7));
 
-	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Scene");
+	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Tile1");
 
-	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("Player");
+	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("samus");
+
+	std::shared_ptr<Engine::Entity> Floor = std::make_shared<Engine::Entity>("floor");
 
 	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
 
@@ -1332,27 +1342,29 @@ void Render::createScene()
 
 	main_camera->transform.setPosition(-.44, 1.351, -14.5);
 	
-	//mesh1->attachComponent(std::make_shared<Engine::Mesh>(mesh1, "Scenario",     "CobbleStone", "Assets\\samus\\scene.glb", &device, transferPool.get()));
-	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "PlayerMesh", "Player", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
-
-	//mesh1->transform.setPosition(glm::vec3(0,-.8,0));
-	//mesh1->transform.setScale(glm::vec3(1.0f));
-	//mesh1->transform.rotate(glm::vec3(0, 1, 0),90.0);
+	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "samus", "samus", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
 
 	Player->transform.setPosition(glm::vec3(0, .8, 0));
 	Player->transform.setScale(glm::vec3(1, 1, 1));
-	Player->transform.setRotation(-90, 0, 0);
+	Player->transform.setRotation(-180, 90, 90);
+
+	Floor->attachComponent(std::make_shared<Engine::Mesh>(Floor, "floor", "floor", "Assets\\floor\\floor.gltf", &device, transferPool.get()));
 
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
-	std::shared_ptr<Node> node1 = std::make_shared<Node>(mesh1);
+
 	std::shared_ptr<Node> node2 = std::make_shared<Node>(Player);
 
+	std::shared_ptr<Node> node3 = std::make_shared<Node>(sun);
+
+	std::shared_ptr<Node> node1 = std::make_shared<Node>(Floor);
+
 	sceneGraph.addNode(cameraNode);
-	//'sceneGraph.addNode(node1);
+	sceneGraph.addNode(node1);
+	sceneGraph.addNode(node3);
 	sceneGraph.addNode(node2);
+
 	mainSCene = std::move(scene);
 	mainSCene.sceneGraph.updateSceneGraph();
-
 
 }
 
@@ -1474,19 +1486,18 @@ void Render::renderUI(uint32_t imageIndex)
 
 	if (ImGui::BeginTabBar("Inspector", tab_bar_flags))
 	{
-		if (ImGui::BeginTabItem("Scene Graph"))
-		{
-			glm::vec3 p = light1.position;
-			ImGui::InputFloat3("Position", (float*)glm::value_ptr(p));
-			ImGui::InputFloat3("Color", (float*)glm::value_ptr(light1.color));
-			ImGui::InputFloat4("Ortho", (float*)glm::value_ptr(ortho));
+			if (ImGui::BeginTabItem("Scene Graph"))
+			{
+				ImGui::InputFloat3("Position", (float*)glm::value_ptr(light1.position));
+				ImGui::InputFloat3("Color", (float*)glm::value_ptr(light1.color));
+				ImGui::InputFloat4("Ortho", (float*)glm::value_ptr(ortho));
 
-			light1.position = p;
-			ImGui::InputFloat("Dist", &dist);
-			ImGui::InputFloat2("Nearfar", (float*)glm::value_ptr(nearFar));
+				ImGui::InputFloat("Dist", &dist);
+				ImGui::InputFloat2("Nearfar", (float*)glm::value_ptr(nearFar));
 
-			mainSCene.sceneGraph.buildUI(mainSCene.sceneGraph.root);
-			ImGui::EndTabItem();
+				mainSCene.sceneGraph.buildUI(mainSCene.sceneGraph.root);
+				ImGui::EndTabItem();
+			
 		}
 		if (ImGui::BeginTabItem("Scene Settings"))
 		{
@@ -1556,7 +1567,6 @@ void Render::updateUniforms(uint32_t imageIndex)
 
 	viewProjectionBuffers[imageIndex]->udpate(t);
 
-	LightUniform lightUbo;
 
 	lightUbo.invProj = glm::inverse(main_camera->getProjectionMatrix());
 
@@ -1564,7 +1574,9 @@ void Render::updateUniforms(uint32_t imageIndex)
 	lightUbo.camera = main_camera->transform.getPosition();
 	lightUbo.invView = glm::inverse(main_camera->getViewMatrix());
 	//mainLight = light1;
-	lightUbo.light[0] = light1;
+	lightUbo.lights[0] = light1;
+	lightUbo.lights[1] = light2;
+	lightUbo.lights[2] = light3;
 
 
 	glm::vec3 lightDireciton = glm::normalize(light1.position);

@@ -9,8 +9,8 @@ Kalm::Kalm(const char* _name):name(_name)
 void Kalm::initiateResouces()
 {	
 	WindowProperties properties;
-	properties._HEIGHT = 	1000000000;
-	properties._WIDTH = 1000000000;
+	properties._HEIGHT = 	1080;
+	properties._WIDTH = 1920;
 	properties._title = "TEST";
 
 	//Initiate Window

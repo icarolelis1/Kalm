@@ -279,13 +279,8 @@ vec3 uncharted2_filmic (vec3 v)
 
 void main() {
 	
-vec3 textureColor = FXAA();
-//vec3 textureColorOffset = texture(mainImage,texCoord).rgb;
-
-//if(length(textureColor - textureColorOffset)>.1){
- //   textureColor = vec3(.0,0,0);
-//}
-
+//vec3 textureColor = FXAA();
+vec3 textureColor =  texture(mainImage  ,texCoord).rgb;
 textureColor = uncharted2_filmic(textureColor);
 textureColor = pow(textureColor, vec3(1./2.2));
 

@@ -41,7 +41,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -180,6 +180,7 @@
     <ClCompile Include="Engine\Components\Component.cpp" />
     <ClCompile Include="Engine\Entity\Entity.cpp" />
     <ClCompile Include="Engine\Input\Input.cpp" />
+    <ClCompile Include="Engine\Light\Light.cpp" />
     <ClCompile Include="Engine\Material\Material.cpp" />
     <ClCompile Include="Engine\MeshComponent\Mesh.cpp" />
     <ClCompile Include="Engine\SceneGraph\SceneGraph.cpp" />
@@ -230,6 +231,7 @@
     <ClInclude Include="Engine\Entity\Entity.h" />
     <ClInclude Include="Engine\Event\Event.h" />
     <ClInclude Include="Engine\Input\Input.h" />
+    <ClInclude Include="Engine\Light\Light.h" />
     <ClInclude Include="Engine\Material\Material.h" />
     <ClInclude Include="Engine\MeshComponent\Mesh.h" />
     <ClInclude Include="Engine\SceneGraph\SceneGraph.h" />

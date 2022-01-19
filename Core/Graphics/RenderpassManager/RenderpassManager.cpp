@@ -10,6 +10,9 @@ Game::RenderpassManager::RenderpassManager(const VK_Objects::Device* _device, VK
 
 void Game::RenderpassManager::createRenderpasses(VkExtent2D extent )
 {
+	VkExtent2D gBufferSRAA;
+	gBufferSRAA.width = extent.width * 4;
+	gBufferSRAA.height = extent.height * 4;
 	createShadowMapRenderpass(extent);
 	createGBufferRenderpass(extent);
 	createDeferredLightingRenderPass(extent);
