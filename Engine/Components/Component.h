@@ -11,7 +11,8 @@ namespace Engine {
 	{
 		SCRIPT,
 		COLLISOR,
-		MESH
+		MESH,
+		LIGHT
 	};
 
 	class Component {

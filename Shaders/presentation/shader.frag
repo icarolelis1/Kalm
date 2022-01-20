@@ -269,7 +269,7 @@ vec3 uncharted2_tonemap_partial(vec3 x)
 
 vec3 uncharted2_filmic (vec3 v)
 {
-    float exposure_bias =1.6;
+    float exposure_bias =2.1;
     vec3 curr = uncharted2_tonemap_partial(v * exposure_bias);
 
     vec3 W = vec3(11.2f);

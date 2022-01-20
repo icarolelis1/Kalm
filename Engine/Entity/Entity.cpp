@@ -87,5 +87,10 @@ void Engine::Entity::logComponents()
 	componentContainer.listComponents();
 }
 
+std::shared_ptr<Engine::Entity> Engine::Entity::getSharedPointer()
+{
+	return std::shared_ptr<Engine::Entity>(this);
+}
+
 
 

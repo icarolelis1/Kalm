@@ -8,8 +8,8 @@ struct LightUbo {
 
     vec3 lightColor;
 	vec3 position;
-	
-	float type;
+    vec3 typeFactor;
+
 
 };
 
@@ -20,6 +20,7 @@ layout(set = 0, binding = 0) uniform UniformBuffLight{
     vec3 camera;
 	LightUbo lights[3];
 	mat4 lightMatrix;	
+int num_lights;
 
 }lightUbo;
 
@@ -105,8 +106,8 @@ vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
 
 
     float distance = distance(WorldPos,lightUbo.lights[ind].position);
-    if(lightUbo.lights[ind].type ==1.0)
-        factor = 1.0/(distance*distance*.0002);
+    if(lightUbo.lights[ind].typeFactor.x ==1.0)
+        factor = 1.0/(distance*distance*lightUbo.lights[ind].typeFactor.y);
     
 	vec3 lightColor = lightUbo.lights[ind].lightColor *factor;
 
@@ -213,7 +214,7 @@ void main(){
 
 
 
-    for(int i = 0; i < 3; ++i) 
+    for(int i = 0; i < 1; ++i) 
 
         {
 
@@ -227,7 +228,7 @@ void main(){
 
 	vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 	vec3 reflection = prefilteredReflection(R, roughness).rgb; 	
-	vec3 irradiance = texture(irradianceMap,N*vec3(1,-1,1)).rgb*1.25 ;
+	vec3 irradiance = texture(irradianceMap,N*vec3(1,-1,1)).rgb ;
 
     vec3 diffuse = ( irradiance )* (albedo);
 
@@ -240,10 +241,10 @@ void main(){
 	kD *= 1.0 - metallic;
 
     vec3 ambient = (kD * diffuse  + specular ) ;
-    color = vec3(Lo*shadow  +ambient) +texture(emissionMap,TexCoords).rgb*10000 ;
+    color = vec3(Lo*shadow  +ambient) +texture(emissionMap,TexCoords).rgb*1000 ;
 
 
-    Color = mix(vec4(vec3(0),1.0),vec4(color,1.0),w);  
+    Color = mix(vec4(vec3(1),1.0),vec4(color,1.0),w);  
 	
     float level =14.;
     if((0.2126*Color.r) + (0.7152*Color.g) + (0.0722*Color.b) > level)

@@ -13,7 +13,7 @@ vec3 gaussianBlurVertical(){
 vec3 result = texture( brighImage  ,texCoord).rgb* weight[0];
 
      vec2 tex_offset = 1.0 / textureSize( brighImage  , 0); // gets size of single texel
-	 tex_offset*=4;
+	 tex_offset*=2;
 
 
 	for(int i=1;i<5;++i){

@@ -13,6 +13,7 @@ FramebufferManagement::FramebufferManagement( VK_Objects::Device * _device , VK_
 
 void FramebufferManagement::createAttachemnts(VkExtent2D extent)
 {
+
 	VkExtent2D gBufferSRAA;
 	gBufferSRAA.width = extent.width * 4;
 	gBufferSRAA.height = extent.height * 4;

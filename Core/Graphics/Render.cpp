@@ -23,9 +23,9 @@ void alignedFree(void* data)
 
 Render::Render()
 {
-	light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(-900, 1400, 0));
-	light2.color = glm::vec3(.5f,.2f,.2f);	light2.position = glm::vec3(glm::vec3(-15, 3, 9)); light2.type = 1.0;
-	light3.color = glm::vec3(.3f);	light2.position = glm::vec3(glm::vec3(5, 3, -3)); light3.type = 1.0;
+	//light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(-900, 1400, 0));
+	//light2.color = glm::vec3(.0f,.0f,.0f);	light2.position = glm::vec3(glm::vec3(-15, 3, 9)); light2.type = 1.0;
+	//light3.color = glm::vec3(.0f);	light2.position = glm::vec3(glm::vec3(5, 3, -3)); light3.type = 1.0;
 
 	nearFar = glm::vec2(.1f, 115.f);
 	dist = 115;
@@ -471,7 +471,7 @@ void Render::createRenderContexts()
 
 				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
 
-				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle(),pipelineManager,materialManager);
+				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle(),pipelineManager,materialManager,i);
 			}
 
 		
@@ -1389,6 +1389,14 @@ void Render::separateSceneObjects(std::shared_ptr<Node> node)
 
 		}
 
+		if ((e1)->getComponent(Engine::COMPONENT_TYPE::LIGHT)) {
+
+			std::shared_ptr<Engine::LightComponent> m = std::dynamic_pointer_cast<Engine::LightComponent>((e1)->getComponent(Engine::COMPONENT_TYPE::LIGHT));
+			lightContainer.push_back(m);
+
+		}
+
+
 		std::list<std::shared_ptr<Node>>::iterator it = node->childs.begin();
 
 
@@ -1488,8 +1496,7 @@ void Render::renderUI(uint32_t imageIndex)
 	{
 			if (ImGui::BeginTabItem("Scene Graph"))
 			{
-				ImGui::InputFloat3("Position", (float*)glm::value_ptr(light1.position));
-				ImGui::InputFloat3("Color", (float*)glm::value_ptr(light1.color));
+			
 				ImGui::InputFloat4("Ortho", (float*)glm::value_ptr(ortho));
 
 				ImGui::InputFloat("Dist", &dist);
@@ -1568,21 +1575,29 @@ void Render::updateUniforms(uint32_t imageIndex)
 	viewProjectionBuffers[imageIndex]->udpate(t);
 
 
-	lightUbo.invProj = glm::inverse(main_camera->getProjectionMatrix());
+	lightUniform.invProj = glm::inverse(main_camera->getProjectionMatrix());
 
 
-	lightUbo.camera = main_camera->transform.getPosition();
-	lightUbo.invView = glm::inverse(main_camera->getViewMatrix());
+	lightUniform.camera = main_camera->transform.getPosition();
+	lightUniform.invView = glm::inverse(main_camera->getViewMatrix());
 	//mainLight = light1;
-	lightUbo.lights[0] = light1;
-	lightUbo.lights[1] = light2;
-	lightUbo.lights[2] = light3;
+
+	uint32_t i = 0;
+	for (auto light : lightContainer) {
+		LightUbo l{};
+		l.color = light->getColor();
+		l.position = light->getPosition();
+		l.typeFactor = glm::vec3(light->getType(), light->getFactor(),.0);
+		lightUniform.lights[i] = l;
+		i++;
+	};
+	lightUniform.num_lights = i+1 ;
 
 
-	glm::vec3 lightDireciton = glm::normalize(light1.position);
+	glm::vec3 lightDireciton = glm::normalize(lightUniform.lights[0].position);
 
 	//glm::mat4 depthViewMatrix = lookAt(  (camera->eulerDir.front * camera->shadowDistance + lightDireciton* shadowMapPass.lightDistance) , camera->eulerDir.front *2.f , glm::vec3(0.0, -1.0, 0.0));
-	glm::mat4 depthViewMatrix = lookAt(normalize(light1.position)*dist , glm::vec3(0), glm::vec3(0.0, -1.0, 0.0));
+	glm::mat4 depthViewMatrix = lookAt(normalize(lightUniform.lights[0].position) * dist, glm::vec3(0), glm::vec3(0.0, -1.0, 0.0));
 
 	//std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix);
 
@@ -1590,12 +1605,12 @@ void Render::updateUniforms(uint32_t imageIndex)
 	glm::mat4 depthProjectionMatrix = glm::ortho(ortho.x, ortho.y, ortho.z, ortho.w, nearFar.x, nearFar.y);
 
 	glm::mat4 lightMatrix = depthProjectionMatrix * depthViewMatrix;
-	lightUbo.lightMatrix = lightMatrix;
+	lightUniform.lightMatrix = lightMatrix;
 
 	main_camera->setFarplane(nearFar.y);
 	main_camera->setNearPlane(nearFar.x);
 	
-	lightUniformBuffers[imageIndex]->udpate(lightUbo);
+	lightUniformBuffers[imageIndex]->udpate(lightUniform);
 
 	lightProjectionUniformBuffers[imageIndex]->udpate(lightMatrix);
 

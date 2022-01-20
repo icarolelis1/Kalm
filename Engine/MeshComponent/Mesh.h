@@ -52,7 +52,7 @@ namespace Engine {
 		
 		void update(float timeStep);
 
-		void draw(VkCommandBuffer& cmd, PipelineManager& pipeline_manager, MaterialManager& materialmanager );
+		void draw(VkCommandBuffer& cmd, PipelineManager& pipeline_manager, MaterialManager& materialmanager, uint32_t index);
 
 		void draw(VkCommandBuffer& cmd);
 

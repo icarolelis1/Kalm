@@ -28,6 +28,7 @@ constexpr bool DEBUG_ = true;
 constexpr bool UI_RENDER = true;
 
 using Meshes = std::vector<std::shared_ptr<Engine::Mesh>>;
+using LightContainer = std::vector<std::shared_ptr<Engine::LightComponent>>;
 
 
 
@@ -46,8 +47,7 @@ struct LightUbo {
 
 	alignas(16) glm::vec3 color;
 	alignas(16) glm::vec3 position;
-	float type;
-
+	alignas(16)	glm::vec3 typeFactor;
 };
 struct LightUniform {
 
@@ -56,6 +56,7 @@ struct LightUniform {
 	alignas(16) glm::vec3 camera;
 	LightUbo lights[3];
 	glm::mat4 lightMatrix;
+	int num_lights = 1;
 };
 
 class Render
@@ -155,17 +156,15 @@ private:
 	std::unique_ptr<Game::RenderpassManager> renderpass;
 	MaterialManager materialManager;
 
-	LightUniform lightUbo;
+	LightUniform lightUniform;
 
 	void updateSceneGraph();
 	void updateUniforms(uint32_t imageIndex);
 	void updateDynamicUniformBuffer(uint32_t imageIndex);
 	Game::Scene mainSCene;
 	glm::vec3 mainLightPos = glm::vec3(400);
-	LightUbo light1;
-	LightUbo light2;
-	LightUbo light3;
-
+	
+	LightContainer lightContainer;
 
 	float lastFrameTIme = 0;
 	float frameTime;

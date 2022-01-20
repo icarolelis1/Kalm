@@ -48,6 +48,7 @@ void SceneGraph::buildUI(std::shared_ptr<Node> node)
 		glm::vec3 scale = node->entity->transform.getScale();
 		glm::vec3 rotation = node->entity->transform.getRotation();
 
+		ImGui::Text("TRANSFORM");
 		ImGui::InputFloat3("Position", (float*)glm::value_ptr(position));
 		ImGui::InputFloat3("Rotation", (float*)glm::value_ptr(rotation));
 		ImGui::InputFloat3("Scale", (float*)glm::value_ptr(scale));

@@ -37,7 +37,7 @@ void Engine::Mesh::update(float timeStep)
 {
 }
 
-void Engine::Mesh::draw(VkCommandBuffer& cmd, PipelineManager& pipeline_manager, MaterialManager& material_manager)
+void Engine::Mesh::draw(VkCommandBuffer& cmd, PipelineManager& pipeline_manager, MaterialManager& material_manager,uint32_t index)
 {
 
 	VkDeviceSize offsets[1] = { 0 };
@@ -187,18 +187,23 @@ void Engine::Mesh::loadMaterial(aiMesh *aMesh)
 	texture_paths[aMesh->mMaterialIndex].name = name.C_Str();
 
 
+	if(fileBaseColor.length>0)
 	texture_paths[aMesh->mMaterialIndex].diffuseMap = "Assets\\" +id +"\\" + std::string(fileBaseColor.C_Str());
+	if(emisisonMap.length>0)
 	texture_paths[aMesh->mMaterialIndex].emissionMap = "Assets\\" +id+ "\\" + std::string(emisisonMap.C_Str());
+	if(fileMetallicRoughness.length>0)
 	texture_paths[aMesh->mMaterialIndex].metallicMap = "Assets\\"+id +"\\" + std::string(fileMetallicRoughness.C_Str());
+	if(fileMetallicRoughness.length>9)
 	texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets\\"+id+"\\" + std::string(fileMetallicRoughness.C_Str());
+	if(normalMap.length>0)
 	texture_paths[aMesh->mMaterialIndex].normalMap = "Assets\\"+id+"\\" + std::string(normalMap.C_Str());
 	texture_paths[aMesh->mMaterialIndex].index = aMesh->mMaterialIndex;
 
-	if (fileBaseColor.length== 0)texture_paths[aMesh->mMaterialIndex].diffuseMap = "Assets//common/black.png";
-	if (emisisonMap.length ==0)texture_paths[aMesh->mMaterialIndex].emissionMap = "Assets//common/black.png";
-	if (fileMetallicRoughness.length ==0)texture_paths[aMesh->mMaterialIndex].metallicMap = "Assets//common/black.png";
-	if (fileMetallicRoughness.length ==0)texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets//common/black.png";
-	if (normalMap.length==0)texture_paths[aMesh->mMaterialIndex].normalMap = "Assets//common/black.png";
+	if (fileBaseColor.length== 0)texture_paths[aMesh->mMaterialIndex].diffuseMap = "Assets//common//black.png";
+	if (emisisonMap.length ==0)texture_paths[aMesh->mMaterialIndex].emissionMap = "Assets//common//black.png";
+	if (fileMetallicRoughness.length ==0)texture_paths[aMesh->mMaterialIndex].metallicMap = "Assets//common//black.png";
+	if (fileMetallicRoughness.length ==0)texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets//common//black.png";
+	if (normalMap.length==0)texture_paths[aMesh->mMaterialIndex].normalMap = "Assets//common//black.png";
 
 
 }

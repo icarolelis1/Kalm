@@ -2,7 +2,7 @@
 #include <iostream>
 #include "Components/Component.h"
 #include "Utility/Transform.h"
-
+#include <memory>
 #include "imgui.h"
 namespace Engine {
 
@@ -82,9 +82,9 @@ namespace Engine {
 
 	};
 
-	class Entity {
-	public:
-		
+	class Entity :public std::enable_shared_from_this<Entity>
+	{
+	public: 
 		Entity(const char* _name);
 
 		virtual void start() ;
@@ -102,6 +102,7 @@ namespace Engine {
 
 		Transform transform;
 
+		std::shared_ptr<Entity> getSharedPointer();
 
 
 	protected:
