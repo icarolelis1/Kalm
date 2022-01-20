@@ -42,6 +42,11 @@ void Engine::Camera::setNearPlane(float t)
 	nearPlane = t;
 }
 
+float Engine::Camera::getFarPlane()
+{
+	return farPlane;
+}
+
 glm::vec3 Engine::Camera::getCenter()
 {
 	return center;
@@ -79,7 +84,7 @@ std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers()
 	fov = 45.0f;
 	float tan = glm::tan(glm::radians(fov / 2.));
 	float aspectRatio = 1924 / 1055;
-	float farPlane = this->farPlane;
+	float farPlane = this->transform.getPosition().y + 10.0f;
 	float heightNear = 2 * tan * nearPlane;
 	float widthNear = heightNear * aspectRatio;
 	float heightFar = 2 * tan * farPlane;

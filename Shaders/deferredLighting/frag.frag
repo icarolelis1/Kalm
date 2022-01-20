@@ -199,7 +199,7 @@ void main(){
     vec4 fragPosLight = (lightUbo.lightMatrix)* vec4(WorldPos,1.0) ;
     vec3 L = normalize(lightUbo.lights[0].position - WorldPos);
 
-    float shadow = shadowCalculation(fragPosLight,0.00003);
+    float shadow = shadowCalculation(fragPosLight,0.0000);
 
     vec3 V = normalize(lightUbo.camera - WorldPos);
     vec3 R = reflect(V, N); 
@@ -214,7 +214,7 @@ void main(){
 
 
 
-    for(int i = 0; i < 1; ++i) 
+    for(int i = 0; i < lightUbo.num_lights; ++i) 
 
         {
 

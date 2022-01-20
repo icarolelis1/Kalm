@@ -681,14 +681,14 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 
 	VkViewport viewport = {};
 
-	viewport.width = static_cast<uint32_t>(1920);
-	viewport.height = static_cast<uint32_t>(1080);
+	viewport.width = static_cast<uint32_t>(2024);
+	viewport.height = static_cast<uint32_t>(2024);
 
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D rect = {};
-	rect.extent.width = static_cast<uint32_t>(1920);
-	rect.extent.height = static_cast<uint32_t>(1080);
+	rect.extent.width = static_cast<uint32_t>(2024);
+	rect.extent.height = static_cast<uint32_t>(2024);
 	rect.offset = { 0,0 };
 
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -1319,8 +1319,13 @@ void Render::createScene()
 {
 	Game::Scene scene;
 	SceneGraph& sceneGraph = scene.sceneGraph;
+	//		Light(const char* id, glm::vec3 color = glm::vec3(1.0f), glm::vec3 position = glm::vec3(0.0), float type = 0.0);
 
-	std::shared_ptr<Engine::Entity>  sun = std::make_shared<Engine::Light>("Sun");
+	std::shared_ptr<Engine::Entity>  sun = std::make_shared<Engine::Light>("Sun",glm::vec3(1),glm::vec3(900,400,20),0.0);
+
+	std::shared_ptr<Engine::Entity>  pointLight1 = std::make_shared<Engine::Light>("pointLight1", glm::vec3(1), glm::vec3(10, 4, 1), 1.0);
+
+	std::shared_ptr<Engine::Entity>  pointLight2 = std::make_shared<Engine::Light>("pointLight2", glm::vec3(1), glm::vec3(-10, 4, -1), 1.0);
 
 	sceneGraph.root->entity->transform.setScale(glm::vec3(.7, 1., .7));
 
@@ -1329,6 +1334,8 @@ void Render::createScene()
 	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("samus");
 
 	std::shared_ptr<Engine::Entity> Floor = std::make_shared<Engine::Entity>("floor");
+
+	Floor->transform.setScale(glm::vec3(5));
 
 	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
 
@@ -1352,16 +1359,23 @@ void Render::createScene()
 
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
 
-	std::shared_ptr<Node> node2 = std::make_shared<Node>(Player);
-
-	std::shared_ptr<Node> node3 = std::make_shared<Node>(sun);
-
 	std::shared_ptr<Node> node1 = std::make_shared<Node>(Floor);
+	std::shared_ptr<Node> node2 = std::make_shared<Node>(Player);
+	std::shared_ptr<Node> node3 = std::make_shared<Node>(sun);
+	std::shared_ptr<Node> node4 = std::make_shared<Node>(pointLight1);
+	std::shared_ptr<Node> node5 = std::make_shared<Node>(pointLight2);
+
+
+
+
+
 
 	sceneGraph.addNode(cameraNode);
 	sceneGraph.addNode(node1);
-	sceneGraph.addNode(node3);
 	sceneGraph.addNode(node2);
+	sceneGraph.addNode(node3);
+	sceneGraph.addNode(node4);
+	sceneGraph.addNode(node5);
 
 	mainSCene = std::move(scene);
 	mainSCene.sceneGraph.updateSceneGraph();
@@ -1599,10 +1613,10 @@ void Render::updateUniforms(uint32_t imageIndex)
 	//glm::mat4 depthViewMatrix = lookAt(  (camera->eulerDir.front * camera->shadowDistance + lightDireciton* shadowMapPass.lightDistance) , camera->eulerDir.front *2.f , glm::vec3(0.0, -1.0, 0.0));
 	glm::mat4 depthViewMatrix = lookAt(normalize(lightUniform.lights[0].position) * dist, glm::vec3(0), glm::vec3(0.0, -1.0, 0.0));
 
-	//std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix);
+	std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix);
 
-	//glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], nearFar.x, nearFar.y);
-	glm::mat4 depthProjectionMatrix = glm::ortho(ortho.x, ortho.y, ortho.z, ortho.w, nearFar.x, nearFar.y);
+	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], nearFar.x, nearFar.y);
+	//glm::mat4 depthProjectionMatrix = glm::ortho(ortho.x, ortho.y, ortho.z, ortho.w, nearFar.x, nearFar.y);
 
 	glm::mat4 lightMatrix = depthProjectionMatrix * depthViewMatrix;
 	lightUniform.lightMatrix = lightMatrix;

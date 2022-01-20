@@ -17,6 +17,7 @@ namespace Engine {
 
 		void setFarplane(float t);
 		void setNearPlane(float t);
+		float getFarPlane();
 		glm::vec3 getCenter();
 		std::array<float, 6> calculateFrustumInLightSpace(glm::mat4 lightMatrix);
 		EulerDirections eulerDirections;

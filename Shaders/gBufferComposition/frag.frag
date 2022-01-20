@@ -65,7 +65,7 @@ vec3 em =   texture( emissionMap ,TexCoords  ).rgb ;
 vec2  metRoughness =   vec2(texture( metallicnessMap, TexCoords ).x, texture( metallicnessMap, TexCoords ).y) ;
 Albedo =  vec4(pow(texture( diffuseMap, TexCoords).xyz  ,vec3(2.2)),1.0);
 
-MetallicRoughness= vec2(metRoughness.x , metRoughness.y);
+MetallicRoughness= vec2(metRoughness.x*0.0 , metRoughness.y);
 Emission  = vec4(em,1.0);
 
 }
