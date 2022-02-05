@@ -3,6 +3,7 @@
 Engine::SphereCollsior::SphereCollsior(std::shared_ptr<Engine::Entity> _entity, float _radius,glm::vec3 posOffset, const char* name):Collisor(_entity,posOffset,name),radius(_radius)
 {
 #ifdef _DEBUG
+	std::cout << "Sphere created\n";
 
 
 #endif // !DEBUG

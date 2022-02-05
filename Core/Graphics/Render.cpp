@@ -1332,6 +1332,7 @@ void Render::createScene()
 	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Tile1");
 
 	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("samus");
+	//Engine::SphereCollsior::SphereCollsior(std::shared_ptr<Engine::Entity> _entity, float _radius,glm::vec3 posOffset, const char* name):Collisor(_entity,posOffset,name),radius(_radius)
 
 	std::shared_ptr<Engine::Entity> Floor = std::make_shared<Engine::Entity>("floor");
 
