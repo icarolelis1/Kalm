@@ -1575,7 +1575,7 @@ void Render::createImGuiInterface()
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
-
+	
 	ImGui_ImplGlfw_InitForVulkan(window, true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance = instance.vk_Instance;

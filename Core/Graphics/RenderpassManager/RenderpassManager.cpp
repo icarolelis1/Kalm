@@ -203,7 +203,6 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 
 	VkAttachmentReference pColorAttachments[4] = {  albedoAttachment.reference , metallicRoughnessAttachment.reference , NormalsAttachment.reference,emissionAttachment.reference };
 
-
 	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.description[0].colorAttachmentCount = 4;
 	subpass.description[0].pColorAttachments = pColorAttachments; 
