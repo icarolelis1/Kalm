@@ -107,7 +107,7 @@ private:
 
 	void renderUI(uint32_t imageIndex);
 
-
+	void recreateSwapChain();
 	VK_Objects::Instance instance;
 	VK_Objects::Device device;
 	VK_Objects::Surface surface;

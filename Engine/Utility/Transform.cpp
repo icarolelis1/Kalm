@@ -1,5 +1,24 @@
 #include "Transform.h"
 
+void Engine::Transform::start()
+{
+	calculateRotationQuaternion(glm::vec3(1, 0, 0), 0.0f);
+}
+
+void Engine::Transform::update(float timeStep)
+{
+}
+
+void Engine::Transform::awake()
+{
+}
+
+Engine::Transform::Transform(const char *id) :Component(id)
+{
+	this->componentType = COMPONENT_TYPE::TRANSFORM;
+	rotQuaternion = glm::quat(1.0, 0.0, 0.0, 0.0);
+}
+
 glm::mat4& Engine::Transform::getModelMatrix()
 {
 	return model;
@@ -60,11 +79,24 @@ glm::quat Engine::Transform::calculateRotationQuaternion(glm::vec3 axis, float a
 	glm::quat quat = glm::quat(0.0, position.x, position.y, position.z);
 
 	glm::vec3 p = glm::vec3(glm::sin(angle / 2.)) * glm::normalize(axis);
+
 	glm::quat q2 = glm::quat(glm::cos(angle / 2.0), p.x, p.y, p.z);
 
 	glm::quat t = q2 * quat * glm::inverse(q2);
+
+	rotQuaternion = t;
+
 	return t;
 }
+
+//void Engine::Transform::updateInternalQuaternions()
+//{
+//	glm::quat currentQuaternion = glm::normalize(glm::quat(rotation));
+//	glm::quat p = glm::quat(0.0, position.x, position.y, position.z);
+//
+//	rotQuaternion = currentQuaternion * p * glm::conjugate(currentQuaternion);
+//
+//}
 
 void Engine::Transform::increasePos(float x, float y, float z)
 {
@@ -77,27 +109,34 @@ void Engine::Transform::increasePos(glm::vec3 p)
 }
 
 void Engine::Transform::updateModelMatrix(Transform& parent)
-{
+{/*
+	glm::quat internalQuat = glm::quat(0.0, position.x, position.y, position.z);
+	glm::quat rotationQuaternion = glm::quat(glm::normalize(rotation));
+
+	glm::quat r = rotationQuaternion * internalQuat * glm::inverse(rotationQuaternion);
+	rotMatrix = glm::mat4_cast(r);*/
+
+	rotMatrix = glm::toMat4(glm::normalize(rotQuaternion));
+
 	glm::mat4 identity(1.0f);
-	identity = glm::scale(identity, scale);
 	identity = glm::translate(identity, position);
-	identity = glm::rotate(identity, glm::radians(rotation.z), glm::vec3(0, 0, 1));
-	identity = glm::rotate(identity, glm::radians(rotation.x), glm::vec3(1, 0, 0));
-	identity = glm::rotate(identity, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+	identity *= rotMatrix;
+	identity = glm::scale(identity, scale);
 
 	glm::mat4 parentModel = parent.getModelMatrix();
 
-	model = parent.getModelMatrix()*identity;
+	model =  parentModel* identity;
 
 }
 
 void Engine::Transform::updateModelMatrix()
 {
 	glm::mat4 identity(1.0f);
+	rotMatrix = glm::toMat4(glm::normalize(rotQuaternion));
 
-	identity *= rotMatrix;
 	identity = glm::translate(identity, position);
 	identity = glm::scale(identity, scale);
+	identity *= rotMatrix;
 
 
 	model = identity;
@@ -109,13 +148,27 @@ void Engine::Transform::rotate(glm::vec3 axis, float angle)
 	axis = glm::normalize(axis);
 	glm::quat quat = glm::quat(0.0,position.x,position.y,position.z);
 
-	glm::vec3 p = glm::vec3(glm::sin(angle / 2.)) * (axis);
-	glm::quat q2 = glm::quat(glm::cos(angle / 2.0), p.x, p.y, p.z);
+	glm::vec3 p = glm::vec3(glm::sin(glm::radians(angle / 2.))) * (axis);
 
-	glm::quat t =  q2 * quat * glm::inverse(q2);
+	glm::quat q2 =glm::normalize(glm::quat(glm::cos(glm::radians(angle / 2.0)), p.x, p.y, p.z));
 
-	rotQuaternion = glm::normalize(t);
-	rotMatrix = glm::toMat4(glm::normalize(t));
+	glm::quat t =  q2 * quat * glm::conjugate(q2);
+
+	rotQuaternion *= (t);
 
 
 }
+
+void Engine::Transform::buildUi()
+{
+	ImGui::InputFloat3("Position", glm::value_ptr(this->position));
+	ImGui::InputFloat3("Rotation", glm::value_ptr(this->rotation));
+	ImGui::InputFloat3("Scale", glm::value_ptr(this->scale));
+}
+
+void Engine::Transform::shouldUpdateRotations(bool b)
+{
+	shouldUpdateQuaternion = b;;
+}
+
+

@@ -10,9 +10,7 @@ Game::RenderpassManager::RenderpassManager(const VK_Objects::Device* _device, VK
 
 void Game::RenderpassManager::createRenderpasses(VkExtent2D extent )
 {
-	VkExtent2D gBufferSRAA;
-	gBufferSRAA.width = extent.width * 4;
-	gBufferSRAA.height = extent.height * 4;
+
 	createShadowMapRenderpass(extent);
 	createGBufferRenderpass(extent);
 	createDeferredLightingRenderPass(extent);
@@ -27,8 +25,8 @@ void Game::RenderpassManager::createShadowMapRenderpass(VkExtent2D extent_)
 	//Creates a renderpass for variance shadow map. Two float values will be stored.
 
 	VkExtent2D extent;
-	extent.width = 2024;
-	extent.height = 2024;
+	extent.width = 1920;
+	extent.height = 1080;
 	std::unique_ptr<VK_Objects::Renderpass> shadowMapRenderpass = std::make_unique<VK_Objects::Renderpass>(device, "SHADOW_MAP", extent);
 
 	VK_Objects::RenderpassProperties renderpassProperties;
@@ -210,9 +208,6 @@ void Game::RenderpassManager::createGBufferRenderpass(VkExtent2D extent)
 	subpass.description[0].colorAttachmentCount = 4;
 	subpass.description[0].pColorAttachments = pColorAttachments; 
 	subpass.description[0].pDepthStencilAttachment = &depthAttachment.reference;
-
-
-		
 	subpass.dependencies[0].srcSubpass =		VK_SUBPASS_EXTERNAL;
 	subpass.dependencies[0].dstSubpass =		0;
 	subpass.dependencies[0].srcStageMask =		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;

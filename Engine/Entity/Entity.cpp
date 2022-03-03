@@ -1,7 +1,12 @@
 #include "Entity.h"
 
-Engine::Entity::Entity(const char* _name):name(_name)
+Engine::Entity::Entity(const char* _name, bool makeTransform ):name(_name)
 {
+	if (makeTransform) {
+		std::shared_ptr<Component> transform = std::make_shared<Engine::Transform>("Transform");
+		this->attachComponent(transform);
+		this->transform = std::dynamic_pointer_cast<Engine::Transform>(transform);
+	}
 }
 
 void Engine::Entity::start()

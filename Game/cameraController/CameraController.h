@@ -17,6 +17,7 @@
 		void loadState(std::fstream& file);
 
 	private:
+		std::shared_ptr<Engine::Transform> transform;
 		void resetCamera();
 		float velocity = .04f;
 		void updateDirections();

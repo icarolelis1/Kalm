@@ -99,7 +99,7 @@ void Vk_Functions::copyBuffer(VkCommandBuffer cmd, VK_Objects::Buffer& src, VK_O
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &cmd;
 	vkEndCommandBuffer(cmd);
-
+	
 	vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(queue);
 

@@ -7,7 +7,7 @@ Engine::Camera::Camera(const char* _id) :  Engine::Entity(_id)
 
 glm::mat4& Engine::Camera::getViewMatrix()
 {
-	auto pos =   transform.getPosition();
+	auto pos =   transform->getPosition();
 
 	viewMatrix = glm::lookAt(pos, pos + eulerDirections.front, eulerDirections.up);
 
@@ -84,14 +84,14 @@ std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers()
 	fov = 45.0f;
 	float tan = glm::tan(glm::radians(fov / 2.));
 	float aspectRatio = 1924 / 1055;
-	float farPlane = this->transform.getPosition().y + 10.0f;
+	float farPlane = this->transform->getPosition().y + 10.0f;
 	float heightNear = 2 * tan * nearPlane;
 	float widthNear = heightNear * aspectRatio;
 	float heightFar = 2 * tan * farPlane;
 	float widthFar = heightFar * aspectRatio;
 
-	glm::vec3 centerNear = transform.getPosition() + eulerDirections.front * nearPlane;
-	glm::vec3 centerFar = transform.getPosition() + eulerDirections.front * farPlane;
+	glm::vec3 centerNear = transform->getPosition() + eulerDirections.front * nearPlane;
+	glm::vec3 centerFar = transform->getPosition() + eulerDirections.front * farPlane;
 	center = (centerNear + centerFar) /glm::vec3(2.0f);
 
 	//std::cout << "Center : " << centerFar.x<<" "<<centerFar.y<<" "<<centerFar.z << std::endl;

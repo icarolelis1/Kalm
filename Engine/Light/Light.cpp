@@ -2,7 +2,7 @@
 
 Engine::Light::Light(const char*id,glm::vec3 _color, glm::vec3 position, float _type):Entity(id)
 {
-	transform.setPosition(position);
+	transform->setPosition(position);
 	attachComponent(std::make_shared<Engine::LightComponent>(id,getSharedPointer()));
 	std::shared_ptr<Engine::LightComponent> light = std::dynamic_pointer_cast<Engine::LightComponent>(getComponent(Engine::COMPONENT_TYPE::LIGHT));
 	light->setPosition(position);
@@ -25,7 +25,7 @@ void Engine::Light::setLightType(float type)
 Engine::LightComponent::LightComponent(const char* id, std::shared_ptr<Engine::Entity> _entity):Component(id),entity(_entity)
 {
 	this->componentType = COMPONENT_TYPE::LIGHT;
-	this->position = entity->transform.getPosition();
+	this->position = entity->transform->getPosition();
 	this->factor = 0.002;
 }
 

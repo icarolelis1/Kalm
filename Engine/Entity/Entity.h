@@ -1,9 +1,9 @@
 #pragma once
 #include <iostream>
-#include "Components/Component.h"
 #include "Utility/Transform.h"
 #include <memory>
-#include "imgui.h"
+#include <map>
+
 namespace Engine {
 
 		using ComponentContainerInstance = std::map<std::string, std::shared_ptr<Component>>;
@@ -85,7 +85,9 @@ namespace Engine {
 	class Entity :public std::enable_shared_from_this<Entity>
 	{
 	public: 
-		Entity(const char* _name);
+
+		std::shared_ptr<Engine::Transform> transform;
+		Entity(const char* _name,bool makeTransform=true);
 
 		virtual void start() ;
 
@@ -100,12 +102,11 @@ namespace Engine {
 		virtual void buildUiRepresentation();
 		virtual void logComponents();
 
-		Transform transform;
-
 		std::shared_ptr<Entity> getSharedPointer();
 
 
 	protected:
+
 		bool alive = true;
 		bool displayOnInspector = true;
 

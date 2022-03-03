@@ -50,7 +50,7 @@ void Window::createWindow()
 
 void Window::destroyWindow()
 {
-	glfwDestroyWindow(windowHandler);
+	//glfwDestroyWindow(windowHandler);
 
 }
 

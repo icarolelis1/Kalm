@@ -16,7 +16,7 @@ SceneGraph::SceneGraph()
 {
 	std::shared_ptr<Engine::Entity> e1 = std::make_shared<Engine::Entity>("Root");
 	root = std::make_shared<Node>(e1);
-	root->entity->transform.setScale(glm::vec3(1));
+	root->entity->transform->setScale(glm::vec3(1));
 }
 
 void SceneGraph::addNode(std::shared_ptr<Node> entity)
@@ -44,20 +44,20 @@ void SceneGraph::buildUI(std::shared_ptr<Node> node)
 		node->entity->buildUiRepresentation();
 		ImGui::Spacing();
 
-		glm::vec3 position = node->entity->transform.getPosition();
-		glm::vec3 scale = node->entity->transform.getScale();
-		glm::vec3 rotation = node->entity->transform.getRotation();
+		//glm::vec3 position = node->entity->transform->getPosition();
+		//glm::vec3 scale = node->entity->transform->getScale();
+		//glm::vec3 rotation = node->entity->transform->getRotation();
 
-		ImGui::Text("TRANSFORM");
-		ImGui::InputFloat3("Position", (float*)glm::value_ptr(position));
-		ImGui::InputFloat3("Rotation", (float*)glm::value_ptr(rotation));
-		ImGui::InputFloat3("Scale", (float*)glm::value_ptr(scale));
+		//ImGui::Text("TRANSFORM");
+		//ImGui::InputFloat3("Position", (float*)glm::value_ptr(position));
+		//ImGui::InputFloat3("Rotation", (float*)glm::value_ptr(rotation));
+		//ImGui::InputFloat3("Scale", (float*)glm::value_ptr(scale));
 
-		ImGui::Spacing();
+		//ImGui::Spacing();
 
-		node->entity->transform.setPosition(position);
-		node->entity->transform.setScale(scale);
-		node->entity->transform.setRotation(rotation);
+		//node->entity->transform->setPosition(position);
+		//node->entity->transform->setScale(scale);
+		//node->entity->transform->setRotation(rotation);
 
 		ImGui::PopID();
 
@@ -80,7 +80,7 @@ void SceneGraph::updateSceneGraph()
 
 void SceneGraph::saveState(std::shared_ptr<Node> node, std::fstream& saveFile)
 {
-	glm::vec3 p = node->entity->transform.getPosition();
+	glm::vec3 p = node->entity->transform->getPosition();
 	saveFile << node->entity->getName() << std::endl;
 	saveFile << "Position : " << p.x << " " << p.y << " " << p.z << std::endl;
 	std::list<std::shared_ptr<Node>>::iterator it = node->childs.begin();
@@ -104,10 +104,10 @@ void SceneGraph::saveState(std::shared_ptr<Node> node, std::fstream& saveFile)
 void SceneGraph::updateTransforms(std::shared_ptr<Node> node)
 {
 	if(node->parent)
-		node->entity->transform.updateModelMatrix(node->parent->entity->transform);
+		node->entity->transform->updateModelMatrix(*node->parent->entity->transform.get());
 
 	else {
-		node->entity->transform.updateModelMatrix();
+		node->entity->transform->updateModelMatrix();
 	}
 	std::list<std::shared_ptr<Node>>::iterator it = node->childs.begin();
 	while (it != node->childs.end()) {

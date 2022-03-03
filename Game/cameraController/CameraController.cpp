@@ -2,6 +2,7 @@
 
 CameraController::CameraController(std::shared_ptr<Engine::Camera> _camera, std::string id):Script(id.data()),camera(_camera)
 {
+	transform = std::dynamic_pointer_cast<Engine::Transform>(camera->getComponent (Engine::COMPONENT_TYPE::TRANSFORM));
 }
 
 void CameraController::awake()
@@ -10,7 +11,7 @@ void CameraController::awake()
 
 void CameraController::start()
 {
-	camera->transform.setPosition(0., 3., -5.);
+	transform->setPosition(0., 3., -5.);
 	updateDirections();
 
 }
@@ -19,20 +20,20 @@ void CameraController::update(float timeStep)
 {
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_W)) {
 
-		camera->transform.increasePos(camera->eulerDirections.front * timeStep * velocity);
+		transform->increasePos(camera->eulerDirections.front * timeStep * velocity);
 
 	}
 
 
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_W)) {
 
-		camera->transform.increasePos(camera->eulerDirections.front * timeStep * velocity);
+		transform->increasePos(camera->eulerDirections.front * timeStep * velocity);
 
 	}
 	
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_S)) {
 
-		camera->transform.increasePos(-camera->eulerDirections.front * timeStep * velocity);
+		transform->increasePos(-camera->eulerDirections.front * timeStep * velocity);
 	}
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_A)) {
 		YAW += velocity * timeStep;
@@ -50,11 +51,11 @@ void CameraController::update(float timeStep)
 	}
 
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_SPACE)) {
-		camera->transform.increasePos(-camera->eulerDirections.up * timeStep * velocity/5.0f);
+		transform->increasePos(-camera->eulerDirections.up * timeStep * velocity/5.0f);
 	}
 
 	else if (Window::keyboard.getKeyPressed(GLFW_KEY_C)) {
-		camera->transform.increasePos(camera->eulerDirections.up * timeStep * velocity / 5.0f);
+		transform->increasePos(camera->eulerDirections.up * timeStep * velocity / 5.0f);
 	}
 
 	if (Window::keyboard.getKeyPressed(GLFW_KEY_1)) {
@@ -65,11 +66,11 @@ void CameraController::update(float timeStep)
 	Engine::CursorPos cursorPos = Window::mouse.getCursorPos();
 
 	if (Window::mouse.getMouseACtionStatus(GLFW_MOUSE_BUTTON_2, GLFW_PRESS)) {
-		if (cursorPos.x >= 1920 - offset) { camera->transform.increasePos(velocity * camera->eulerDirections.right); }
-		if (cursorPos.x <= offset) camera->transform.increasePos(-velocity * camera->eulerDirections.right);
+		if (cursorPos.x >= 1920 - offset) { transform->increasePos(velocity * camera->eulerDirections.right); }
+		if (cursorPos.x <= offset) transform->increasePos(-velocity * camera->eulerDirections.right);
 
-		if (cursorPos.y >= 1055 - offset) camera->transform.increasePos(-velocity * glm::normalize(glm::vec3(camera->eulerDirections.front.x, 0, camera->eulerDirections.front.z) * glm::cos(glm::radians(-90 - PITCH))));
-		if (cursorPos.y <= (offset)) camera->transform.increasePos(velocity * glm::normalize(glm::vec3(camera->eulerDirections.front.x, 0, camera->eulerDirections.front.z) * glm::cos(glm::radians(-90 - PITCH))));
+		if (cursorPos.y >= 1055 - offset) transform->increasePos(-velocity * glm::normalize(glm::vec3(camera->eulerDirections.front.x, 0, camera->eulerDirections.front.z) * glm::cos(glm::radians(-90 - PITCH))));
+		if (cursorPos.y <= (offset)) transform->increasePos(velocity * glm::normalize(glm::vec3(camera->eulerDirections.front.x, 0, camera->eulerDirections.front.z) * glm::cos(glm::radians(-90 - PITCH))));
 	}
 
 

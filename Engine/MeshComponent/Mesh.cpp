@@ -113,7 +113,7 @@ void Engine::Mesh::setUpdateOnNextFrame(bool value) {
 
 glm::mat4& Engine::Mesh::getModelMatrix() {
 
-	return entity->transform.getModelMatrix();
+	return entity->transform->getModelMatrix();
 }
 
 void Engine::Mesh::destroy()
@@ -184,19 +184,39 @@ void Engine::Mesh::loadMaterial(aiMesh *aMesh)
 	material->GetTexture(aiTextureType_NORMALS,0, &normalMap);
 	material->GetTexture(aiTextureType_EMISSIVE,0, &emisisonMap);
 
-	texture_paths[aMesh->mMaterialIndex].name = name.C_Str();
+	if(name.length>0)
+		texture_paths[aMesh->mMaterialIndex].name = name.C_Str();
+	else {
+		texture_paths[aMesh->mMaterialIndex].name = id + "\\ Material";
 
-
+	}
 	if(fileBaseColor.length>0)
 	texture_paths[aMesh->mMaterialIndex].diffuseMap = "Assets\\" +id +"\\" + std::string(fileBaseColor.C_Str());
+	else {
+		texture_paths[aMesh->mMaterialIndex].diffuseMap = "Assets\\common\\white.png";
+	}
 	if(emisisonMap.length>0)
 	texture_paths[aMesh->mMaterialIndex].emissionMap = "Assets\\" +id+ "\\" + std::string(emisisonMap.C_Str());
+	else {
+		texture_paths[aMesh->mMaterialIndex].emissionMap = "Assets\\common\\black.png";
+
+	}
 	if(fileMetallicRoughness.length>0)
 	texture_paths[aMesh->mMaterialIndex].metallicMap = "Assets\\"+id +"\\" + std::string(fileMetallicRoughness.C_Str());
-	if(fileMetallicRoughness.length>9)
+	else {
+		texture_paths[aMesh->mMaterialIndex].metallicMap = "Assets\\common\\black.png";
+	}
+	if(fileMetallicRoughness.length>0)
 	texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets\\"+id+"\\" + std::string(fileMetallicRoughness.C_Str());
+	else {
+		texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets\\common\\white.png";
+
+	}
 	if(normalMap.length>0)
 	texture_paths[aMesh->mMaterialIndex].normalMap = "Assets\\"+id+"\\" + std::string(normalMap.C_Str());
+	else {
+		texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets\\common\\black.png";
+	}
 	texture_paths[aMesh->mMaterialIndex].index = aMesh->mMaterialIndex;
 
 	if (fileBaseColor.length== 0)texture_paths[aMesh->mMaterialIndex].diffuseMap = "Assets//common//black.png";

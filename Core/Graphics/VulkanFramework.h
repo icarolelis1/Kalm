@@ -555,8 +555,8 @@ namespace VK_Objects {
 
 		void prepareSwapChain(uint32_t WIDTH, uint32_t HEIGHT, Device device, Surface *surface, ImageFormat& desiredFormat, GLFWwindow* window, QueueSharingMode& queueSharingMode) {
 
-			properties.extent.width = 2024;
-			properties.extent.height = 2024;
+			properties.extent.width = 1920;
+			properties.extent.height = 1080;
 
 			querySwapChainProperties(device, *surface, desiredFormat, window);
 			createSwapChain(device, *surface, queueSharingMode);

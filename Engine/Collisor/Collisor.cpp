@@ -24,11 +24,11 @@ namespace Engine {
 
 	void Collisor::start()
 	{
-		collisorPosition = entity->transform.getPosition() + localPosition;
+		collisorPosition = entity->transform->getPosition() + localPosition;
 
 		//Position the mesh that visually represent this collisor (helps to debug collision)
 
-		meshEntity->transform.setPosition(collisorPosition);
+		meshEntity->transform->setPosition(collisorPosition);
 	}
 
 	void Collisor::setLocalPos(glm::vec3 lp)
@@ -39,10 +39,10 @@ namespace Engine {
 	void Collisor::update(float deltaTime)
 	{
 		//Position the collisor in reference to it's entity
-		collisorPosition = entity->transform.getPosition() + localPosition;
+		collisorPosition = entity->transform->getPosition() + localPosition;
 
 		//Position the mesh that visually represent this collisor (helps to debug collision)
-		meshEntity->transform.setPosition(collisorPosition);
+		meshEntity->transform->setPosition(collisorPosition);
 	}
 
 	void Collisor::registerCollisionEvent(const std::function<void(Engine::Collisor& col)> f)

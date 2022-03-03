@@ -7964,7 +7964,8 @@ static bool ImGui::NavScoreItem(ImGuiNavMoveResult* result, ImRect cand)
 		draw_list->AddRectFilled(cand.Max - ImVec2(4, 4), cand.Max + CalcTextSize(buf) + ImVec2(4, 4), IM_COL32(40, 0, 0, 150));
 		draw_list->AddText(g.IO.FontDefault, 13.0f, cand.Max, ~0U, buf);
 	}
-	else if (g.IO.KeyCtrl) // Hold to preview score in matching quadrant. Press C to rotate.
+	else if (g.IO.KeyCtrl) // Hold to preview score in matching quadrant. Press C to 
+		.
 	{
 		if (IsKeyPressedMap(ImGuiKey_C)) { g.NavMoveDirLast = (ImGuiDir)((g.NavMoveDirLast + 1) & 3); g.IO.KeysDownDuration[g.IO.KeyMap[ImGuiKey_C]] = 0.01f; }
 		if (quadrant == g.NavMoveDir)
