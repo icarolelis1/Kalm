@@ -43,8 +43,6 @@ namespace RENDER {
 		void setBuffers(std::vector<VK_Objects::SBuffer> mvpBuffers, std::vector<VK_Objects::SBuffer> lightBuffer);
 		std::vector<VK_Objects::PComandBuffer> persistentCommandBuffers;
 
-		~RenderContext();
-
 		uint32_t currentFrameIndex = 0;
 
 	private:
@@ -61,8 +59,6 @@ namespace RENDER {
 		VK_Objects::Device device;
 
 		std::unique_ptr<RenderTarget> target;
-
-
 
 		int maxFramesInFly;
 

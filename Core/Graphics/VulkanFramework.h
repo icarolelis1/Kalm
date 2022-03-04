@@ -553,10 +553,12 @@ namespace VK_Objects {
 		}
 
 
-		void prepareSwapChain(uint32_t WIDTH, uint32_t HEIGHT, Device device, Surface *surface, ImageFormat& desiredFormat, GLFWwindow* window, QueueSharingMode& queueSharingMode) {
+		void prepareSwapChain(uint32_t WIDTH, uint32_t HEIGHT, Device device, Surface *surface, ImageFormat& desiredFormat, GLFWwindow* window, QueueSharingMode& queueSharingMode, VkSwapchainKHR old_swapChain = VK_NULL_HANDLE) {
 
-			properties.extent.width = 1920;
-			properties.extent.height = 1080;
+			properties.extent.width = WIDTH;
+			properties.extent.height = HEIGHT;
+
+			oldSwapChain = old_swapChain;
 
 			querySwapChainProperties(device, *surface, desiredFormat, window);
 			createSwapChain(device, *surface, queueSharingMode);
@@ -587,6 +589,8 @@ namespace VK_Objects {
 		uint32_t getNumberOfImages();
 
 		VkFormat getFormat();
+
+		VkSwapchainKHR oldSwapChain;
 
 		VkSwapchainKHR& getSwapChainHandle() {return properties.vk_swapChain; } ;
 
@@ -621,7 +625,7 @@ namespace VK_Objects {
 			}
 
 
-			createInfo.oldSwapchain = VK_NULL_HANDLE;
+			createInfo.oldSwapchain = oldSwapChain;
 			createInfo.flags = 0;
 
 			VkResult result = vkCreateSwapchainKHR(device.getLogicalDevice(), &createInfo, nullptr, &properties.vk_swapChain);

@@ -24,7 +24,7 @@ Utils::WindowHandler* Window::getWindowHandler()
 void Window::createWindow()
 {
 	glfwInit();
-	glfwWindowHint(GLFW_RESIZABLE, 0);
+	glfwWindowHint(GLFW_RESIZABLE, 1);
 
 	windowHandler = glfwCreateWindow(WIDTH, HEIGHT, title, nullptr, nullptr);
 	glfwMakeContextCurrent(windowHandler);

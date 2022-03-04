@@ -97,7 +97,9 @@ private:
 	void addMeshes();
 	void createDynamicUniformBuffers();
 	void createMaterials();
-
+	void createSamplers();
+	void AllocateCommonDescriptorsSets();
+	void createEnvMaps();
 	void createScene();
 
 	void separateSceneObjects(std::shared_ptr<Node> node);
@@ -120,6 +122,12 @@ private:
 	std::vector<VK_Objects::SBuffer> modelBuffers;
 	std::vector<VK_Objects::SBuffer> lightUniformBuffers;
 	std::vector<VK_Objects::SBuffer> lightProjectionUniformBuffers;
+
+
+	std::unique_ptr<VK_Objects::CubeMap> cubeMap;
+	std::unique_ptr<VK_Objects::CubeMap> envMAp;
+	std::unique_ptr<VK_Objects::Image> brdfLut;
+	std::unique_ptr<VK_Objects::CubeMap> irradianceMap;
 
 	Utils::WindowHandler* w;
 	

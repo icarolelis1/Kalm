@@ -61,9 +61,14 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 	createDynamicUniformBuffers();
 	if(UI_RENDER)
 	createImGuiInterface();
+	createSamplers();
+	createEnvMaps();
+	AllocateCommonDescriptorsSets();
 	createRenderContexts();
 
 	//creteCommandBuffer();
+
+
 }
 
 //Creation of Instance
@@ -143,87 +148,34 @@ void Render::createRenderpass()
 {
 	renderpass = std::make_unique<Game::RenderpassManager>(&device, &swapChain, swapChain.getExtent());
 
-	/*
-	VkExtent2D e = swapChain.getExtent();
-
-	//First Renderpass
-	std::unique_ptr<VK_Objects::Renderpass> renderpass1 = std::make_unique<VK_Objects::Renderpass>(&device,"InitialRenderPass",e);
-
-	VK_Objects::RenderpassProperties renderpassProperties;
-
-	//Single Attachment
-	renderpassProperties.attachments.resize(1);
-
-	VK_Objects::RenderAttachment attachment1;
-	attachment1.description.format = swapChain.getFormat();
-	attachment1.description.samples = VK_SAMPLE_COUNT_1_BIT;
-	attachment1.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachment1.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachment1.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachment1.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachment1.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachment1.description.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	attachment1.description.flags = 0;
-
-	attachment1.reference.attachment = 0;
-	attachment1.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VK_Objects::Subpass subpass;
-	subpass.description.resize(1);
-	subpass.dependencies.resize(2);
-
-	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.description[0].colorAttachmentCount = 1;
-	subpass.description[0].pColorAttachments = &attachment1.reference;
-
-	subpass.dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-	subpass.dependencies[0].dstSubpass = 0;
-	subpass.dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpass.dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpass.dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	subpass.dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpass.dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	subpass.dependencies[1].srcSubpass = 0;
-	subpass.dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-	subpass.dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpass.dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	subpass.dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	subpass.dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	subpass.dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	renderpassProperties.attachments[0] = attachment1;
-	renderpass1->properties = renderpassProperties;
-	renderpass1->subpass = subpass;
-
-	Vk_Functions::createRenderpass(&device, *renderpass1.get());
-
-	renderpasses[renderpass1->getKey()] = std::move(renderpass1);
-	*/
-
 }
 
-void Render::createRenderContexts()
+void Render::createEnvMaps()
 {
 	//SKYBOX AND ENVIROMENT 
-
-	VK_Objects::CubeMap cubeMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", cubeMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	cubeMap = std::make_unique<VK_Objects::CubeMap>(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", *cubeMap.get(), *transferPool.get(), *graphicsPool.get(), poolManager);
 	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
 
-	VK_Objects::CubeMap envMAp(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
-	Vk_Functions::filterEnviromentMap(&device, cubeMap, envMAp, *transferPool.get(), *graphicsPool.get(), poolManager);
+	envMAp = std::make_unique<VK_Objects::CubeMap>(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
+	Vk_Functions::filterEnviromentMap(&device, *cubeMap.get(), *envMAp.get(), *transferPool.get(), *graphicsPool.get(), poolManager);
 
-	VK_Objects::Image brdfLut(&device, 512, 512, VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
-	Vk_Functions::generatBRDFLut(&device, brdfLut, *transferPool.get(), *graphicsPool.get(), poolManager);
+	brdfLut = std::make_unique<VK_Objects::Image>(&device, 512, 512, VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+	Vk_Functions::generatBRDFLut(&device, *brdfLut.get(), *transferPool.get(), *graphicsPool.get(), poolManager);
 
-	VK_Objects::CubeMap irradianceMap(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", irradianceMap, *transferPool.get(), *graphicsPool.get(), poolManager);
+	irradianceMap = std::make_unique<VK_Objects::CubeMap>(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", *irradianceMap.get(), *transferPool.get(), *graphicsPool.get(), poolManager);
 
-	
+}
+void Render::AllocateCommonDescriptorsSets()
+{
+
 	uint32_t n = swapChain.getNumberOfImages();
 
 	//Create Resources
+	viewProjectionBuffers.clear();
+	lightUniformBuffers.clear();
+	lightProjectionUniformBuffers.clear();
 
 	viewProjectionBuffers.resize(n);
 	lightUniformBuffers.resize(n);
@@ -231,8 +183,6 @@ void Render::createRenderContexts()
 	int index = 0;
 
 
-
-	Vk_Functions::createSampler(&device, sampler_Testing);
 
 	for (int i = 0; i < viewProjectionBuffers.size(); i++) {
 
@@ -313,7 +263,7 @@ void Render::createRenderContexts()
 
 		imageInfo.resize(2);
 		imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[0].imageView = *framebuffersManager->deferreLighting_Images["DEFERRED_LIGHTING_ATTACHMENT"]->getVkImageViewHandle() ;
+		imageInfo[0].imageView = *framebuffersManager->deferreLighting_Images["DEFERRED_LIGHTING_ATTACHMENT"]->getVkImageViewHandle();
 		imageInfo[0].sampler = sampler_Testing;
 
 		imageInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -334,26 +284,6 @@ void Render::createRenderContexts()
 
 	}
 
-	VkSamplerCreateInfo samplerInfo = {};
-	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerInfo.magFilter = VK_FILTER_LINEAR;
-	samplerInfo.minFilter = VK_FILTER_LINEAR;
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = 4;
-	samplerInfo.maxLod = 10;
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-
-
-	if (vkCreateSampler(device.getLogicalDevice(), &samplerInfo, device.getAllocator(), &sampler_streatch) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
-	}
 
 
 	for (int i = 0; i < enviromentData_Descriptorsets.size(); i++) {
@@ -369,15 +299,15 @@ void Render::createRenderContexts()
 		imageInfo[0].sampler = sampler_streatch;
 
 		imageInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[1].imageView = irradianceMap.getVkViewHandle();
+		imageInfo[1].imageView = irradianceMap->getVkViewHandle();
 		imageInfo[1].sampler = sampler_Testing;
 
 		imageInfo[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[2].imageView = envMAp.getVkViewHandle();
+		imageInfo[2].imageView = envMAp->getVkViewHandle();
 		imageInfo[2].sampler = sampler_Testing;
 
 		imageInfo[3].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[3].imageView = *brdfLut.getVkImageViewHandle();
+		imageInfo[3].imageView = *brdfLut->getVkImageViewHandle();
 		imageInfo[3].sampler = sampler_Testing;
 
 		imageInfo[4].imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
@@ -387,6 +317,17 @@ void Render::createRenderContexts()
 		enviromentData_Descriptorsets[i].updateDescriptorset(bufferInfos, imageInfo);
 
 	}
+
+}
+
+
+
+void Render::createRenderContexts()
+{
+	
+	uint32_t n = swapChain.getNumberOfImages();
+
+	//uint32_t n = swapChain.getNumberOfImages();
 
 	VkExtent2D e = swapChain.getExtent();
 
@@ -557,11 +498,14 @@ void Render::createRenderContexts()
 			uint32_t imageIndex;
 
 			VkResult result = vkAcquireNextImageKHR(device.getLogicalDevice(), r1->swapChain->getSwapChainHandle(), UINT64_MAX, r1->frames[r1->currentFrameIndex]->getImageAvaibleSemaphore(), VK_NULL_HANDLE, &imageIndex);
-			if (result != VK_SUCCESS) {
-				std::cout << "Failed to aquire Image\n";
+			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+				recreateSwapChain();
+				return;
 
-				std::cout << result << std::endl;
-			};
+			}
+			else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+				throw std::runtime_error("failed to acquire swap chain image!");
+			}
 
 			//swapChain->update();
 			updateSceneGraph();
@@ -613,20 +557,8 @@ void Render::createRenderContexts()
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
 				
-				std::cout << "SwapChain Recreation ... \n";
-				int w, h = 0;
-				glfwGetFramebufferSize(window, &w, &h);
-				while (w == 0 || h == 0) {
-					glfwGetFramebufferSize(window, &w, &h);
+				recreateSwapChain();
 
-					glfwWaitEvents();
-				}
-				
-				vkQueueWaitIdle(device.getQueueHandle(VK_Objects::QUEUE_TYPE::GRAPHICS))	;
-				VK_Objects::ImageFormat imageFormat = VK_Objects::ImageFormat::VK_FORMAT_B8G8R8A8_UNORM;
-				VK_Objects::QueueSharingMode queueSharingMode = device.getQueueSharingMode();
-
-				swapChain.prepareSwapChain(1920, 1055, device, &surface, imageFormat, window, queueSharingMode);
 			}
 			else if (result != VK_SUCCESS) {
 				throw std::runtime_error("failed to present swap chain image!");
@@ -634,18 +566,10 @@ void Render::createRenderContexts()
 			r1->currentFrameIndex = (r1->currentFrameIndex + 1) % 3;
 
 		}
+		vkDeviceWaitIdle(device.getLogicalDevice());
 
-	}
+	} 
 
-	vkDeviceWaitIdle(device.getLogicalDevice());
-	vkDestroySampler(device.getLogicalDevice(), sampler_streatch, nullptr);
-	ImGui_ImplVulkan_Shutdown();
-
-	vkDestroySampler(device.getLogicalDevice(), sampler_Testing, nullptr);
-
-	for (auto& b : modelBuffers) {
-		vkUnmapMemory(device.getLogicalDevice(), b->getMemoryHandle());
-	}
 }
 
 void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
@@ -1444,6 +1368,34 @@ void Render::createMaterials()
 
 }
 
+void Render::createSamplers()
+{
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 4;
+	samplerInfo.maxLod = 10;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+
+	if (vkCreateSampler(device.getLogicalDevice(), &samplerInfo, device.getAllocator(), &sampler_streatch) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture sampler!");
+	}
+
+	Vk_Functions::createSampler(&device, sampler_Testing);
+
+}
+
+
 void Render::createScene()
 {
 	Game::Scene scene;
@@ -1496,11 +1448,6 @@ void Render::createScene()
 	std::shared_ptr<Node> node5 = std::make_shared<Node>(pointLight2);
 	std::shared_ptr<Node> node6 = std::make_shared<Node>(floor);
 
-
-
-
-
-
 	sceneGraph.addNode(cameraNode);
 	//sceneGraph.addNode(node1);
 	sceneGraph.addNode(node2);
@@ -1541,8 +1488,6 @@ void Render::separateSceneObjects(std::shared_ptr<Node> node)
 			lightContainer.push_back(m);
 
 		}
-
-
 		std::list<std::shared_ptr<Node>>::iterator it = node->childs.begin();
 
 
@@ -1706,14 +1651,47 @@ void Render::renderUI(uint32_t imageIndex)
 
 void Render::recreateSwapChain()
 {
+	std::cout << "SWAPCHAIN RECREATED\n";
+	int w, h = 0;
+
+	glfwGetFramebufferSize(window, &w, &h);
+	while (w == 0 || h == 0) {
+		glfwGetFramebufferSize(window, &w, &h);
+
+		glfwWaitEvents();
+	}
 	vkDeviceWaitIdle(device.getLogicalDevice());
-	////Setup the swapChain
-	//swapChain.prepareSwapChain(WIDTH, HEIGHT, device, &surface, format, windowHandler, queueSharingMode);
-	////Create First renderpass;
-	//createRenderpass();
-	//framebuffersManager = std::make_unique<FramebufferManagement>(&device, &swapChain, renderpass->passes);
+
+	//Destroy Resources
+	swapChain.destroySwapChain(device);
+	//Destroy Renderpasses
+	renderpass.reset();
+	//Destroy Frambuffers
+	framebuffersManager.reset();
+	//Destroy Pipelines
+	//pipelineManager.clear();
+	//Reset Command Pool
+	vkResetCommandPool(device.getLogicalDevice(), graphicsPool->getPoolHanndle(), VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+	//Get current Window Size
+	int width, height;
+	glfwGetWindowSize(window,&width, &height);
+
+	//Rebuild STUFF ****
+	// 
+	//Setup the swapChain
+	VK_Objects::QueueSharingMode queueSharingMode = device.getQueueSharingMode();
+	VK_Objects::ImageFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+	swapChain.prepareSwapChain(width, height, device, &surface, format, window, queueSharingMode);
+	//Create First renderpass;
+	createRenderpass();
+	//Create FrameBuffers
+	framebuffersManager = std::make_unique<FramebufferManagement>(&device, &swapChain, renderpass->passes);
+	//Create Pipelines
 	//createPipeline();
-	//createCommandPools();
+	//Create CommandPools
+	AllocateCommonDescriptorsSets();
+	createRenderContexts();
 }
 
 
@@ -1816,6 +1794,22 @@ void Render::updateDynamicUniformBuffer(uint32_t imageIndex)
 
 Render::~Render()
 {
+	cubeMap.reset();
+	envMAp.reset();
+	brdfLut.reset();
+	irradianceMap.reset();
+
+	for (auto& b : modelBuffers) {
+		vkUnmapMemory(device.getLogicalDevice(), b->getMemoryHandle());
+	}
+
+	vkDeviceWaitIdle(device.getLogicalDevice());
+	ImGui_ImplVulkan_Shutdown();
+
+
+	vkDestroySampler(device.getLogicalDevice(), sampler_streatch, nullptr);
+	vkDestroySampler(device.getLogicalDevice(), sampler_Testing, nullptr);
+
 
 	//(device.getLogicalDevice(), sampler, device.getAllocator());
 

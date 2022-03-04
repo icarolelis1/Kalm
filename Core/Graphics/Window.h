@@ -26,9 +26,7 @@ public:
 	static Engine::KeyBoard keyboard;
 
 private:
-	void createWindow();
-
-	;
+	void createWindow();;
 
 	Utils::WindowHandler* windowHandler;
 

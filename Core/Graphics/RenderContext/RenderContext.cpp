@@ -16,14 +16,10 @@ RENDER::RenderContext::RenderContext(VK_Objects::Device& _device):device(_device
 
 void RENDER::RenderContext::setPersistentCommandBuffers(std::vector<VK_Objects::PComandBuffer> cmds)
 {
-
 persistentCommandBuffers = std::move(cmds);
-
 for (unsigned int i = 0; i < persistentCommandBuffers.size(); i++) {
 		frames.push_back(std::make_unique<RenderFrame>(device, i));
 	}
-
-
 }
 
 std::unique_ptr<RENDER::RenderContext> RENDER::RenderContext::getContext()
@@ -141,9 +137,5 @@ void RENDER::RenderContext::setBuffers(std::vector<VK_Objects::SBuffer> _mvpBuff
 {
 	mvpBuffers = std::move(_mvpBuffers);
 	lightBuffers = std::move(_lightBuffer);
-}
-
-RENDER::RenderContext::~RenderContext()
-{
 }
 
