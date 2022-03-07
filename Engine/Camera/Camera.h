@@ -14,23 +14,27 @@ namespace Engine {
 		void awake();
 		void start();
 		void update(float timeStep);
+		void setWidthHeight(int w, int h);
 
 		void setFarplane(float t);
 		void setNearPlane(float t);
 		float getFarPlane();
+		float getNearPlane();
 		glm::vec3 getCenter();
-		std::array<float, 6> calculateFrustumInLightSpace(glm::mat4 lightMatrix);
+		std::array<float, 6> calculateFrustumInLightSpace(glm::mat4 lightMatrix,glm::vec3 shadow_caster);
 		EulerDirections eulerDirections;
+		std::array<glm::vec3, 8> calculateFrustumConers(glm::vec3 shadow_caster);
 		
 	private:
-		std::array<glm::vec3, 8> calculateFrustumConers();
 
 		glm::vec3 center;
-		float farPlane = 120;
+		float farPlane = 60.0;
 		float nearPlane = .1;
 		float fov;
 		glm::mat4 projectionMatrix;
 		glm::mat4 viewMatrix;
+		float width;
+		float height;
 
 	};
 

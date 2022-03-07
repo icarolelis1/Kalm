@@ -78,8 +78,6 @@ VK_Objects::Image::Image(const VK_Objects::Device* _device, const char* path, Vk
 
 	uint32_t numMips = 1;
 
-	
-
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	vk_extent.width = texWidth;
@@ -95,9 +93,9 @@ VK_Objects::Image::Image(const VK_Objects::Device* _device, const char* path, Vk
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 	if (!pixels) {
-		std::cout << path << std::endl;
+		std::cout << path << std::endl; 
 		throw std::runtime_error("failed to load texture image for path : ~");
-	}
+	} 
 
 	VkImageCreateInfo imageInfo = {};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

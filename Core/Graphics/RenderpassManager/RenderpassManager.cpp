@@ -25,8 +25,8 @@ void Game::RenderpassManager::createShadowMapRenderpass(VkExtent2D extent_)
 	//Creates a renderpass for variance shadow map. Two float values will be stored.
 
 	VkExtent2D extent;
-	extent.width = 1920;
-	extent.height = 1080;
+	extent.width = 2048;
+	extent.height = 2048;
 	std::unique_ptr<VK_Objects::Renderpass> shadowMapRenderpass = std::make_unique<VK_Objects::Renderpass>(device, "SHADOW_MAP", extent);
 
 	VK_Objects::RenderpassProperties renderpassProperties;

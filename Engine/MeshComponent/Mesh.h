@@ -29,6 +29,13 @@ namespace Engine {
 
 	};
 
+	struct Material_adjustments {
+		//roughness / metallicness / useNormalMap
+		glm::vec3 roughMettallicN = glm::vec3(1,1,1);
+		glm::vec2 textureMultiplier = glm::vec2(1);
+
+	};
+
 	struct Vertex {
 		glm::vec3 pos;
 		glm::vec3 normal;
@@ -72,9 +79,15 @@ namespace Engine {
 
 		void setTexParameter(glm::vec2 v, float r);
 
+		void setMaterialName(std::string s,int materialIndex=0);
+
 		Tex_data getTexData();
 
+		Material_adjustments& getMaterialSettings();
+
 		std::vector<Engine::FilesPath> getTextureFIles();
+
+		void shouldUseNormalMap(int b);
 
 		~Mesh();
 
@@ -83,6 +96,7 @@ namespace Engine {
 		void loadMaterial(aiMesh* aMesh);
 		void createVertexBuffer(VkCommandBuffer cmd);
 		void createIndexBuffer(VkCommandBuffer cmd);
+		bool useNormalMap = true;
 
 		std::string materialTag;
 
@@ -102,6 +116,7 @@ namespace Engine {
 		std::shared_ptr<Engine::Entity> entity;
 		
 		std::vector<Engine::FilesPath> texture_paths;
+		Material_adjustments materialAdjustments;
 
 		bool updateTransformOnNextFrame = false;
 

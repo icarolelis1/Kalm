@@ -43,10 +43,10 @@ void Engine::Mesh::draw(VkCommandBuffer& cmd, PipelineManager& pipeline_manager,
 	VkDeviceSize offsets[1] = { 0 };
 	vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer->getBufferHandle(), offsets);
 	vkCmdBindIndexBuffer(cmd, indexBuffer->getBufferHandle(), 0, VK_INDEX_TYPE_UINT32);
-
+	  
 	for (uint32_t i = 0; i < meshes.size(); i++) {
 		//bind invidivual material
-		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_manager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &material_manager[texture_paths[i].name]->getDescriptorsetAtIndex(i), 0, NULL);
+ 		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_manager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &material_manager[texture_paths[i].name]->getDescriptorsetAtIndex(i), 0, NULL);
 
 		vkCmdDrawIndexed(cmd, meshes[i].indexCount, 1, static_cast<uint32_t>(meshes[i].indexBase), meshes[i].vertexOffset, 0);
 
@@ -86,7 +86,7 @@ void Engine::Mesh::setMaterialRag(std::string& tag)
 
 std::string Engine::Mesh::getMaterialTag()
 {
-	return materialTag;
+	return materialTag  ;
 }
 
 void Engine::Mesh::setTexParameter(glm::vec2 v, float r)
@@ -95,14 +95,33 @@ void Engine::Mesh::setTexParameter(glm::vec2 v, float r)
 	tex_data.roughnessMultiplier = r;
 }
 
+void Engine::Mesh::setMaterialName(std::string s, int materialIndex)
+{
+	if (texture_paths.size() <= materialIndex + 1) {
+		texture_paths[materialIndex].name = s;
+	}
+
+}
+
 Engine::Tex_data Engine::Mesh::getTexData()
 {
 	return tex_data;
 }
 
+Engine::Material_adjustments& Engine::Mesh::getMaterialSettings()
+{
+	return materialAdjustments;
+}
+
 std::vector<Engine::FilesPath> Engine::Mesh::getTextureFIles()
 {
 	return texture_paths;
+}
+
+void Engine::Mesh::shouldUseNormalMap(int b)
+{
+	
+		materialAdjustments.roughMettallicN.z = b;
 }
 
 void Engine::Mesh::setUpdateOnNextFrame(bool value) {
@@ -139,7 +158,14 @@ void Engine::Mesh::loadMeshes()
 	for (unsigned int i = 0; i < meshes.size(); i++) {
 		aiMesh* aMesh = scene->mMeshes[i];
 	
+			if(materialTag!="default_material")
 			loadMaterial(aMesh);
+			else {
+				texture_paths.resize(1);
+				texture_paths[0].name = "default_material";
+				shouldUseNormalMap(0);
+				materialAdjustments.roughMettallicN.y = 0.5;
+			}
 
 		meshes[i].indexBase = indexBase;
 		meshes[i].vertexOffset = vertexOffset;
@@ -182,8 +208,9 @@ void Engine::Mesh::loadMaterial(aiMesh *aMesh)
 	material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
 	material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
 	material->GetTexture(aiTextureType_NORMALS,0, &normalMap);
-	material->GetTexture(aiTextureType_EMISSIVE,0, &emisisonMap);
+	material->GetTexture(aiTextureType_EMISSIVE,0, &emisisonMap); 
 
+	  
 	if(name.length>0)
 		texture_paths[aMesh->mMaterialIndex].name = name.C_Str();
 	else {
@@ -215,6 +242,7 @@ void Engine::Mesh::loadMaterial(aiMesh *aMesh)
 	if(normalMap.length>0)
 	texture_paths[aMesh->mMaterialIndex].normalMap = "Assets\\"+id+"\\" + std::string(normalMap.C_Str());
 	else {
+		shouldUseNormalMap(0);
 		texture_paths[aMesh->mMaterialIndex].roughnessMap = "Assets\\common\\black.png";
 	}
 	texture_paths[aMesh->mMaterialIndex].index = aMesh->mMaterialIndex;

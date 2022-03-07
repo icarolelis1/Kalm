@@ -14,9 +14,7 @@ FramebufferManagement::FramebufferManagement( VK_Objects::Device * _device , VK_
 void FramebufferManagement::createAttachemnts(VkExtent2D extent)
 {
 
-	VkExtent2D gBufferSRAA;
-	gBufferSRAA.width = extent.width * 4;
-	gBufferSRAA.height = extent.height * 4;
+
 	createGBufferAttachments(extent);
 	createDepthMapAttachment(extent);
 }
@@ -65,8 +63,8 @@ void FramebufferManagement::createGBufferAttachments(VkExtent2D extent)
 void FramebufferManagement::createDepthMapAttachment(VkExtent2D _extent)
 {
 	VkExtent2D extent;
-	extent.width = 2024;
-	extent.height = 2024;
+	extent.width = 2048;
+	extent.height = 2048;
 
 	VkFormat format = device->getSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
 		VK_IMAGE_TILING_OPTIMAL,

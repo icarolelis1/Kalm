@@ -62,7 +62,6 @@ VK_Objects::Descriptorset VK_Objects::DescriptorPoolManager::allocateDescriptor(
 
 		VkDescriptorPoolCreateInfo create_info{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
 
-		// We do not set FREE_DESCRIPTOR_SET_BIT as we do not need to free individual descriptor sets
 		create_info.flags = 0;
 		create_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size())	;
 		create_info.pPoolSizes = pool_sizes.data();
@@ -86,6 +85,7 @@ VK_Objects::Descriptorset VK_Objects::DescriptorPoolManager::allocateDescriptor(
 
 	if (pools[pool_index]->allocateDescriptorSet(dset.getDescriptorSetHandle(), *_descriptorLayout.get())) {
 
+		dset;
 		return dset;
 	}
 	

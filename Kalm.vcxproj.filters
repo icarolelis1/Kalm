@@ -145,6 +145,15 @@
     <Filter Include="Arquivos de Recurso\Engine\Light">
       <UniqueIdentifier>{3c0edad2-9384-426b-9287-83bf8c449dfe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Arquivos de Recurso\Core\3DShapes">
+      <UniqueIdentifier>{a165b6e1-e368-4c77-873c-bd7775879ef6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{f1548c6e-bd48-4782-b09c-5c35a86d0b5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Gbuffer">
+      <UniqueIdentifier>{95760136-c149-4c7e-a12d-4ebc1f1e70aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Graphics\Render.cpp">
@@ -269,6 +278,9 @@
     </ClCompile>
     <ClCompile Include="Engine\Light\Light.cpp">
       <Filter>Arquivos de Recurso\Engine\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3DShapes\Cube.cpp">
+      <Filter>Arquivos de Recurso\Core\3DShapes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -412,6 +424,9 @@
     </ClInclude>
     <ClInclude Include="Engine\Light\Light.h">
       <Filter>Arquivos de Recurso\Engine\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\3DShapes\Cube.h">
+      <Filter>Arquivos de Recurso\Core\3DShapes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

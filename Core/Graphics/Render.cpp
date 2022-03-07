@@ -23,13 +23,8 @@ void alignedFree(void* data)
 
 Render::Render()
 {
-	//light1.color = glm::vec3(4.0f);	light1.position = glm::vec3(glm::vec3(-900, 1400, 0));
-	//light2.color = glm::vec3(.0f,.0f,.0f);	light2.position = glm::vec3(glm::vec3(-15, 3, 9)); light2.type = 1.0;
-	//light3.color = glm::vec3(.0f);	light2.position = glm::vec3(glm::vec3(5, 3, -3)); light3.type = 1.0;
-
 	nearFar = glm::vec2(.1f, 115.f);
 	dist = 115;
-
 }
 
 void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WIDTH, uint32_t HEIGHT)
@@ -65,10 +60,6 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 	createEnvMaps();
 	AllocateCommonDescriptorsSets();
 	createRenderContexts();
-
-	//creteCommandBuffer();
-
-
 }
 
 //Creation of Instance
@@ -105,7 +96,6 @@ void Render::createInstance()
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 	auto layers = debuger.getValidationLayers();
 
-	std::cout << "Current layers \n";
 	/*for (auto layer : layers) {
 		std::cout << layer << std::endl;
 	}*/
@@ -402,13 +392,13 @@ void Render::createRenderContexts()
 
 				if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
 					currentTag = meshes[j]->getMaterialTag();
-					std::cout << j << " " << meshes[j]->getMaterialTag() << std::endl;
 
 				}
 
 				uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
 
 				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
+				vkCmdPushConstants(commandBuffers[i]->getCommandBufferHandle(), pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Engine::Material_adjustments), &meshes[j]->getMaterialSettings());
 
 				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle(),pipelineManager,materialManager,i);
 			}
@@ -430,11 +420,7 @@ void Render::createRenderContexts()
 			renderpass->passes["DEFERRED_LIGHTING"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
 
 		}
-		
-		//VkMemoryBarrier barrierInfo{};
-		//barrierInfo.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		//barrierInfo.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-		//barrierInfo.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+
 
 		createBloom(commandBuffers[i]->getCommandBufferHandle(), i);
 
@@ -592,24 +578,22 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 
 	VkViewport viewport = {};
 
-	viewport.width = static_cast<uint32_t>(2024);
-	viewport.height = static_cast<uint32_t>(2024);
+	viewport.width = static_cast<uint32_t>(2048);
+	viewport.height = static_cast<uint32_t>(2048);
 
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D rect = {};
-	rect.extent.width = static_cast<uint32_t>(2024);
-	rect.extent.height = static_cast<uint32_t>(2024);
+	rect.extent.width = static_cast<uint32_t>(2048);
+	rect.extent.height = static_cast<uint32_t>(2048);
 	rect.offset = { 0,0 };
 
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
 	vkCmdSetScissor(commandBuffer, 0, 1, &rect);
 
-	//VkDescriptorSet descriptorsets[2] = { globalData_Descriptorsets[i].getDescriptorSetHandle(),lightProjection_Descriptorset[i].getDescriptorSetHandle() };
-
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SHADOW_MAP"]->getPipelineHandle());
-	//
+	
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SHADOW_MAP"]->getPipelineLayoutHandle()->getHandle(), 0, 1, &lightProjection_Descriptorset[i].getDescriptorSetHandle(), 0, NULL);
 
 	for (int j = 0; j < meshes.size(); j++) {
@@ -621,11 +605,7 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 		meshes[j]->draw(commandBuffer);
 	}
 
-
-
 	renderpass->passes["SHADOW_MAP"]->endRenderPass(commandBuffer);
-
-	//Vk_Functions::endCommandBuffer(commandBuffer);
 
 }
 
@@ -772,10 +752,15 @@ void Render::createPipeline()
 		float rough_multiplier;
 	}pushData;
 
-	std::vector<VkPushConstantRange> pushConstants;
+	std::vector<VkPushConstantRange> pushConstantsData;
+	pushConstantsData.resize(1);
+	pushConstantsData[0].offset = 0;
+	pushConstantsData[0].size = sizeof(Engine::Material_adjustments);
+	pushConstantsData[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 
-	std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstants);
+
+	std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstantsData);
 
 	VK_Objects::PipelineProperties pipelineInfo{};
 
@@ -997,8 +982,7 @@ void Render::createPipeline()
 	{
 
 		//vertical blur  Pipeline
-
-
+		
 		VK_Objects::ShaderResource verticalBlurImageRessource{};
 		verticalBlurImageRessource.binding = static_cast<uint32_t>(0);
 		verticalBlurImageRessource.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -1188,13 +1172,11 @@ void Render::creteCommandBuffer() {
 	clearValues[1].color = { 1.0,1.0,1.0,.0 };
 	clearValues[2].color = { 1.0,1.0 };
 
-
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
 	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[0]);
-
 
 	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
 	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
@@ -1239,7 +1221,6 @@ void Render::creteCommandBuffer() {
 
 			if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
 				currentTag = meshes[j]->getMaterialTag();
-				std::cout << j << " " << meshes[j]->getMaterialTag() << std::endl;
 
 			}
 
@@ -1355,11 +1336,27 @@ void Render::createDynamicUniformBuffers()
 
 void Render::createMaterials()
 {
+	Engine::FilesPath path{};
+	path.diffuseMap = "Assets\\common\\white.png";
+	path.emissionMap = "Assets\\common\\black.png";
+	path.index = 0;
+	path.metallicMap = "Assets\\common\\black.png";
+	path.name = "default_material";
+	path.normalMap = "Assets\\common\\black.png";
+	path.roughnessMap = "Assets\\common\\white.png";
+
+	//Create DeafultMaterial
+	materialManager["default_material"] = std::make_unique<Engine::Material>(&device, "default_material", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+
+
 	for (auto mesh : meshes) {
+		if (mesh->getMaterialTag() == "default_material")continue;
+		std::string s = mesh->getId();
 		std::vector<Engine::FilesPath> files = mesh->getTextureFIles();
 		for (auto mat : files) {
+
 			if(materialManager.find(mat.name) == materialManager.end())
-				materialManager[mat.name] = std::make_unique<Engine::Material>(&device, mat.name, files[mat.index], poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+ 				materialManager[mat.name] = std::make_unique<Engine::Material>(&device, mat.name, files[mat.index], poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 		}
 	}
 	//materialManager["Player"] = std::make_unique<Engine::Material>(&device, "Player", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
@@ -1402,65 +1399,61 @@ void Render::createScene()
 	SceneGraph& sceneGraph = scene.sceneGraph;
 	//		Light(const char* id, glm::vec3 color = glm::vec3(1.0f), glm::vec3 position = glm::vec3(0.0), float type = 0.0);
 
-	std::shared_ptr<Engine::Entity>  sun = std::make_shared<Engine::Light>("Sun",glm::vec3(1),glm::vec3(900,400,20),0.0);
+	sceneGraph.root->entity->transform->setScale(glm::vec3(0.7, 1.0, 0.7));
+	//Lights
+	std::shared_ptr<Engine::Entity>  sun = std::make_shared<Engine::Light>("Sun",glm::vec3(1),glm::vec3(100,100,0),0.0);
 
 	std::shared_ptr<Engine::Entity>  pointLight1 = std::make_shared<Engine::Light>("pointLight1", glm::vec3(1), glm::vec3(10, 4, 1), 1.0);
 
 	std::shared_ptr<Engine::Entity>  pointLight2 = std::make_shared<Engine::Light>("pointLight2", glm::vec3(1), glm::vec3(-10, 4, -1), 1.0);
 
-	//sceneGraph.root->entity->transform.setScale(glm::vec3(.7, 1., .7));
 
-	std::dynamic_pointer_cast<Engine::Transform>(sceneGraph.root->entity->getComponent(Engine::COMPONENT_TYPE::TRANSFORM))->setScale(glm::vec3(.7, 1., .7));
 
-	std::shared_ptr<Engine::Entity> mesh1 = std::make_shared<Engine::Entity>("Tile1");
-
-	std::shared_ptr<Engine::Entity> Player = std::make_shared<Engine::Entity>("samus");
 	//Engine::SphereCollsior::SphereCollsior(std::shared_ptr<Engine::Entity> _entity, float _radius,glm::vec3 posOffset, const char* name):Collisor(_entity,posOffset,name),radius(_radius)
 
 	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
-
-	std::shared_ptr<Engine::Component> sphereCollisor = std::make_shared<Engine::SphereCollsior>(Player, 1.0f, glm::vec3(0), "PlayerCol");
 
 	main_camera = std::dynamic_pointer_cast<Engine::Camera>(camera_entity);
 
 	std::shared_ptr<Engine::Script> cameraController = std::make_shared<CameraController>(main_camera, "camController");
 
 	camera_entity->attachComponent(cameraController);
+	int h, w;
+	glfwGetFramebufferSize(window, &w, &h);
+	main_camera->setWidthHeight(w, h);
 
 	std::dynamic_pointer_cast<Engine::Transform>(main_camera->getComponent(Engine::COMPONENT_TYPE::TRANSFORM))->setPosition(-.44, 1.351, -14.5);
 	
-	Player->attachComponent(std::make_shared<Engine::Mesh>(Player, "samus", "samus", "Assets\\samus\\scene.gltf", &device, transferPool.get()));
-
-	Player->transform->setPosition(glm::vec3(0, .8, 0));
-	Player->transform->setScale(glm::vec3(1, 1, 1));
-	Player->transform->rotate(glm::vec3(90.0,00.0f, 0.0), 45.0f);
-
-	std::shared_ptr<Engine::Entity>  floor = std::make_shared<Engine::Entity>("floor");
-
-	floor->attachComponent(std::make_shared<Engine::Mesh>(floor, "floor", "floor", "Assets\\plane\\plane.glb", &device, transferPool.get()));
-
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
 
+	std::shared_ptr<Engine::Entity> globe = std::make_shared<Engine::Entity>("MyGlobe");
+	std::shared_ptr<Engine::Entity> cube = std::make_shared<Engine::Entity>("plane");
+	cube->transform->setScale(glm::vec3(5, 0.1, 5.));
+	globe->transform->setPosition(0, 2.5, .0);
+
+	cube->attachComponent(std::make_shared<Engine::Mesh>(cube, "plane", "plane", "Assets\\plane\\plane.gltf", &device, transferPool.get()));
+	globe->attachComponent(std::make_shared<Engine::Mesh>(globe, "MyGlobe", "MyGlobe", "Assets\\MyGlobe\\globe.gltf", &device, transferPool.get()));
+
 	//std::shared_ptr<Node> node1 = std::make_shared<Node>(Floor);
-	std::shared_ptr<Node> node2 = std::make_shared<Node>(Player);
 	std::shared_ptr<Node> node3 = std::make_shared<Node>(sun);
 	std::shared_ptr<Node> node4 = std::make_shared<Node>(pointLight1);
 	std::shared_ptr<Node> node5 = std::make_shared<Node>(pointLight2);
-	std::shared_ptr<Node> node6 = std::make_shared<Node>(floor);
+	std::shared_ptr<Node> node6 = std::make_shared<Node>(globe);
+	std::shared_ptr<Node> node7 = std::make_shared<Node>(cube);
 
+	 
 	sceneGraph.addNode(cameraNode);
 	//sceneGraph.addNode(node1);
-	sceneGraph.addNode(node2);
 	sceneGraph.addNode(node3);
 	sceneGraph.addNode(node4);
 	sceneGraph.addNode(node5);
 	sceneGraph.addNode(node6);
+	sceneGraph.addNode(node7);
 
 	mainSCene = std::move(scene);
 	mainSCene.sceneGraph.updateSceneGraph();
 
 }
-
 
 void Render::separateSceneObjects(std::shared_ptr<Node> node)
 {
@@ -1514,13 +1507,28 @@ void Render::createImGuiInterface()
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
+	io.Fonts->AddFontFromFileTTF("Engine\\font\\Roboto-Light.ttf",16.0f);
+
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
 	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.Colors[ImGuiCol_WindowBg] = ImColor(255, 255, 255);
+	style.Colors[ImGuiCol_TitleBg] = ImColor(255, 255, 255);
+	style.Colors[ImGuiCol_Border] = ImColor(0, 0, 0);
+	style.Colors[ImGuiCol_Text] = ImColor(0, 0, 0);
+	style.Colors[ImGuiCol_ChildBg] = ImColor(0, 0, 0);
+	style.Colors[ImGuiCol_Tab] = ImColor(255, 255, 255);
+	style.Colors[ImGuiCol_TabActive] = ImColor(255, 255, 255);
+	style.Colors[ImGuiCol_TabHovered] = ImColor(225, 225, 225);
+	style.Colors[ImGuiCol_FrameBg] = ImColor(255, 255, 255);
+
+	style.WindowRounding = 3.0f;
 	
+	style.WindowBorderSize = 2.5f;
+	style.FrameBorderSize = 1.5f;;
 	ImGui_ImplGlfw_InitForVulkan(window, true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance = instance.vk_Instance;
@@ -1588,6 +1596,7 @@ void Render::renderUI(uint32_t imageIndex)
 			if (ImGui::BeginTabItem("Scene Graph"))
 			{
 			
+			
 				ImGui::InputFloat4("Ortho", (float*)glm::value_ptr(ortho));
 
 				ImGui::InputFloat("Dist", &dist);
@@ -1637,7 +1646,7 @@ void Render::renderUI(uint32_t imageIndex)
 
 	ImGui::End();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	ImGui::Render();
 
@@ -1653,8 +1662,8 @@ void Render::recreateSwapChain()
 {
 	std::cout << "SWAPCHAIN RECREATED\n";
 	int w, h = 0;
-
 	glfwGetFramebufferSize(window, &w, &h);
+	main_camera->setWidthHeight(w, h);
 	while (w == 0 || h == 0) {
 		glfwGetFramebufferSize(window, &w, &h);
 
@@ -1703,17 +1712,13 @@ void Render::updateSceneGraph()
 
 
 void Render::updateUniforms(uint32_t imageIndex)
-{
-	VP t;
-	t.view = main_camera->getViewMatrix();
-	t.projection = main_camera->getProjectionMatrix();
+{	glm::vec3 lightDireciton = glm::normalize(lightUniform.lights[0].position);
 
-	viewProjectionBuffers[imageIndex]->udpate(t);
+
 
 
 	lightUniform.invProj = glm::inverse(main_camera->getProjectionMatrix());
-
-
+	
 	lightUniform.camera = std::dynamic_pointer_cast<Engine::Transform>(main_camera->getComponent(Engine::COMPONENT_TYPE::TRANSFORM))->getPosition();
 	lightUniform.invView = glm::inverse(main_camera->getViewMatrix());
 	//mainLight = light1;
@@ -1730,27 +1735,39 @@ void Render::updateUniforms(uint32_t imageIndex)
 	lightUniform.num_lights = i+1 ;
 
 
-	glm::vec3 lightDireciton = glm::normalize(lightUniform.lights[0].position);
 
-	//glm::mat4 depthViewMatrix = lookAt(  (camera->eulerDir.front * camera->shadowDistance + lightDireciton* shadowMapPass.lightDistance) , camera->eulerDir.front *2.f , glm::vec3(0.0, -1.0, 0.0));
-	glm::mat4 depthViewMatrix = lookAt(normalize(lightUniform.lights[0].position) * dist, glm::vec3(0), glm::vec3(0.0, -1.0, 0.0));
 
-	std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix);
+	//Light Space Directions
+	glm::vec3 right = glm::normalize(glm::cross(lightDireciton, glm::vec3(0, 1, 0)));
+	glm::vec3 lightUp = glm::vec3(glm::cross(lightDireciton, right));
+	glm::vec3 p = lightDireciton * main_camera->getFarPlane() * dist;
+	
+	glm::mat4 depthViewMatrix = lookAt(lightDireciton *main_camera->getFarPlane() + main_camera->getCenter(), main_camera->getCenter(), lightUp);
 
-	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], nearFar.x, nearFar.y);
+	//glm::mat4 depthViewMatrix = lookAt(normalize(lightDireciton*(main_camera->getFarPlane() - main_camera->getNearPlane()) - main_camera->getCenter()),main_camera->getCenter(), glm::vec3(0,-1,0));
+
+	std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix,glm::vec3(lightDireciton));
+
+	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3],nearFar.x,nearFar.y );
 	//glm::mat4 depthProjectionMatrix = glm::ortho(ortho.x, ortho.y, ortho.z, ortho.w, nearFar.x, nearFar.y);
 
 	glm::mat4 lightMatrix = depthProjectionMatrix * depthViewMatrix;
 	lightUniform.lightMatrix = lightMatrix;
 
-	main_camera->setFarplane(nearFar.y);
-	main_camera->setNearPlane(nearFar.x);
+	//main_camera->setFarplane(nearFar.y);
+	//main_camera->setNearPlane(nearFar.x);
 	
 	lightUniformBuffers[imageIndex]->udpate(lightUniform);
 
 	lightProjectionUniformBuffers[imageIndex]->udpate(lightMatrix);
 
+	VP t;
 
+	t.view = main_camera->getViewMatrix();
+
+	t.projection = main_camera->getProjectionMatrix();
+
+	viewProjectionBuffers[imageIndex]->udpate(t);
 	//Update the uniform buffers that hold model projection, which is stored in one large buffer per frame.
 	updateDynamicUniformBuffer(imageIndex);
 

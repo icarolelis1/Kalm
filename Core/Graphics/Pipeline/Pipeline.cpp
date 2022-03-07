@@ -113,7 +113,7 @@ VK_Objects::Pipeline::Pipeline(const Device& _device, std::shared_ptr<PipelineLa
 	pipelineCI.pVertexInputState = &vertexInputState;
 	pipelineCI.subpass = info.subpass;
 	VkResult r = vkCreateGraphicsPipelines(device.getLogicalDevice() , vk_cache, 1, &pipelineCI, device.getAllocator() , &vk_pipeline);
-	if (r == VK_SUCCESS)std::cout << "Successfully created pipeline\n";
+	if (r != VK_SUCCESS)std::cout << "Failed to create pipeline\n";
 
 	vertexShader->destroyModule();
 	fragmentShader->destroyModule();
@@ -262,7 +262,7 @@ VK_Objects::PipelineLayout::PipelineLayout(const Device& _device, std::vector<st
 
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(handles.size());
+	pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(handles.size()); 
 
 	if(handles.size()>0)
 	pipelineLayoutCreateInfo.pSetLayouts = handles.data();

@@ -143,7 +143,7 @@ vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
 			float variance = moments.y-(moments.x*moments.x);
 			variance = max(variance,0.00002);
 			float d = currentDepth - moments.x;
-			float p_max = variance/(variance+d*d);
+			float p_max = smoothstep(.2,1.0,variance/(variance+d*d));
 
 		return p_max;
 }
@@ -242,6 +242,9 @@ void main(){
 
     vec3 ambient = (kD * diffuse  + specular ) ;
     color = vec3(Lo*shadow  +ambient) +texture(emissionMap,TexCoords).rgb*1000 ;
+
+
+    color = vec3(Lo +ambient)*shadow  +texture(emissionMap,TexCoords).rgb*1000 ;
 
 
     Color = mix(vec4(vec3(1),1.0),vec4(color,1.0),w);  

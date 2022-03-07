@@ -10,7 +10,13 @@ layout(location = 0) in vec3 Normals;
 layout(location = 1) in vec2 TexCoords;
 layout(location = 2) in vec3 WorldPos;
 
+layout (push_constant) uniform constants{
 
+	vec3 roughMetallicN;	
+	vec2 textMultiplier;
+
+
+}PushConstants;
 
 layout (location = 0 ) out vec4 Albedo;
 layout (location = 1 ) out vec2 MetallicRoughness;
@@ -59,13 +65,12 @@ void main()
 
 
 
-
-Normal = vec4(getNormalFromMap(vec2(1.0)),1.0);
+Normal = mix(vec4(Normals,1.0),vec4(getNormalFromMap(PushConstants.textMultiplier),1.0) ,PushConstants.roughMetallicN.z);
 vec3 em =   texture( emissionMap ,TexCoords  ).rgb ;
-vec2  metRoughness =   vec2(texture( metallicnessMap, TexCoords ).x, texture( metallicnessMap, TexCoords ).y) ;
+vec2  metRoughness =   vec2(texture( metallicnessMap, TexCoords ).y * PushConstants.roughMetallicN.x, texture( metallicnessMap, TexCoords ).z *PushConstants.roughMetallicN.y ) ;
 Albedo =  vec4(pow(texture( diffuseMap, TexCoords).xyz  ,vec3(2.2)),1.0);
 
-MetallicRoughness= vec2(metRoughness.x*0.0 , metRoughness.y);
+MetallicRoughness= vec2(metRoughness.x , metRoughness.y );
 Emission  = vec4(em,1.0);
 
 }

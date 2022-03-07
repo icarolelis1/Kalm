@@ -193,6 +193,7 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 
 	VK_Objects::Descriptorset descriptorset(device);
 
+	poolManager;
 	descriptorset = poolManager->allocateDescriptor(descLayout);
 
 

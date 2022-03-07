@@ -2,7 +2,7 @@
 
 Engine::Camera::Camera(const char* _id) :  Engine::Entity(_id)
 {
-	projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, .1f, 100.f);
+	projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, nearPlane, farPlane);
 }
 
 glm::mat4& Engine::Camera::getViewMatrix()
@@ -16,6 +16,8 @@ glm::mat4& Engine::Camera::getViewMatrix()
 
 glm::mat4& Engine::Camera::getProjectionMatrix()
 {
+	projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, nearPlane, farPlane);
+
 	return projectionMatrix;
 }
 
@@ -30,6 +32,12 @@ void Engine::Camera::start()
 
 void Engine::Camera::update(float timeStep)
 {
+}
+
+void Engine::Camera::setWidthHeight(int w, int h)
+{
+	width = w;
+	height = h;
 }
 
 void Engine::Camera::setFarplane(float t)
@@ -47,14 +55,19 @@ float Engine::Camera::getFarPlane()
 	return farPlane;
 }
 
+float Engine::Camera::getNearPlane()
+{
+	return nearPlane;
+}
+
 glm::vec3 Engine::Camera::getCenter()
 {
 	return center;
 }
 
-std::array<float, 6> Engine::Camera::calculateFrustumInLightSpace(glm::mat4 lightMatrix)
+std::array<float, 6> Engine::Camera::calculateFrustumInLightSpace(glm::mat4 lightMatrix,glm::vec3 shadow_caster)
 {
-	std::array<glm::vec3, 8> corners = calculateFrustumConers();
+	std::array<glm::vec3, 8> corners = calculateFrustumConers(shadow_caster);
 	float maxX, maxY, maxZ;
 	float minX, minY, minZ;
 	maxX = maxY = maxZ = -10000;
@@ -79,12 +92,18 @@ std::array<float, 6> Engine::Camera::calculateFrustumInLightSpace(glm::mat4 ligh
 	return boundries;
 }
 
-std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers()
+std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers(glm::vec3 shadow_caster)
 {
+
+	//Light Space Directions
+	glm::vec3 right = glm::normalize(glm::cross(shadow_caster,glm::vec3(0,1,0)));
+	glm::vec3 lightUp = glm::vec3(glm::cross(shadow_caster, right));
+
 	fov = 45.0f;
 	float tan = glm::tan(glm::radians(fov / 2.));
-	float aspectRatio = 1924 / 1055;
-	float farPlane = this->transform->getPosition().y + 10.0f;
+
+	float aspectRatio = width / height;
+	float farPlane = 60.0f;
 	float heightNear = 2 * tan * nearPlane;
 	float widthNear = heightNear * aspectRatio;
 	float heightFar = 2 * tan * farPlane;

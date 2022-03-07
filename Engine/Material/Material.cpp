@@ -44,19 +44,20 @@ Engine::Material::Material(const VK_Objects::Device* _device, std::string _id, F
 
 	//VK_Objects::Image textureImage(&device, "Assets\\Common\\castle.jpg", VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, 0, *transferPool.get());
 
+	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 	
 	//Create textures
-	images["DIFFUSE_TEXTURE"] =   std::make_unique<VK_Objects::Image>(device, texturePaths.diffuseMap.c_str() , VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
-	images["EMISSION_TEXTURE"] =  std::make_unique<VK_Objects::Image>(device, texturePaths.emissionMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
-	images["ROUGHNESS_TEXTURE"] = std::make_unique<VK_Objects::Image>(device, texturePaths.roughnessMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
-	images["METALLIC_TEXTURE"] = std::make_unique<VK_Objects::Image>(device, texturePaths.metallicMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, 0, *transferCommandPool, 1, true);
-	images["NORMAL_TEXTURE"] =    std::make_unique<VK_Objects::Image>(device, texturePaths.normalMap.c_str(), VK_FORMAT_R8G8B8A8_UNORM,  VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
+	images["DIFFUSE_TEXTURE"] =   std::make_unique<VK_Objects::Image>(device, texturePaths.diffuseMap.c_str() , format, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
+	images["EMISSION_TEXTURE"] =  std::make_unique<VK_Objects::Image>(device, texturePaths.emissionMap.c_str(), format, VK_IMAGE_TILING_OPTIMAL,  0, *transferCommandPool, 1, true);
+	images["ROUGHNESS_TEXTURE"] = std::make_unique<VK_Objects::Image>(device, texturePaths.roughnessMap.c_str(), format, VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
+	images["METALLIC_TEXTURE"] = std::make_unique<VK_Objects::Image>(device, texturePaths.metallicMap.c_str(), format, VK_IMAGE_TILING_OPTIMAL, 0, *transferCommandPool, 1, true);
+	images["NORMAL_TEXTURE"] =    std::make_unique<VK_Objects::Image>(device, texturePaths.normalMap.c_str(), format,  VK_IMAGE_TILING_OPTIMAL,   0, *transferCommandPool, 1, true);
 
-	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["DIFFUSE_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["DIFFUSE_TEXTURE"]->getMaximumMips());
-	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["EMISSION_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["EMISSION_TEXTURE"]->getMaximumMips());
-	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["ROUGHNESS_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["ROUGHNESS_TEXTURE"]->getMaximumMips());
-	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["METALLIC_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["METALLIC_TEXTURE"]->getMaximumMips());
-	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["NORMAL_TEXTURE"]->getVkImageHandle(), VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["NORMAL_TEXTURE"]->getMaximumMips());
+	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["DIFFUSE_TEXTURE"]->getVkImageHandle(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["DIFFUSE_TEXTURE"]->getMaximumMips());
+	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["EMISSION_TEXTURE"]->getVkImageHandle(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["EMISSION_TEXTURE"]->getMaximumMips());
+	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["ROUGHNESS_TEXTURE"]->getVkImageHandle(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["ROUGHNESS_TEXTURE"]->getMaximumMips());
+	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["METALLIC_TEXTURE"]->getVkImageHandle(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["METALLIC_TEXTURE"]->getMaximumMips());
+	Vk_Functions::setImageLayout(*device, *transferCommandPool, images["NORMAL_TEXTURE"]->getVkImageHandle(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, images["NORMAL_TEXTURE"]->getMaximumMips());
 
 	uint32_t n = images["DIFFUSE_TEXTURE"]->getMaximumMips();
 	Vk_Functions::generateMips(device, images["DIFFUSE_TEXTURE"].get(), graphicsCommandPool, images["DIFFUSE_TEXTURE"]->getMaximumMips());

@@ -18,6 +18,7 @@
 #include <Scene/Scene.h>
 #include <Graphics/Thread/Thread.h>
 #include <Collisor/sphere/SphereCollisor.h>
+#include <3DShapes/Cube.h>
 #include <fstream>
 
 #ifndef GLM_FORCE_DEFAULT_ALIGNED_GENTYPES

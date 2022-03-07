@@ -89,7 +89,8 @@ namespace Engine {
 	//		//Create a mesh to visually represent the collisor in the scene. This helps to set the collisor properly
 	//		collisorMesh = std::make_shared<Model>(mesh.c_str(), "Aplication\\assets\\utils\\sphereCollisor.obj", INTERNAL);
 	//
-	//		collisorMesh->transform.setScale(glm::vec3(radius));
+	//		collisorMesh->transform.set
+	// (glm::vec3(radius));
 	//	}
 	//
 	//	void SphereCollisor::displayInferface()

@@ -2,7 +2,7 @@
 
 #include <map>
 #include <memory>
-#define MAX_SETS 45
+#define MAX_SETS 65
 
 namespace VK_Objects {
 	
