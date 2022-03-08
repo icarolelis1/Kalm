@@ -58,8 +58,8 @@ VkCommandBuffer& RenderFrame::getCommandBufferHandler()
 
 RenderFrame::~RenderFrame()	
 {
-	for (int i = 0; i < commandPools.size(); i++)
-		vkDestroyCommandPool(device.getLogicalDevice(), commandPools[i]->getPoolHanndle(), device.getAllocator());
+	//for (int i = 0; i < commandPools.size(); i++)
+	//	vkDestroyCommandPool(device.getLogicalDevice(), commandPools[i]->getPoolHanndle(), device.getAllocator());
 
 	vkDestroySemaphore(device.getLogicalDevice(), vk_avaibleSemaphore, device.getAllocator());
 	vkDestroySemaphore(device.getLogicalDevice(), vk_finishSemaphore, device.getAllocator());
