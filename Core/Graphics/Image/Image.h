@@ -53,7 +53,7 @@ namespace Vk_Functions {
 
 	void setImageLayout(VK_Objects::Device device, VK_Objects::CommandPool& pool, VkImage& image, VkFormat format, VkImageLayout oldImageLayout, VkImageLayout newLayout, uint32_t layerCount = 1, int baseLayer = 0, uint32_t mipLevels = 1);
 
-	void copyBufferToImage(VK_Objects::Buffer& buffer, VkImage image, VK_Objects::Device device, VK_Objects::CommandPool& pool, uint32_t width, uint32_t height, uint32_t baseLayer = 0, uint32_t layerCount = 1);
+	void copyBufferToImage(VK_Objects::Buffer& buffer, VkImage image, VK_Objects::Device device, VK_Objects::CommandPool* pool, uint32_t width, uint32_t height, uint32_t baseLayer = 0, uint32_t layerCount = 1);
 
 	void copyBufferToImage(VkBuffer& buffer, VkImage image, VkDevice device, VkCommandPool pool, uint32_t width, uint32_t height, uint32_t baseLayer = 0, uint32_t layerCount = 1);
 

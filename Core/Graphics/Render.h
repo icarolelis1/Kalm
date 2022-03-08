@@ -27,7 +27,7 @@
 
 constexpr bool DEBUG_ = true;
 constexpr bool UI_RENDER = true;
-
+ 
 using Meshes = std::vector<std::shared_ptr<Engine::Mesh>>;
 using LightContainer = std::vector<std::shared_ptr<Engine::LightComponent>>;
 
@@ -60,6 +60,15 @@ struct LightUniform {
 	int num_lights = 1;
 };
 
+struct RenderQueries {
+	VkQueryPool statisticPool;
+	std::vector< uint64_t> statistics;
+
+	VkQueryPool timeStampsPool;
+	std::vector< uint64_t> timeStamps;
+
+};
+
 class Render
 {
 	struct TimeStep {
@@ -88,11 +97,11 @@ private:
 	void prepareDevice(VK_Objects::Surface surface);
 	void createRenderpass();
 	void createRenderContexts();
+	void recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t index);
 	void createShadowMap(VkCommandBuffer &commandBuffer,uint32_t imageIndex);
 	void createBloom(VkCommandBuffer& commandBuffer, uint32_t imageIndex);
 
 	void createPipeline();
-	void creteCommandBuffer();
 
 	void createCommandPools();
 	void addMeshes();
@@ -105,9 +114,10 @@ private:
 
 	void separateSceneObjects(std::shared_ptr<Node> node);
 	void getEntityScripts();
-	void getEntityMeshes();
+	
 	void createImGuiInterface();
-
+	void setqueryPoolStatistics();
+	void getQueryPoolResults();
 	void renderUI(uint32_t imageIndex);
 
 	void recreateSwapChain();
@@ -155,7 +165,6 @@ private:
 	std::vector<VK_Objects::Descriptorset> light_Descriptorsets;
 	std::vector<VK_Objects::Descriptorset> lightProjection_Descriptorset;
 	size_t dynamicAlignment;
-
 	Utils::Debuger debuger;
 
 	//RenderPasses renderpasses;
@@ -172,7 +181,7 @@ private:
 	void updateDynamicUniformBuffer(uint32_t imageIndex);
 	Game::Scene mainSCene;
 	glm::vec3 mainLightPos = glm::vec3(400);
-	
+	RenderQueries renderQueries;
 	LightContainer lightContainer;
 
 	float lastFrameTIme = 0;

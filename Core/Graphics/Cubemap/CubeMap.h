@@ -34,7 +34,7 @@ namespace VK_Objects {
 
 namespace Vk_Functions {
 
-	void convertEquirectangularImageToCubeMap(const VK_Objects::Device* device, const char* hdriImagePath, VK_Objects::CubeMap& cupeMap, VK_Objects::CommandPool& transientPool, VK_Objects::CommandPool& graphicsPool, VK_Objects::SDescriptorPoolManager poolManager);
+	void convertEquirectangularImageToCubeMap(const VK_Objects::Device* device, const char* hdriImagePath, VK_Objects::CubeMap& cupeMap, VK_Objects::CommandPool* transientPool, VK_Objects::CommandPool* graphicsPool, VK_Objects::SDescriptorPoolManager poolManager);
 
 	void filterEnviromentMap(const VK_Objects::Device* device, VK_Objects::CubeMap& skybox , VK_Objects::CubeMap& envMap, VK_Objects::CommandPool& transientPool, VK_Objects::CommandPool& graphicsPool, VK_Objects::SDescriptorPoolManager poolManager);
 

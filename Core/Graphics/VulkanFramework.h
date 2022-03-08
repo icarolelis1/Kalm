@@ -246,6 +246,14 @@ namespace VK_Objects {
 
 		};
 
+		float getTimeStampPeriod() {
+			return tiemStampPeriod;
+		}
+
+		bool checkTimeStampSupport() {
+			return timeStampSupport;
+		}
+
 		size_t getMinimumBufferAligment() {
 			VkPhysicalDeviceProperties props;
 			vkGetPhysicalDeviceProperties(vk_physicalDevice, &props);
@@ -255,6 +263,12 @@ namespace VK_Objects {
 		VkSampleCountFlagBits getMaxUsableSampleCount() {
 			VkPhysicalDeviceProperties physicalDeviceProperties;
 			vkGetPhysicalDeviceProperties(vk_physicalDevice, &physicalDeviceProperties);
+
+			tiemStampPeriod = physicalDeviceProperties.limits.timestampPeriod;
+
+			if (physicalDeviceProperties.limits.timestampComputeAndGraphics == VK_TRUE) {
+				timeStampSupport = true;
+			}
 
 			VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 			if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
@@ -362,7 +376,8 @@ namespace VK_Objects {
 			VkPhysicalDeviceFeatures features{};
 			features.samplerAnisotropy = VK_TRUE;
 			features.fillModeNonSolid = VK_TRUE;
-
+			features.pipelineStatisticsQuery = VK_TRUE;
+			
 			VkDeviceCreateInfo deviceInfo = {};
 			deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 			deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
@@ -451,6 +466,10 @@ namespace VK_Objects {
 
 
 	private:
+
+		bool timeStampSupport = false;
+		
+		float tiemStampPeriod;
 
 		bool checkDeviceExtensions(VkPhysicalDevice device) {
 		

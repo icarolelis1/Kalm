@@ -687,7 +687,7 @@ bool ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer,VK_Objec
         vkCmdCopyBufferToImage(command_buffer, buffer.getBufferHandle(), bd->FontImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
        */
 
-        Vk_Functions::copyBufferToImage(buffer, bd->FontImage, device, pool, width, height);
+        Vk_Functions::copyBufferToImage(buffer, bd->FontImage, device, &pool, width, height);
     //Vk_Functions::copyBufferToImage(.)
 
         /*

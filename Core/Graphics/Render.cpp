@@ -49,7 +49,6 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 	framebuffersManager = std::make_unique<FramebufferManagement>(&device, &swapChain, renderpass->passes);
 	createPipeline();
 	createCommandPools();
-	addMeshes();
 	createScene();
 	separateSceneObjects(mainSCene.sceneGraph.root);
 	createMaterials();
@@ -59,6 +58,7 @@ void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WID
 	createSamplers();
 	createEnvMaps();
 	AllocateCommonDescriptorsSets();
+	setqueryPoolStatistics();
 	createRenderContexts();
 }
 
@@ -144,7 +144,7 @@ void Render::createEnvMaps()
 {
 	//SKYBOX AND ENVIROMENT 
 	cubeMap = std::make_unique<VK_Objects::CubeMap>(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", *cubeMap.get(), *transferPool.get(), *graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", *cubeMap.get(), transferPool.get(), graphicsPool.get(), poolManager);
 	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
 
 	envMAp = std::make_unique<VK_Objects::CubeMap>(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
@@ -154,7 +154,7 @@ void Render::createEnvMaps()
 	Vk_Functions::generatBRDFLut(&device, *brdfLut.get(), *transferPool.get(), *graphicsPool.get(), poolManager);
 
 	irradianceMap = std::make_unique<VK_Objects::CubeMap>(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", *irradianceMap.get(), *transferPool.get(), *graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", *irradianceMap.get(), transferPool.get(), graphicsPool.get(), poolManager);
 
 }
 void Render::AllocateCommonDescriptorsSets()
@@ -317,24 +317,122 @@ void Render::createRenderContexts()
 	
 	uint32_t n = swapChain.getNumberOfImages();
 
-	//uint32_t n = swapChain.getNumberOfImages();
+	//std::vector<VK_Objects::PComandBuffer> commandBuffers;
 
-	VkExtent2D e = swapChain.getExtent();
+	//commandBuffers.resize(n);
 
-	std::unique_ptr<RENDER::RenderContext> r1 = std::make_unique<RENDER::RenderContext>(device, std::make_shared<VK_Objects::SwapChain>(swapChain));
+	//for (uint32_t i = 0; i < n; i++) {
 
-	r1->setMaxFramesInFlight(3);
+	//	commandBuffers[i] = graphicsPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
-	std::vector<VK_Objects::PComandBuffer> commandBuffers;
+	//}
 
-	commandBuffers.resize(n);
+	/*for (unsigned int i = 0; i < commandBuffers.size(); i++) {
 
-	for (uint32_t i = 0; i < n; i++) {
+		recordCommandIndex(*commandBuffers[i], i);
+	}*/
 
-		commandBuffers[i] = graphicsPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+	RENDER::RenderContext render_context = RENDER::RenderContext(device, std::make_shared<VK_Objects::SwapChain>(swapChain));
 
-	}
 
+	render_context.setNumberOfFrames(3);
+
+	while (!glfwWindowShouldClose(w)) {
+
+		float time = (float)glfwGetTime();
+		TimeStep timeStep = time - lastFrameTIme;
+		frameTime = timeStep.getTimeinMilli();
+		lastFrameTIme = time;
+
+
+		glfwPollEvents();
+		std::stringstream ss;
+		ss << "Kalm" << " " << " [" << frameTime << " MILLISEC]";
+
+		glfwSetWindowTitle(window, ss.str().c_str());
+		scriptManager.update(frameTime);
+
+		{
+
+			vkWaitForFences(device.getLogicalDevice(), 1, &render_context.frames[render_context.currentFrameIndex]->getFrameCountControllFence(), VK_FALSE, UINT64_MAX);
+			uint32_t imageIndex;
+
+			VkResult result = vkAcquireNextImageKHR(device.getLogicalDevice(), render_context.swapChain->getSwapChainHandle(), UINT64_MAX, render_context.frames[render_context.currentFrameIndex]->getImageAvaibleSemaphore(), VK_NULL_HANDLE, &imageIndex);
+			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+				recreateSwapChain();
+				return;
+
+			}
+			else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+				throw std::runtime_error("failed to acquire swap chain image!");
+			}
+			vkResetFences(device.getLogicalDevice(), 1, &render_context.frames[render_context.currentFrameIndex]->getFrameCountControllFence());
+			
+			//RECORD COMMAN FOR FRAME
+			recordCommandIndex(render_context.frames[render_context.currentFrameIndex]->getCommandBuffer(), render_context.currentFrameIndex);
+			//swapChain->update();
+			updateSceneGraph();
+			updateUniforms(render_context.currentFrameIndex);
+
+
+			VkSubmitInfo submitInfo = {};
+			renderUI(imageIndex);
+
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+			VkSemaphore waitSemaphores[] = { render_context.frames[render_context.currentFrameIndex]->getImageAvaibleSemaphore() };
+			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+			submitInfo.waitSemaphoreCount = 1;
+			submitInfo.pWaitSemaphores = waitSemaphores;
+			submitInfo.pWaitDstStageMask = waitStages;
+
+			VkCommandBuffer cmd = render_context.frames[render_context.currentFrameIndex]->getCommandBufferHandler();
+
+			VkCommandBuffer cmds[2] = {cmd,imGuiCmds[imageIndex] };
+
+			submitInfo.commandBufferCount = 2;
+			submitInfo.pCommandBuffers = &cmds[0];
+
+			VkSemaphore signalSemaphores[] = { render_context.frames[render_context.currentFrameIndex]->getRenderFinishedSemaphore() };
+			submitInfo.signalSemaphoreCount = 1;
+			submitInfo.pSignalSemaphores = signalSemaphores;
+
+
+			VkResult r = vkQueueSubmit(device.getQueueHandle(VK_Objects::QUEUE_TYPE::GRAPHICS), 1, &submitInfo, render_context.frames[render_context.currentFrameIndex]->getFrameCountControllFence());
+
+			VkPresentInfoKHR presentInfo = {};
+			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+			presentInfo.waitSemaphoreCount = 1;
+			presentInfo.pWaitSemaphores = signalSemaphores;
+
+			VkSwapchainKHR swapChains[] = { render_context.swapChain->getSwapChainHandle() };
+			presentInfo.swapchainCount = 1;
+			presentInfo.pSwapchains = swapChains;
+			presentInfo.pImageIndices = &imageIndex;
+
+			result = vkQueuePresentKHR(device.getQueueHandle(VK_Objects::QUEUE_TYPE::PRESENT), &presentInfo);
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+				
+				recreateSwapChain();
+
+			}
+			else if (result != VK_SUCCESS) {
+				throw std::runtime_error("failed to present swap chain image!");
+			}
+			render_context.currentFrameIndex = (render_context.currentFrameIndex + 1) % 3;
+			if(DEBUG_)
+			getQueryPoolResults();
+
+		}
+		vkDeviceWaitIdle(device.getLogicalDevice());
+
+	} 
+
+}
+
+void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t i)
+{
 	//Record commands
 	std::array<VkClearValue, 3> clearValues = {};
 	clearValues[0].depthStencil = { 1.f };
@@ -354,16 +452,96 @@ void Render::createRenderContexts()
 
 	renderpass->passes["SWAPCHAIN_RENDERPASS"]->clearValues.push_back(clearValues[1]);
 
+	i;
+	Vk_Functions::beginCommandBuffer(command.getCommandBufferHandle());
 
-	for (unsigned int i = 0; i < commandBuffers.size(); i++) {
+	if (DEBUG_) {
+		vkCmdResetQueryPool(command.getCommandBufferHandle(), renderQueries.statisticPool, 0, static_cast<uint32_t>(renderQueries.statistics.size()));
+		vkCmdResetQueryPool(command.getCommandBufferHandle(), renderQueries.timeStampsPool, 0, static_cast<uint32_t>(renderQueries.timeStamps.size()));
+	}
 
-		Vk_Functions::beginCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
+	if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, renderQueries.timeStampsPool, 0);
 
-		createShadowMap(commandBuffers[i]->getCommandBufferHandle(), i);
+	createShadowMap(command.getCommandBufferHandle(), i);
+	if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 1);
 
 
-		renderpass->passes["G_BUFFER"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
+	renderpass->passes["G_BUFFER"]->beginRenderPass(command.getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
 
+	VkExtent2D e = swapChain.getExtent();
+	VkViewport viewport = {};
+
+	viewport.width = static_cast<uint32_t>(e.width);
+	viewport.height = static_cast<uint32_t>(e.height);
+
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D rect = {};
+	rect.extent.width = static_cast<uint32_t>(e.width);
+	rect.extent.height = static_cast<uint32_t>(e.height);
+	rect.offset = { 0,0 };
+
+	vkCmdSetViewport(command.getCommandBufferHandle(), 0, 1, &viewport);
+
+	vkCmdSetScissor(command.getCommandBufferHandle(), 0, 1, &rect);
+	if (DEBUG_) {
+		vkCmdBeginQuery(command.getCommandBufferHandle(), renderQueries.statisticPool, 0, 0);
+		vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, renderQueries.timeStampsPool, 2);
+	}
+
+	VkDescriptorSet descriptorsets[1] = { globalData_Descriptorsets[i].getDescriptorSetHandle() };
+	vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 1, descriptorsets, 0, NULL);
+
+	vkCmdBindPipeline(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
+
+	std::string currentTag = meshes[0]->getMaterialTag();
+
+	for (int j = 0; j < meshes.size(); j++) {
+
+		if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
+			currentTag = meshes[j]->getMaterialTag();
+
+		}
+
+		uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
+
+		vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
+		vkCmdPushConstants(command.getCommandBufferHandle(), pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Engine::Material_adjustments), &meshes[j]->getMaterialSettings());
+
+		meshes[j]->draw(command.getCommandBufferHandle(), pipelineManager, materialManager, i);
+
+	}
+	if (DEBUG_) {
+		vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 3);
+		vkCmdEndQuery(command.getCommandBufferHandle(), renderQueries.statisticPool, 0);
+	}
+	renderpass->passes["G_BUFFER"]->endRenderPass(command.getCommandBufferHandle());
+
+	{
+
+		renderpass->passes["DEFERRED_LIGHTING"]->beginRenderPass(command.getCommandBufferHandle(), framebuffersManager->framebuffers["DEFERRED_LIGHTING_FRAMEBUFFER"][i]->getFramebufferHandle());
+
+		if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, renderQueries.timeStampsPool, 4);
+
+		vkCmdBindPipeline(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineHandle());
+
+		VkDescriptorSet descriptorsets[3] = { light_Descriptorsets[i].getDescriptorSetHandle(), enviromentData_Descriptorsets[i].getDescriptorSetHandle(), deferredShading_Descriptorsets[i].getDescriptorSetHandle() };
+
+		vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(3), &descriptorsets[0], 0, NULL);
+
+		vkCmdDraw(command.getCommandBufferHandle(), 3, 1, 0, 0);
+
+		if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 5);
+		renderpass->passes["DEFERRED_LIGHTING"]->endRenderPass(command.getCommandBufferHandle());
+
+	}
+
+	if (DEBUG_) vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, renderQueries.timeStampsPool, 6);
+
+	createBloom(command.getCommandBufferHandle(), i);
+	if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 7);
+
+	{
 		VkViewport viewport = {};
 
 		viewport.width = static_cast<uint32_t>(e.width);
@@ -376,186 +554,30 @@ void Render::createRenderContexts()
 		rect.extent.height = static_cast<uint32_t>(e.height);
 		rect.offset = { 0,0 };
 
-		vkCmdSetViewport(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &viewport);
+		vkCmdSetViewport(command.getCommandBufferHandle(), 0, 1, &viewport);
 
-		vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
+		vkCmdSetScissor(command.getCommandBufferHandle(), 0, 1, &rect);
 
-
-		VkDescriptorSet descriptorsets[1] = { globalData_Descriptorsets[i].getDescriptorSetHandle()};
-		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 1, descriptorsets, 0, NULL);
-
-		vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
-
-		std::string currentTag = meshes[0]->getMaterialTag();
-
-			for (int j = 0; j < meshes.size(); j++) {
-
-				if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
-					currentTag = meshes[j]->getMaterialTag();
-
-				}
-
-				uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
-
-				vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
-				vkCmdPushConstants(commandBuffers[i]->getCommandBufferHandle(), pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Engine::Material_adjustments), &meshes[j]->getMaterialSettings());
-
-				meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle(),pipelineManager,materialManager,i);
-			}
-
-		renderpass->passes["G_BUFFER"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
-
-		{
-
-			renderpass->passes["DEFERRED_LIGHTING"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["DEFERRED_LIGHTING_FRAMEBUFFER"][i]->getFramebufferHandle());
-
-			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineHandle());
-
-			VkDescriptorSet descriptorsets[3] = { light_Descriptorsets[i].getDescriptorSetHandle(), enviromentData_Descriptorsets[i].getDescriptorSetHandle(), deferredShading_Descriptorsets[i].getDescriptorSetHandle() };
-
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(3), &descriptorsets[0], 0, NULL);
-
-			vkCmdDraw(commandBuffers[i]->getCommandBufferHandle(), 3, 1, 0, 0);
-
-			renderpass->passes["DEFERRED_LIGHTING"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
-
-		}
+		if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, renderQueries.timeStampsPool, 8);
 
 
-		createBloom(commandBuffers[i]->getCommandBufferHandle(), i);
+		renderpass->passes["SWAPCHAIN_RENDERPASS"]->beginRenderPass(command.getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
 
-		{
-			VkViewport viewport = {};
+		vkCmdBindPipeline(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineHandle());
 
-			viewport.width = static_cast<uint32_t>(e.width);
-			viewport.height = static_cast<uint32_t>(e.height);
+		VkDescriptorSet descriptorsets[1] = { finalOutPut_Descriptorsets[i].getDescriptorSetHandle() };
 
-			viewport.maxDepth = 1.0f;
+		vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(1), &descriptorsets[0], 0, NULL);
 
-			VkRect2D rect = {};
-			rect.extent.width = static_cast<uint32_t>(e.width);
-			rect.extent.height = static_cast<uint32_t>(e.height);
-			rect.offset = { 0,0 };
+		vkCmdDraw(command.getCommandBufferHandle(), 3, 1, 0, 0);
 
-			vkCmdSetViewport(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &viewport);
+		renderpass->passes["SWAPCHAIN_RENDERPASS"]->endRenderPass(command.getCommandBufferHandle());
 
-			vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
-
-			renderpass->passes["SWAPCHAIN_RENDERPASS"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
-
-			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineHandle());
-
-			VkDescriptorSet descriptorsets[1] = { finalOutPut_Descriptorsets[i].getDescriptorSetHandle()};
-
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(1), &descriptorsets[0], 0, NULL);
-
-			vkCmdDraw(commandBuffers[i]->getCommandBufferHandle(), 3, 1, 0, 0);
-
-			renderpass->passes["SWAPCHAIN_RENDERPASS"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
-
-		}
-
-		Vk_Functions::endCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
+		if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 9);
 
 	}
 
-	r1->setPersistentCommandBuffers(std::move(commandBuffers));
-
-	meshes[0]->setUpdateOnEveryFrameNextFrame(1);
-
-	while (!glfwWindowShouldClose(w)) {
-
-		float time = (float)glfwGetTime();
-		TimeStep timeStep = time - lastFrameTIme;
-		frameTime = timeStep.getTimeinMilli();
-		lastFrameTIme = time;
-
-
-		glfwPollEvents();
-		std::stringstream ss;
-		ss << "Kalm" << " " << " [" << frameTime << " MILLISEC]";
-
-		glfwSetWindowTitle(window, ss.str().c_str());
-		scriptManager.update(frameTime);
-
-		{
-
-			vkWaitForFences(device.getLogicalDevice(), 1, &r1->frames[r1->currentFrameIndex]->getFrameCountControllFence(), VK_FALSE, UINT64_MAX);
-			uint32_t imageIndex;
-
-			VkResult result = vkAcquireNextImageKHR(device.getLogicalDevice(), r1->swapChain->getSwapChainHandle(), UINT64_MAX, r1->frames[r1->currentFrameIndex]->getImageAvaibleSemaphore(), VK_NULL_HANDLE, &imageIndex);
-			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-				recreateSwapChain();
-				return;
-
-			}
-			else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-				throw std::runtime_error("failed to acquire swap chain image!");
-			}
-
-			//swapChain->update();
-			updateSceneGraph();
-			updateUniforms(r1->currentFrameIndex);
-
-			if (r1->frames[imageIndex]->getImageStillInFlightFence() != VK_NULL_HANDLE) {
-				vkWaitForFences(device.getLogicalDevice(), 1, &r1->frames[imageIndex]->getImageStillInFlightFence(), VK_TRUE, UINT64_MAX);
-			}
-
-			r1->frames[imageIndex]->getImageStillInFlightFence() = r1->frames[r1->currentFrameIndex]->getFrameCountControllFence();
-
-			VkSubmitInfo submitInfo = {};
-			renderUI(imageIndex);
-
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-			VkSemaphore waitSemaphores[] = { r1->frames[r1->currentFrameIndex]->getImageAvaibleSemaphore() };
-			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-			submitInfo.waitSemaphoreCount = 1;
-			submitInfo.pWaitSemaphores = waitSemaphores;
-			submitInfo.pWaitDstStageMask = waitStages;
-
-			VkCommandBuffer cmd = r1->persistentCommandBuffers[imageIndex]->getCommandBufferHandle();
-
-			VkCommandBuffer cmds[2] = {cmd,imGuiCmds[imageIndex] };
-
-			submitInfo.commandBufferCount = 2;
-			submitInfo.pCommandBuffers = &cmds[0];
-
-			VkSemaphore signalSemaphores[] = { r1->frames[r1->currentFrameIndex]->getRenderFinishedSemaphore() };
-			submitInfo.signalSemaphoreCount = 1;
-			submitInfo.pSignalSemaphores = signalSemaphores;
-
-			vkResetFences(device.getLogicalDevice(), 1, &r1->frames[r1->currentFrameIndex]->getFrameCountControllFence());
-
-			VkResult r = vkQueueSubmit(device.getQueueHandle(VK_Objects::QUEUE_TYPE::GRAPHICS), 1, &submitInfo, r1->frames[r1->currentFrameIndex]->getFrameCountControllFence());
-
-			VkPresentInfoKHR presentInfo = {};
-			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-			presentInfo.waitSemaphoreCount = 1;
-			presentInfo.pWaitSemaphores = signalSemaphores;
-
-			VkSwapchainKHR swapChains[] = { r1->swapChain->getSwapChainHandle() };
-			presentInfo.swapchainCount = 1;
-			presentInfo.pSwapchains = swapChains;
-			presentInfo.pImageIndices = &imageIndex;
-
-			result = vkQueuePresentKHR(device.getQueueHandle(VK_Objects::QUEUE_TYPE::PRESENT), &presentInfo);
-
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-				
-				recreateSwapChain();
-
-			}
-			else if (result != VK_SUCCESS) {
-				throw std::runtime_error("failed to present swap chain image!");
-			}
-			r1->currentFrameIndex = (r1->currentFrameIndex + 1) % 3;
-
-		}
-		vkDeviceWaitIdle(device.getLogicalDevice());
-
-	} 
-
+	Vk_Functions::endCommandBuffer(command.getCommandBufferHandle());
 }
 
 void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
@@ -1147,155 +1169,6 @@ void Render::createPipeline()
 	}
 }
 
-void Render::creteCommandBuffer() {
-
-	VkExtent2D e = swapChain.getExtent();
-	uint32_t n = swapChain.getNumberOfImages();
-
-	std::unique_ptr<RENDER::RenderContext> r1 = std::make_unique<RENDER::RenderContext>(device, std::make_shared<VK_Objects::SwapChain>(swapChain));
-
-	r1->setMaxFramesInFlight(3);
-
-	std::vector<VK_Objects::PComandBuffer> commandBuffers;
-
-	commandBuffers.resize(n);
-
-	for (uint32_t i = 0; i < n; i++) {
-
-		commandBuffers[i] = graphicsPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-
-	}
-
-	//Record commands
-	std::array<VkClearValue, 3> clearValues = {};
-	clearValues[0].depthStencil = { 1.f };
-	clearValues[1].color = { 1.0,1.0,1.0,.0 };
-	clearValues[2].color = { 1.0,1.0 };
-
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[1]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[2]);
-	renderpass->passes["G_BUFFER"]->clearValues.push_back(clearValues[0]);
-
-	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
-	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
-
-	renderpass->passes["SWAPCHAIN_RENDERPASS"]->clearValues.push_back(clearValues[1]);
-
-
-	for (unsigned int i = 0; i < commandBuffers.size(); i++) {
-
-		Vk_Functions::beginCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
-
-		createShadowMap(commandBuffers[i]->getCommandBufferHandle(), i);
-
-
-		renderpass->passes["G_BUFFER"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
-
-		VkViewport viewport = {};
-
-		viewport.width = static_cast<uint32_t>(e.width);
-		viewport.height = static_cast<uint32_t>(e.height);
-
-		viewport.maxDepth = 1.0f;
-
-		VkRect2D rect = {};
-		rect.extent.width = static_cast<uint32_t>(e.width);
-		rect.extent.height = static_cast<uint32_t>(e.height);
-		rect.offset = { 0,0 };
-
-		vkCmdSetViewport(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &viewport);
-
-		vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
-
-
-		VkDescriptorSet descriptorsets[1] = { globalData_Descriptorsets[i].getDescriptorSetHandle() };
-		vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 1, descriptorsets, 0, NULL);
-
-		vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
-
-		std::string currentTag = meshes[0]->getMaterialTag();
-
-		for (int j = 0; j < meshes.size(); j++) {
-
-			if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
-				currentTag = meshes[j]->getMaterialTag();
-
-			}
-
-			uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
-
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
-
-			meshes[j]->draw(commandBuffers[i]->getCommandBufferHandle(), pipelineManager, materialManager, i);
-		}
-
-		renderpass->passes["G_BUFFER"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
-
-		{
-
-			renderpass->passes["DEFERRED_LIGHTING"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["DEFERRED_LIGHTING_FRAMEBUFFER"][i]->getFramebufferHandle());
-
-			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineHandle());
-
-			VkDescriptorSet descriptorsets[3] = { light_Descriptorsets[i].getDescriptorSetHandle(), enviromentData_Descriptorsets[i].getDescriptorSetHandle(), deferredShading_Descriptorsets[i].getDescriptorSetHandle() };
-
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["DEFERRED_SHADING"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(3), &descriptorsets[0], 0, NULL);
-
-			vkCmdDraw(commandBuffers[i]->getCommandBufferHandle(), 3, 1, 0, 0);
-
-			renderpass->passes["DEFERRED_LIGHTING"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
-
-		}
-
-		//VkMemoryBarrier barrierInfo{};
-		//barrierInfo.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		//barrierInfo.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-		//barrierInfo.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-
-		createBloom(commandBuffers[i]->getCommandBufferHandle(), i);
-
-		{
-			VkViewport viewport = {};
-
-			viewport.width = static_cast<uint32_t>(e.width);
-			viewport.height = static_cast<uint32_t>(e.height);
-
-			viewport.maxDepth = 1.0f;
-
-			VkRect2D rect = {};
-			rect.extent.width = static_cast<uint32_t>(e.width);
-			rect.extent.height = static_cast<uint32_t>(e.height);
-			rect.offset = { 0,0 };
-
-			vkCmdSetViewport(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &viewport);
-
-			vkCmdSetScissor(commandBuffers[i]->getCommandBufferHandle(), 0, 1, &rect);
-
-			renderpass->passes["SWAPCHAIN_RENDERPASS"]->beginRenderPass(commandBuffers[i]->getCommandBufferHandle(), framebuffersManager->framebuffers["SWAPCHAIN_FRAMEBUFFER"][i]->getFramebufferHandle());
-
-			vkCmdBindPipeline(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineHandle());
-
-			VkDescriptorSet descriptorsets[1] = { finalOutPut_Descriptorsets[i].getDescriptorSetHandle() };
-
-			vkCmdBindDescriptorSets(commandBuffers[i]->getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SWAPCHAIN_PIPELINE"]->getPipelineLayoutHandle()->getHandle(), 0, static_cast<uint32_t>(1), &descriptorsets[0], 0, NULL);
-
-			vkCmdDraw(commandBuffers[i]->getCommandBufferHandle(), 3, 1, 0, 0);
-
-			renderpass->passes["SWAPCHAIN_RENDERPASS"]->endRenderPass(commandBuffers[i]->getCommandBufferHandle());
-
-		}
-
-		Vk_Functions::endCommandBuffer(commandBuffers[i]->getCommandBufferHandle());
-
-	}
-
-	r1->setPersistentCommandBuffers(std::move(commandBuffers));
-
-
-}
-
 void Render::createCommandPools()
 {
 	graphicsPool = std::make_unique<VK_Objects::CommandPool>(device, VK_Objects::POOL_TYPE::GRAPHICS, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -1305,12 +1178,6 @@ void Render::createCommandPools()
 	transferPool = std::make_unique<VK_Objects::CommandPool>(device, VK_Objects::POOL_TYPE::TRANSFER, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
 }
 
-void Render::addMeshes()
-{
-
-	//meshes.push_back(std::make_shared<Engine::Mesh>("icaro\\ds", "Assets\\BTech.fbx", &device, transferPool.get()));
-
-}
 
 void Render::createDynamicUniformBuffers()
 {
@@ -1556,6 +1423,68 @@ void Render::createImGuiInterface()
 
 }
 
+void Render::setqueryPoolStatistics()
+{
+	VkQueryPoolCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+	info.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;
+	info.pipelineStatistics =
+		VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_PRIMITIVES_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_VERTEX_SHADER_INVOCATIONS_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT;
+	info.queryCount = 6;
+	renderQueries.statistics.resize(6);
+
+	if (vkCreateQueryPool(device.getLogicalDevice(), &info, device.getAllocator(), &renderQueries.statisticPool) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create QueryPool");
+
+	}
+
+	{
+		VkQueryPoolCreateInfo info{};
+		info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+		info.queryType = VK_QUERY_TYPE_TIMESTAMP;
+		info.queryCount = 10;
+		renderQueries.timeStamps.resize(10);
+
+		if (vkCreateQueryPool(device.getLogicalDevice(), &info, device.getAllocator(), &renderQueries.timeStampsPool) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create QueryPool");
+
+		}
+		int p;
+	}
+}
+
+void Render::getQueryPoolResults()
+{
+	uint32_t count = static_cast<uint32_t>(renderQueries.statistics.size());
+	vkGetQueryPoolResults(
+		device.getLogicalDevice(),
+		renderQueries.statisticPool,
+		0,
+		1,
+		count * sizeof(uint64_t),
+		renderQueries.statistics.data(),
+		sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT);
+
+
+	vkGetQueryPoolResults(
+		device.getLogicalDevice(),
+		renderQueries.timeStampsPool,
+		0,
+		10,
+		renderQueries.timeStamps.size() * sizeof(uint64_t),
+		renderQueries.timeStamps.data(),
+		sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT);
+
+
+}
+
 void Render::renderUI(uint32_t imageIndex)
 {
 	Vk_Functions::beginCommandBuffer(imGuiCmds[imageIndex]);
@@ -1637,8 +1566,84 @@ void Render::renderUI(uint32_t imageIndex)
 
 			}
 		}
-		if (ImGui::BeginTabItem("Scene Profilling"))
+		if (ImGui::BeginTabItem("Scene Statistics"))
 		{
+			ImGui::Separator();
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "PIPELINE STATISTICS");
+			ImGui::BulletText(
+				"INPUT_ASSEMBLY_VERTICES_BIT = %d\n",
+
+				renderQueries.statistics[0]			
+			);
+			ImGui::BulletText(
+				"NPUT_ASSEMBLY_PRIMITIVES_BIT = %d\n",
+				renderQueries.statistics[1]
+			);
+			ImGui::BulletText(
+			
+				"VERTEX_SHADER_INVOCATIONS_BIT = %d\n",
+				renderQueries.statistics[2]
+			);
+
+			ImGui::BulletText(
+				"CLIPPING_INVOCATIONS_BIT = %d\n",
+			
+				renderQueries.statistics[3]
+			);
+
+			ImGui::BulletText(
+
+				"CLIPPING_PRIMITIVES_BIT = %d\n",
+
+				renderQueries.statistics[4]
+			);
+
+			ImGui::BulletText(
+		
+				"FRAGMENT_SHADER_INVOCATIONS_BIT = %d\n",
+
+				renderQueries.statistics[5]
+
+			);
+
+			ImGui::Separator();
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "APPROXIMATED TIMESTAMPS");
+
+			ImGui::BulletText(
+
+				"SHADOW_MAP = %f\n",
+
+				(renderQueries.timeStamps[1] - renderQueries.timeStamps[0])*device.getTimeStampPeriod()/1000000.0f
+
+			);		ImGui::BulletText(
+
+				"GBUFFER_COMPOSITION = %f\n",
+
+				(renderQueries.timeStamps[3] - renderQueries.timeStamps[2])* device.getTimeStampPeriod() / 1000000.0f
+
+			);		
+			ImGui::BulletText(
+
+				"DEFERRED_LIGHTING = %f\n",
+
+				((renderQueries.timeStamps[5] - renderQueries.timeStamps[4])* device.getTimeStampPeriod() / 1000000.0f)
+				 
+			);		
+			
+			ImGui::BulletText(
+
+				"GAUSSIAN_BLUR_HORIZON_VERTICAL = %f\n",
+
+				(renderQueries.timeStamps[7] - renderQueries.timeStamps[6])* device.getTimeStampPeriod() / 1000000.0f
+
+			);		ImGui::BulletText(
+
+				"PRESENTATION = %f\n",
+
+				(renderQueries.timeStamps[9] - renderQueries.timeStamps[8])* device.getTimeStampPeriod() / 1000000.0f
+
+			);
+
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
@@ -1646,7 +1651,7 @@ void Render::renderUI(uint32_t imageIndex)
 
 	ImGui::End();
 
-	//ImGui::ShowDemoWindow();
+	ImGui::ShowDemoWindow();
 
 	ImGui::Render();
 
@@ -1849,7 +1854,8 @@ Render::~Render()
 	poolManager.reset();
 	framebuffersManager.reset();
 	renderpass.reset();
-
+	vkDestroyQueryPool(device.getLogicalDevice(), renderQueries.statisticPool, device.getAllocator());
+	vkDestroyQueryPool(device.getLogicalDevice(), renderQueries.timeStampsPool, device.getAllocator());
 
 	for (auto& mesh : meshes) {
 		mesh->destroy();

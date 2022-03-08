@@ -157,7 +157,7 @@ VK_Objects::Image::Image(const VK_Objects::Device* _device, const char* path, Vk
 
 	free(pixels);
 	Vk_Functions::setImageLayout(*device, pool, vk_image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0, numMips);
-	Vk_Functions::copyBufferToImage(stagingBuffer, vk_image, *device, pool, texWidth, texHeight, 0, 1);
+	Vk_Functions::copyBufferToImage(stagingBuffer, vk_image, *device, &pool, texWidth, texHeight, 0, 1);
 	Vk_Functions::setImageLayout(*device, pool, vk_image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1, 0, numMips);
 
 }
@@ -320,11 +320,11 @@ namespace Vk_Functions{
 		cmd.reset();
 	}
 
-	void copyBufferToImage(VK_Objects::Buffer& buffer, VkImage image, VK_Objects::Device device, VK_Objects::CommandPool& pool, uint32_t width, uint32_t height, uint32_t baseLayer, uint32_t layerCount)
+	void copyBufferToImage(VK_Objects::Buffer& buffer, VkImage image, VK_Objects::Device device, VK_Objects::CommandPool* pool, uint32_t width, uint32_t height, uint32_t baseLayer, uint32_t layerCount)
 	{
 		RENDER::RenderContext r(device);
 
-		VK_Objects::PComandBuffer cmd = r.beginCommand(pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		VK_Objects::PComandBuffer cmd = r.beginCommand(*pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 		VkBufferImageCopy region = {};
 		region.bufferOffset = 0;
 		region.bufferRowLength = 0;
@@ -352,10 +352,10 @@ namespace Vk_Functions{
 		vkQueueSubmit(device.getQueueHandle(VK_Objects::QUEUE_TYPE::TRANSFER), 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(device.getQueueHandle(VK_Objects::QUEUE_TYPE::TRANSFER));
 
-		vkFreeCommandBuffers(device.getLogicalDevice(),pool.getPoolHanndle(), 1, &cmd->getCommandBufferHandle());
+		vkFreeCommandBuffers(device.getLogicalDevice(),pool->getPoolHanndle(), 1, &cmd->getCommandBufferHandle());
 	}
 
-	void copyBufferToImage(VkBuffer& buffer, VkImage image, VkDevice device, VkCommandPool pool, uint32_t width, uint32_t height, uint32_t baseLayer, uint32_t layerCount)
+	void copyBufferToImage(VkBuffer& buffer, VkImage image, VkDevice device, VkCommandPool* pool, uint32_t width, uint32_t height, uint32_t baseLayer, uint32_t layerCount)
 	{
 	}
 

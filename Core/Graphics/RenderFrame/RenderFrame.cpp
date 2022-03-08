@@ -2,6 +2,11 @@
 
 RenderFrame::RenderFrame(const VK_Objects::Device& _device, uint32_t _index):index(_index),device(_device)
 {
+	commandPools.push_back(std::make_shared<VK_Objects::CommandPool>(device, VK_Objects::POOL_TYPE::GRAPHICS, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT));
+
+	commands.resize(1);
+
+	commandPools[0]->allocateCommandBuffer(commands[0].getCommandBufferHandle(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 	VkSemaphoreCreateInfo semaphInfo{};
 	semaphInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -19,6 +24,7 @@ RenderFrame::RenderFrame(const VK_Objects::Device& _device, uint32_t _index):ind
 	}
 
 }
+
 
 VkSemaphore& RenderFrame::getRenderFinishedSemaphore()
 {
@@ -40,12 +46,24 @@ VkFence& RenderFrame::getImageStillInFlightFence()
 	return vk_imageStillinFlightFence;
 }
 
+VK_Objects::CommandBuffer& RenderFrame::getCommandBuffer()
+{
+	return commands[0];
+}
+
+VkCommandBuffer& RenderFrame::getCommandBufferHandler()
+{
+	return commands[0].getCommandBufferHandle();
+}
+
 RenderFrame::~RenderFrame()	
 {
+	for (int i = 0; i < commandPools.size(); i++)
+		vkDestroyCommandPool(device.getLogicalDevice(), commandPools[i]->getPoolHanndle(), device.getAllocator());
+
 	vkDestroySemaphore(device.getLogicalDevice(), vk_avaibleSemaphore, device.getAllocator());
 	vkDestroySemaphore(device.getLogicalDevice(), vk_finishSemaphore, device.getAllocator());
 	vkDestroyFence(device.getLogicalDevice(), vk_avaibleFence, device.getAllocator());
-	//vkDestroyFence(device.getLogicalDevice(), vk_imageStillinFlightFence, device.getAllocator());
 
 
 }
