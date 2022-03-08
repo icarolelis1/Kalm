@@ -23,9 +23,7 @@ namespace VK_Objects {
 
 	public:
 
-		CommandBuffer();
-
-
+		CommandBuffer(VkCommandBufferLevel);
 
 		VkCommandBuffer& getCommandBufferHandle();
 
@@ -40,12 +38,11 @@ namespace VK_Objects {
 	public:
 
 		CommandPool(const Device& _device, POOL_TYPE type, VkCommandPoolCreateFlags  flags);
-		CommandPool(const CommandPool&) =delete;
-		CommandPool( CommandPool&&)=delete;
-
+		
 		std::unique_ptr<VK_Objects::CommandBuffer> requestCommandBuffer(VkCommandBufferLevel level)const;
 		VkCommandBuffer requestCommandBufferVK(VkCommandBufferLevel level) const;
 
+		CommandPool(CommandPool&) = delete;
 
 		VkCommandPool& getPoolHanndle();
 

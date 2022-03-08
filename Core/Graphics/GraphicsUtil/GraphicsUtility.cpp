@@ -75,9 +75,11 @@ void Vk_Functions::createSampler(const VK_Objects::Device* device,VkSampler &sam
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 
+
 	if (vkCreateSampler(device->getLogicalDevice(), &samplerInfo, device->getAllocator(), &sampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
+
 }
 
 void Vk_Functions::copyBuffer(VkCommandBuffer cmd, VK_Objects::Buffer& src, VK_Objects::Buffer& dest,VkDeviceSize size,VkQueue queue)
