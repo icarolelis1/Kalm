@@ -17,7 +17,18 @@ public:
 	std::shared_ptr<Engine::Entity> entity;
 	std::shared_ptr<Node> parent;
 
+	bool activated = true;
 
+
+	void setActivated(bool b) {
+		this->entity->setActivated(b);
+	}
+
+
+private:
+	
+
+	
 };
 
 
@@ -28,15 +39,18 @@ public:
 	SceneGraph();
 
 	void addNode(std::shared_ptr<Node> entity);
+
 	void addNode(std::shared_ptr<Node> p1, std::shared_ptr<Node> p2);
 
 	void buildUI(std::shared_ptr<Node> node );
+
 	std::shared_ptr<Node> root;
 
 	void updateSceneGraph();
+
 	void saveState(std::shared_ptr<Node> root, std::fstream& saveFile);
 	
-
+	void setActivatedChilds(std::shared_ptr<Node> node, bool b);
 
 private:
 

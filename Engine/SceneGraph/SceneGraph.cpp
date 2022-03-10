@@ -101,6 +101,17 @@ void SceneGraph::saveState(std::shared_ptr<Node> node, std::fstream& saveFile)
 	}
 }
 
+void SceneGraph::setActivatedChilds(std::shared_ptr<Node> node, bool b)
+{
+		std::list<std::shared_ptr<Node>>::iterator it = node->childs.begin();
+		node->setActivated(b);
+
+		while (it != node->childs.end()) {
+			setActivatedChilds(*it, b);
+			it++;
+		}
+}
+
 void SceneGraph::updateTransforms(std::shared_ptr<Node> node)
 {
 	if(node->parent)

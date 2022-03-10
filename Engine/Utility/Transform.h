@@ -5,10 +5,23 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <glm/gtx/quaternion.hpp>
+
 #include <glm/gtc/type_ptr.hpp>
 #include "imgui.h"
 
 namespace Engine {
+
+	struct Plane {
+	public:
+		Plane(glm::vec3 _normal, float _distance) {
+			normal = _normal;
+			distance = _distance;
+		}
+		Plane(){};
+
+		float distance;
+		glm::vec3 normal;
+	};
 
 	struct Quaternion {
 		float w;
@@ -67,6 +80,25 @@ namespace Engine {
 		glm::quat rotQuaternion;
 		float angle = 0;
 		float rotAngle;
+
+	};
+
+	class Volume : public Component {
+	public:
+		Volume(const char* id);
+		void start();
+		void update();
+		void awake();
+
+		virtual bool isOnFrustum() ;
+	};
+
+	class SphereVolume : public Volume {
+
+	public:
+		SphereVolume(const char* id, float radius = 1.0f);
+		bool isOnFrustum();
+
 
 	};
 

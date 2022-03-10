@@ -97,5 +97,12 @@ std::shared_ptr<Engine::Entity> Engine::Entity::getSharedPointer()
 	return std::shared_ptr<Engine::Entity>(this);
 }
 
+void Engine::Entity::setActivated(bool b)
+{
+
+	alive = b;
+	componentContainer.setAlive(b);
+}
+
 
 

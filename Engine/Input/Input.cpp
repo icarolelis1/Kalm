@@ -2,7 +2,6 @@
 
 Engine::Mouse& Engine::Mouse::getInstance(GLFWwindow * _window)
 {
-	
 	static Mouse instance;
 	instance.window = _window;
 	return instance;
@@ -28,11 +27,8 @@ void Engine::Mouse::mouse_callback(GLFWwindow* window, double xpos, double ypos)
 bool Engine::Mouse::getMouseACtionStatus(int button, int action)
 {
 
-
 	return (glfwGetMouseButton(window, button) == action);
 	
-
-
 }
 
 void Engine::Mouse::setWindowHandler(GLFWwindow* _window)

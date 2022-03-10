@@ -27,3 +27,13 @@ Engine::COMPONENT_TYPE Engine::Component::getTypeOfComponent()
 {
 	return componentType;
 }
+
+bool Engine::Component::isAlive()
+{
+	return alive;
+}
+
+void Engine::Component::setAlive(bool b)
+{
+	alive = b;
+}

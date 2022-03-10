@@ -23,7 +23,7 @@ namespace VK_Objects {
 
 	public:
 
-		CommandBuffer(VkCommandBufferLevel);
+		CommandBuffer();
 
 		VkCommandBuffer& getCommandBufferHandle();
 

@@ -4,6 +4,17 @@
 #include <array>
 namespace Engine {
 
+	struct Frustum {
+		Engine::Plane nearPlane;
+		Engine::Plane farPlane;
+		Engine::Plane rightPlane;
+		Engine::Plane leftPlane;
+		Engine::Plane topPlane;
+		Engine::Plane bottomPlane;
+
+
+	};
+
 	class Camera : public Entity{
 
 	public:
@@ -24,9 +35,10 @@ namespace Engine {
 		std::array<float, 6> calculateFrustumInLightSpace(glm::mat4 lightMatrix,glm::vec3 shadow_caster);
 		EulerDirections eulerDirections;
 		std::array<glm::vec3, 8> calculateFrustumConers(glm::vec3 shadow_caster);
+		Engine::Frustum& calculateFrustumPlanes();
 		
 	private:
-
+		Frustum frustum;
 		glm::vec3 center;
 		float farPlane = 60.0;
 		float nearPlane = .1;

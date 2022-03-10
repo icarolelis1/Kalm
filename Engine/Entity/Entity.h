@@ -33,6 +33,18 @@ namespace Engine {
 
 		};
 
+		void setAlive(bool b) {
+			std::map<std::string, std::shared_ptr<Component> >::iterator it;
+			it = components.begin();
+			while (it != components.end()) {
+
+				it->second->setAlive(b);
+
+				it++;
+			}
+
+		}
+
 
 		void  listComponents() {
 
@@ -104,6 +116,7 @@ namespace Engine {
 
 		std::shared_ptr<Entity> getSharedPointer();
 
+		void setActivated(bool b);
 
 	protected:
 

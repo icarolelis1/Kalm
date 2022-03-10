@@ -74,7 +74,7 @@ VK_Objects::PBuffer Vk_Functions::createCubeVertexBuffer(const VK_Objects::Devic
 	return std::move(vertexBuffer);
 }
 
-void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device* device, const char* hdriImagePath, VK_Objects::CubeMap& cubeMap, VK_Objects::CommandPool& transientPool, VK_Objects::CommandPool& graphicsPool, VK_Objects::SDescriptorPoolManager poolManager)
+void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device* device, const char* hdriImagePath, VK_Objects::CubeMap& cubeMap, VK_Objects::CommandPool* transientPool, VK_Objects::CommandPool* graphicsPool, VK_Objects::SDescriptorPoolManager poolManager)
 {
 	int dim = 1080;
 
@@ -105,13 +105,13 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 
 	//Image(const Device * device, uint32_t Width, uint32_t Height, ImageFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageCreateFlags flags, VkImageAspectFlags aspectFlags, uint32_t arrayLayers = 1, bool useMaxNumMips = 0);
 
-	Vk_Functions::setImageLayout(*device, transientPool, cubeMap.getVkImageHandlee(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 6, 0);
+	Vk_Functions::setImageLayout(*device, *transientPool, cubeMap.getVkImageHandlee(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 6, 0);
 
 	VK_Objects::Image equirect(device, texWidth, texHeight, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
-	Vk_Functions::setImageLayout(*device, transientPool, equirect.getVkImageHandle(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0);
+	Vk_Functions::setImageLayout(*device, *transientPool, equirect.getVkImageHandle(), format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, 0);
 	copyBufferToImage(stagingBuffer, equirect.getVkImageHandle(), *device, transientPool, texWidth, texHeight, 0, 1);
 
-	Vk_Functions::setImageLayout(*device, transientPool, equirect.getVkImageHandle(), format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1, 0);
+	Vk_Functions::setImageLayout(*device, *transientPool, equirect.getVkImageHandle(), format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1, 0);
 
 	//Create renderpass
 
@@ -281,7 +281,7 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 	descriptorset.updateDescriptorset(0,imageInfo,false);
 	
 	VK_Objects::PBuffer vertexBuffer;
-	vertexBuffer = createCubeVertexBuffer(device, &transientPool);
+	vertexBuffer = createCubeVertexBuffer(device, transientPool);
 
 	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 	glm::mat4 captureViews[6] =
@@ -312,7 +312,7 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearValues;
 
-		VK_Objects::CommandBuffer commandBuffer = *graphicsPool.requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+		VK_Objects::CommandBuffer commandBuffer = *graphicsPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 		Vk_Functions::beginCommandBuffer(commandBuffer.getCommandBufferHandle());
 
 		vkCmdBeginRenderPass(commandBuffer.getCommandBufferHandle(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -361,11 +361,11 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 		submitInfo.pCommandBuffers = &commandBuffer.getCommandBufferHandle();
 		vkQueueSubmit(device->getQueueHandle(VK_Objects::QUEUE_TYPE::GRAPHICS), 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(device->getQueueHandle(VK_Objects::QUEUE_TYPE::GRAPHICS));
-		vkFreeCommandBuffers(device->getLogicalDevice(), graphicsPool.getPoolHanndle(), 1, &commandBuffer.getCommandBufferHandle());
+		vkFreeCommandBuffers(device->getLogicalDevice(), graphicsPool->getPoolHanndle(), 1, &commandBuffer.getCommandBufferHandle());
 	
 		//Transfering operations
 
-		commandBuffer = *transientPool.requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+		commandBuffer = *transientPool->requestCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 		Vk_Functions::beginCommandBuffer(commandBuffer.getCommandBufferHandle());
 
 		VkImageCopy copyRegion = {};
@@ -386,7 +386,7 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 		copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
 		copyRegion.extent.depth = 1;
 
-		setImageLayout(*device, transientPool, offscreen.getVkImageHandle(), format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1, 0);
+		setImageLayout(*device, *transientPool, offscreen.getVkImageHandle(), format, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1, 0);
 
 		vkCmdCopyImage(
 			commandBuffer.getCommandBufferHandle(),
@@ -408,10 +408,10 @@ void Vk_Functions::convertEquirectangularImageToCubeMap(const VK_Objects::Device
 		submitInfo.pCommandBuffers = &commandBuffer.getCommandBufferHandle();
 		vkQueueSubmit(device->getQueueHandle(VK_Objects::QUEUE_TYPE::TRANSFER), 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(device->getQueueHandle(VK_Objects::QUEUE_TYPE::TRANSFER));
-		vkFreeCommandBuffers(device->getLogicalDevice(), transientPool.getPoolHanndle(), 1, &commandBuffer.getCommandBufferHandle());
+		vkFreeCommandBuffers(device->getLogicalDevice(), transientPool->getPoolHanndle(), 1, &commandBuffer.getCommandBufferHandle());
 
 	}
-	setImageLayout(*device, transientPool, cubeMap.getVkImageHandlee(), format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 6, 0);
+	setImageLayout(*device, *transientPool, cubeMap.getVkImageHandlee(), format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 6, 0);
 
 
 

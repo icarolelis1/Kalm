@@ -30,10 +30,13 @@ namespace Engine {
 		virtual void saveState(std::fstream& file);
 		virtual void loadState(std::fstream& file);
 		COMPONENT_TYPE getTypeOfComponent();
+		bool isAlive();
+		void setAlive(bool b);
 
 	protected:
 		COMPONENT_TYPE componentType;
 		std::string id;
+		bool alive = true;
 
 	private:
 

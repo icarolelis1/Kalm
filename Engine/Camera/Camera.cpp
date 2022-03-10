@@ -2,7 +2,7 @@
 
 Engine::Camera::Camera(const char* _id) :  Engine::Entity(_id)
 {
-	projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, nearPlane, farPlane);
+	projectionMatrix = glm::perspective(glm::radians(fov), 1.0f, nearPlane, farPlane);
 }
 
 glm::mat4& Engine::Camera::getViewMatrix()
@@ -103,7 +103,6 @@ std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers(glm::vec3 shadow
 	float tan = glm::tan(glm::radians(fov / 2.));
 
 	float aspectRatio = width / height;
-	float farPlane = 60.0f;
 	float heightNear = 2 * tan * nearPlane;
 	float widthNear = heightNear * aspectRatio;
 	float heightFar = 2 * tan * farPlane;
@@ -140,4 +139,47 @@ std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers(glm::vec3 shadow
 	//
 	return corners;
 
+}
+
+Engine::Frustum& Engine::Camera::calculateFrustumPlanes()
+{
+
+	const float halfVSide = farPlane * tanf(glm::radians(fov * .5f));
+	const float halfHSide = halfVSide * width / height;;
+	const glm::vec3 frontMultFar = farPlane * eulerDirections.front;
+	glm::vec3 position = transform->getPosition();
+	glm::vec3 n = eulerDirections.front;
+
+	frustum.nearPlane = { };
+	frustum.nearPlane.distance = glm::dot(position + nearPlane * eulerDirections.front,n);
+	frustum.nearPlane.normal = n;
+
+	frustum.farPlane = { };
+	n = eulerDirections.front * glm::vec3(-1);
+
+	frustum.farPlane.distance = glm::dot(position + farPlane * eulerDirections.front,n);
+	frustum.farPlane.normal = n;
+
+	frustum.rightPlane = { };
+	n = glm::normalize(glm::cross(eulerDirections.up, frontMultFar + eulerDirections.right * halfHSide));
+	frustum.rightPlane.distance = glm::dot(position,n);
+	frustum.rightPlane.normal = n;
+
+
+	frustum.leftPlane = {};
+	n = glm::normalize(glm::cross(frontMultFar - eulerDirections.right * halfHSide, eulerDirections.up));
+	frustum.leftPlane.distance = glm::dot(position,n);
+	frustum.leftPlane.normal = n;
+
+	frustum.topPlane = { };
+	n = glm::normalize(glm::cross(eulerDirections.right, frontMultFar -eulerDirections.up * halfVSide));
+	frustum.topPlane.distance = glm::dot(position,n);
+	frustum.topPlane.normal = n;
+
+	frustum.bottomPlane = { };
+	n = glm::normalize(glm::cross(frontMultFar + eulerDirections.up * halfVSide, eulerDirections.right));
+	frustum.bottomPlane.distance = glm::dot(position,n);
+	frustum.bottomPlane.normal = n;
+
+	return frustum;
 }

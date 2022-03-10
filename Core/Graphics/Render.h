@@ -91,6 +91,14 @@ public:
 	~Render();
 
 private:
+
+	void perfomCulling();
+	void performCullingOnSceneGraph(std::shared_ptr<Node> node, Engine::Frustum& frustum);
+	void updateScripts();
+	void updateUniformBuffers();
+	void performCollision();
+	void performPhysics();
+
 	void createInstance();
 	void createDebuger();
 	void createSurface(Utils::WindowHandler*);

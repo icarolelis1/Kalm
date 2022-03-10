@@ -171,4 +171,28 @@ void Engine::Transform::shouldUpdateRotations(bool b)
 	shouldUpdateQuaternion = b;;
 }
 
+Engine::Volume::Volume(const char* id) :Component(id)
+{
+}
 
+void Engine::Volume::start()
+{
+}
+
+void Engine::Volume::update()
+{
+}
+
+void Engine::Volume::awake()
+{
+}
+
+bool Engine::Volume::isOnFrustum()
+{
+	return false;
+}
+
+bool Engine::SphereVolume::isOnFrustum()
+{
+	return true;
+}

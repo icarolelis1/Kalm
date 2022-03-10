@@ -4,8 +4,9 @@ RenderFrame::RenderFrame(const VK_Objects::Device& _device, uint32_t _index):ind
 {
 	commandPools.push_back(std::make_shared<VK_Objects::CommandPool>(device, VK_Objects::POOL_TYPE::GRAPHICS, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT));
 
-	commands.resize(1);
+	commands.resize(3);
 
+	for(int i =0 ; i< commands.size() ; i ++)
 	commandPools[0]->allocateCommandBuffer(commands[0].getCommandBufferHandle(), VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 	VkSemaphoreCreateInfo semaphInfo{};

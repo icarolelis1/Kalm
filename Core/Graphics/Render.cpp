@@ -210,8 +210,6 @@ void Render::AllocateCommonDescriptorsSets()
 		lightProjection_Descriptorset[index].updateDescriptorset(bufferInfos, imageInfo);
 		index++;
 
-
-
 	}
 
 	index = 0;
@@ -335,7 +333,9 @@ void Render::createRenderContexts()
 	RENDER::RenderContext render_context = RENDER::RenderContext(device, std::make_shared<VK_Objects::SwapChain>(swapChain));
 
 
-	render_context.setNumberOfFrames(3);
+	render_context.setNumberOfFrames(swapChain.getNumberOfImages());
+	vkResetCommandPool(device.getLogicalDevice(), graphicsPool->getPoolHanndle(), 0);
+	vkResetCommandPool(device.getLogicalDevice(), transferPool->getPoolHanndle(), 0);
 
 	while (!glfwWindowShouldClose(w)) {
 
@@ -368,11 +368,14 @@ void Render::createRenderContexts()
 			}
 			vkResetFences(device.getLogicalDevice(), 1, &render_context.frames[render_context.currentFrameIndex]->getFrameCountControllFence());
 			
+
+			//Perform Generic Culling Operation
+			perfomCulling();
 			//RECORD COMMAN FOR FRAME
 			recordCommandIndex(render_context.frames[render_context.currentFrameIndex]->getCommandBuffer(), render_context.currentFrameIndex);
 			//swapChain->update();
 			updateSceneGraph();
-			updateUniforms(render_context.currentFrameIndex);
+			updateUniforms(render_context.currentFrameIndex); 
 
 
 			VkSubmitInfo submitInfo = {};
@@ -420,7 +423,7 @@ void Render::createRenderContexts()
 			else if (result != VK_SUCCESS) {
 				throw std::runtime_error("failed to present swap chain image!");
 			}
-			render_context.currentFrameIndex = (render_context.currentFrameIndex + 1) % 3;
+			render_context.currentFrameIndex = (render_context.currentFrameIndex + 1) % 2;
 			if(DEBUG_)
 			getQueryPoolResults();
 
@@ -429,7 +432,7 @@ void Render::createRenderContexts()
 
 	} 
 
-}
+} 
 
 void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t i)
 {
@@ -508,6 +511,7 @@ void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t i)
 		vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
 		vkCmdPushConstants(command.getCommandBufferHandle(), pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Engine::Material_adjustments), &meshes[j]->getMaterialSettings());
 
+		if(meshes[j]->isAlive() == true)
 		meshes[j]->draw(command.getCommandBufferHandle(), pipelineManager, materialManager, i);
 
 	}
@@ -1274,10 +1278,6 @@ void Render::createScene()
 
 	std::shared_ptr<Engine::Entity>  pointLight2 = std::make_shared<Engine::Light>("pointLight2", glm::vec3(1), glm::vec3(-10, 4, -1), 1.0);
 
-
-
-	//Engine::SphereCollsior::SphereCollsior(std::shared_ptr<Engine::Entity> _entity, float _radius,glm::vec3 posOffset, const char* name):Collisor(_entity,posOffset,name),radius(_radius)
-
 	std::shared_ptr<Engine::Entity>  camera_entity = std::make_shared<Engine::Camera>("MainCamera");
 
 	main_camera = std::dynamic_pointer_cast<Engine::Camera>(camera_entity);
@@ -1293,19 +1293,31 @@ void Render::createScene()
 	
 	std::shared_ptr<Node> cameraNode = std::make_shared<Node>(camera_entity);
 
-	std::shared_ptr<Engine::Entity> globe = std::make_shared<Engine::Entity>("MyGlobe");
 	std::shared_ptr<Engine::Entity> cube = std::make_shared<Engine::Entity>("plane");
 	cube->transform->setScale(glm::vec3(5, 0.1, 5.));
-	globe->transform->setPosition(0, 2.5, .0);
 
+	{
+
+		for (int i = 0; i < 10; i++) {
+			for (int j = -5; j < 5; j++) {
+				std::shared_ptr<Engine::Entity> globe = std::make_shared<Engine::Entity>("MyGlobe");
+				globe->transform->setPosition(1.8*i, 2*j, .0);
+				globe->attachComponent(std::make_shared<Engine::Mesh>(globe, "MyGlobe", "MyGlobe", "Assets\\MyGlobe\\globe.gltf", &device, transferPool.get()));
+				std::shared_ptr<Node> node6 = std::make_shared<Node>(globe);
+				sceneGraph.addNode(node6);
+
+
+			}
+		}
+
+
+	}
 	cube->attachComponent(std::make_shared<Engine::Mesh>(cube, "plane", "plane", "Assets\\plane\\plane.gltf", &device, transferPool.get()));
-	globe->attachComponent(std::make_shared<Engine::Mesh>(globe, "MyGlobe", "MyGlobe", "Assets\\MyGlobe\\globe.gltf", &device, transferPool.get()));
 
 	//std::shared_ptr<Node> node1 = std::make_shared<Node>(Floor);
 	std::shared_ptr<Node> node3 = std::make_shared<Node>(sun);
 	std::shared_ptr<Node> node4 = std::make_shared<Node>(pointLight1);
 	std::shared_ptr<Node> node5 = std::make_shared<Node>(pointLight2);
-	std::shared_ptr<Node> node6 = std::make_shared<Node>(globe);
 	std::shared_ptr<Node> node7 = std::make_shared<Node>(cube);
 
 	 
@@ -1314,7 +1326,6 @@ void Render::createScene()
 	sceneGraph.addNode(node3);
 	sceneGraph.addNode(node4);
 	sceneGraph.addNode(node5);
-	sceneGraph.addNode(node6);
 	sceneGraph.addNode(node7);
 
 	mainSCene = std::move(scene);
@@ -1454,7 +1465,6 @@ void Render::setqueryPoolStatistics()
 			throw std::runtime_error("Failed to create QueryPool");
 
 		}
-		int p;
 	}
 }
 
@@ -1525,7 +1535,7 @@ void Render::renderUI(uint32_t imageIndex)
 			if (ImGui::BeginTabItem("Scene Graph"))
 			{
 			
-			
+
 				ImGui::InputFloat4("Ortho", (float*)glm::value_ptr(ortho));
 
 				ImGui::InputFloat("Dist", &dist);
@@ -1537,6 +1547,7 @@ void Render::renderUI(uint32_t imageIndex)
 		}
 		if (ImGui::BeginTabItem("Scene Settings"))
 		{
+
 			ImGui::EndTabItem();
 			if (ImGui::Button("Save")) {
 				std::fstream saveFile;
@@ -1651,7 +1662,7 @@ void Render::renderUI(uint32_t imageIndex)
 
 	ImGui::End();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemo();
 
 	ImGui::Render();
 
@@ -1889,5 +1900,40 @@ Render::~Render()
 	//Destroy Instance
 
 	instance.destroy();
+
+}
+
+void Render::perfomCulling()
+{
+	Engine::Frustum  frustum =  main_camera->calculateFrustumPlanes();
+	performCullingOnSceneGraph(mainSCene.sceneGraph.root,frustum);
+
+}
+
+void Render::performCullingOnSceneGraph(std::shared_ptr<Node> node,Engine::Frustum& frustum)
+{
+
+	std::list<std::shared_ptr<Node>>::iterator it = mainSCene.sceneGraph.root->childs.begin();
+
+	while (it != mainSCene.sceneGraph.root->childs.end()) {
+
+		if ((it->get()->parent->activated == true)) {
+
+
+			glm::vec3 position = it->get()->entity->transform->getPosition();
+
+			if (glm::dot(position, frustum.nearPlane.normal) - frustum.nearPlane.distance < -1.0f) { mainSCene.sceneGraph.setActivatedChilds(*it, false); it++; continue; }
+			if (glm::dot(position, frustum.farPlane.normal) - frustum.farPlane.distance < -1.0f) { mainSCene.sceneGraph.setActivatedChilds(*it, false); it++; continue; }
+			if (glm::dot(position, frustum.rightPlane.normal) - frustum.rightPlane.distance < -1.0f) { mainSCene.sceneGraph.setActivatedChilds(*it, false); it++; continue; }
+			if (glm::dot(position, frustum.leftPlane.normal) - frustum.leftPlane.distance < -1.0f) { mainSCene.sceneGraph.setActivatedChilds(*it, false); it++; continue; }
+			if (glm::dot(position, frustum.topPlane.normal) - frustum.topPlane.distance < -1.0f) { mainSCene.sceneGraph.setActivatedChilds(*it, false); it++; continue; }
+			if (glm::dot(position, frustum.bottomPlane.normal) - frustum.bottomPlane.distance < -1.0f) { mainSCene.sceneGraph.setActivatedChilds(*it, false); it++; continue; }
+			mainSCene.sceneGraph.setActivatedChilds(*it, true);
+			it++;
+
+		}
+		
+	}
+	
 
 }

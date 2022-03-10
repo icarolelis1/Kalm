@@ -87,7 +87,7 @@ void CameraController::buildUi()
 
 	ImGui::InputFloat3("Right", (float*)glm::value_ptr(camera->eulerDirections.right));
 	ImGui::InputFloat3("Front", (float*)glm::value_ptr(camera->eulerDirections.front));
-	ImGui::InputFloat3("Up", (float*)glm::value_ptr(camera->eulerDirections.front));
+	ImGui::InputFloat3("Up", (float*)glm::value_ptr(camera->eulerDirections.up));
 
 
 }
@@ -102,11 +102,8 @@ void CameraController::saveState(std::fstream& file)
 
 void CameraController::loadState(std::fstream& file)
 {
-	std::string s;
-	while (file>>s) {
-		std::cout << s << std::endl;
+	//To do in JSON probably
 
-	}
 }
 
 void CameraController::resetCamera()

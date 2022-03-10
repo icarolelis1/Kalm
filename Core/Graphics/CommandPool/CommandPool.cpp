@@ -21,7 +21,7 @@ VK_Objects::CommandPool::CommandPool(const Device& _device, POOL_TYPE type, VkCo
 std::unique_ptr<VK_Objects::CommandBuffer> VK_Objects::CommandPool::requestCommandBuffer(VkCommandBufferLevel level)const
 {
 
-	std::unique_ptr<CommandBuffer> cmd = 	std::make_unique<VK_Objects::CommandBuffer>(level);
+	std::unique_ptr<CommandBuffer> cmd = 	std::make_unique<VK_Objects::CommandBuffer>();
 
 	 allocateCommandBuffer(cmd->getCommandBufferHandle(), level);
 
@@ -31,7 +31,7 @@ std::unique_ptr<VK_Objects::CommandBuffer> VK_Objects::CommandPool::requestComma
 
 VkCommandBuffer VK_Objects::CommandPool::requestCommandBufferVK(VkCommandBufferLevel level) const
 {
-	std::unique_ptr<CommandBuffer> cmd = std::make_unique<VK_Objects::CommandBuffer>(level);
+	std::unique_ptr<CommandBuffer> cmd = std::make_unique<VK_Objects::CommandBuffer>();
 
 	allocateCommandBuffer(cmd->getCommandBufferHandle(), level);
 
@@ -80,7 +80,7 @@ VK_Objects::CommandPool::~CommandPool()
 	vkDestroyCommandPool(device.getLogicalDevice(), vk_cmdPool, nullptr);
 }
 
-VK_Objects::CommandBuffer::CommandBuffer( VkCommandBufferLevel level)
+VK_Objects::CommandBuffer::CommandBuffer()
 {
 }
 

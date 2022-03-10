@@ -648,7 +648,7 @@ namespace VK_Objects {
 			createInfo.flags = 0;
 
 			VkResult result = vkCreateSwapchainKHR(device.getLogicalDevice(), &createInfo, nullptr, &properties.vk_swapChain);
-
+			if (result != VK_SUCCESS) std::cout << "Failed to create swapchain\n";
 			std::cout << "Sucessfully created a SwapChain\n";
 
 		}
@@ -686,7 +686,7 @@ namespace VK_Objects {
 			properties.extent = chooseImageExtent(properties.capabilities, window);
 			properties.presentMode = choosePresentationMode(propertiesQuery.presentationModes);
 
-			properties.minImageCount = properties.capabilities.minImageCount + 1;
+			properties.minImageCount = properties.capabilities.minImageCount ;
 
 			if (properties.capabilities.maxImageCount > 0 && properties.minImageCount > properties.capabilities.maxImageCount) {
 				properties.minImageCount = properties.capabilities.maxImageCount;
