@@ -82,7 +82,7 @@ void SceneGraph::saveState(std::shared_ptr<Node> node, std::fstream& saveFile)
 {
 	glm::vec3 p = node->entity->transform->getPosition();
 	saveFile << node->entity->getName() << std::endl;
-	saveFile << "Position : " << p.x << " " << p.y << " " << p.z << std::endl;
+	saveFile << "cuuu : " << p.x << " " << p.y << " " << p.z << std::endl;
 	std::list<std::shared_ptr<Node>>::iterator it = node->childs.begin();
 
 	Engine::ComponentContainerInstance instance = node->entity->getAllComponents();

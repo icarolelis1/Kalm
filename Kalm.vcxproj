@@ -104,7 +104,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\ImGui;$(SolutionDir)Dependencies\assimp\include;$(SolutionDir)Dependencies\glm\glm;$(SolutionDir)Dependencies\stb_image;$(SolutionDir)Dependencies\GLFW64\include;$(SolutionDir)Game\;$(SolutionDir)Engine\;$(SolutionDir)Core\;$(SolutionDir)Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\nlohmann;$(SolutionDir)Dependencies\ImGui;$(SolutionDir)Dependencies\assimp\include;$(SolutionDir)Dependencies\glm\glm;$(SolutionDir)Dependencies\stb_image;$(SolutionDir)Dependencies\GLFW64\include;$(SolutionDir)Game\;$(SolutionDir)Engine\;$(SolutionDir)Core\;$(SolutionDir)Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>

@@ -1,3 +1,4 @@
+#pragma once
 #include "Graphics/VulkanFramework.h"
 #include <vector>
 #include <thread>

@@ -20,7 +20,7 @@
 #include <Collisor/sphere/SphereCollisor.h>
 #include <3DShapes/Cube.h>
 #include <fstream>
-
+#include "Graphics/Thread/Thread.h"
 #ifndef GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #endif
@@ -82,9 +82,9 @@ class Render
 
 public:
 	Render();
-	glm::vec2 nearFar = glm::vec2(.1f,103.f);
+	glm::vec2 nearFar = glm::vec2(.1f,30.f);
 	glm::vec4 ortho = glm::vec4(10,-10,-10,10);
-	float dist = 40;
+	float dist = 25;
 	void initiateResources(Utils::WindowHandler *windowHandler, uint32_t WIDTH, uint32_t HEIGHT);
 
 
@@ -105,7 +105,7 @@ private:
 	void prepareDevice(VK_Objects::Surface surface);
 	void createRenderpass();
 	void createRenderContexts();
-	void recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t index);
+	void recordCommandIndex(VK_Objects::CommandBuffer& command, std::vector<VK_Objects::CommandBuffer>& secondaryCommands, uint32_t i);
 	void createShadowMap(VkCommandBuffer &commandBuffer,uint32_t imageIndex);
 	void createBloom(VkCommandBuffer& commandBuffer, uint32_t imageIndex);
 
@@ -147,7 +147,7 @@ private:
 	std::unique_ptr<VK_Objects::CubeMap> envMAp;
 	std::unique_ptr<VK_Objects::Image> brdfLut;
 	std::unique_ptr<VK_Objects::CubeMap> irradianceMap;
-
+	RENDER::ThreadPool threadPool;
 	Utils::WindowHandler* w;
 	
 	size_t modelBuffersSize;

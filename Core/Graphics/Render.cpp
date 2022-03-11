@@ -23,8 +23,8 @@ void alignedFree(void* data)
 
 Render::Render()
 {
-	nearFar = glm::vec2(.1f, 115.f);
-	dist = 115;
+	nearFar = glm::vec2(.1f, 30.0f);
+	dist = 25.f;
 }
 
 void Render::initiateResources(Utils::WindowHandler* windowHandler, uint32_t WIDTH, uint32_t HEIGHT)
@@ -144,7 +144,7 @@ void Render::createEnvMaps()
 {
 	//SKYBOX AND ENVIROMENT 
 	cubeMap = std::make_unique<VK_Objects::CubeMap>(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1080, 1);
-	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Env.hdr", *cubeMap.get(), transferPool.get(), graphicsPool.get(), poolManager);
+	Vk_Functions::convertEquirectangularImageToCubeMap(&device, "Assets\\skyboxes\\Ice_Lake\\Ice_Lake\\Ice_Lake_Ref.hdr", *cubeMap.get(), transferPool.get(), graphicsPool.get(), poolManager);
 	const uint32_t numMips = static_cast<uint32_t>(floor(log2(512))) + 1;
 
 	envMAp = std::make_unique<VK_Objects::CubeMap>(&device, VK_FORMAT_R32G32B32A32_SFLOAT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 512, numMips);
@@ -312,7 +312,7 @@ void Render::AllocateCommonDescriptorsSets()
 
 void Render::createRenderContexts()
 {
-	
+	threadPool.setThreadCount(2);
 	uint32_t n = swapChain.getNumberOfImages();
 
 	//std::vector<VK_Objects::PComandBuffer> commandBuffers;
@@ -350,7 +350,6 @@ void Render::createRenderContexts()
 		ss << "Kalm" << " " << " [" << frameTime << " MILLISEC]";
 
 		glfwSetWindowTitle(window, ss.str().c_str());
-		scriptManager.update(frameTime);
 
 		{
 
@@ -366,20 +365,24 @@ void Render::createRenderContexts()
 			else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 				throw std::runtime_error("failed to acquire swap chain image!");
 			}
+
 			vkResetFences(device.getLogicalDevice(), 1, &render_context.frames[render_context.currentFrameIndex]->getFrameCountControllFence());
 			
-
 			//Perform Generic Culling Operation
 			perfomCulling();
-			//RECORD COMMAN FOR FRAME
-			recordCommandIndex(render_context.frames[render_context.currentFrameIndex]->getCommandBuffer(), render_context.currentFrameIndex);
-			//swapChain->update();
-			updateSceneGraph();
-			updateUniforms(render_context.currentFrameIndex); 
+			//Update Scripts
+			scriptManager.update(frameTime);
 
+			updateSceneGraph();
+			//Update Uniform Buffers
+			updateUniforms(render_context.currentFrameIndex);
+			//RECORD COMMANDS FOR FRAME
+			recordCommandIndex(render_context.frames[render_context.currentFrameIndex]->getCommandBuffer(),render_context.frames[render_context.currentFrameIndex]->getCommandSecondaryCommandBuffer(), render_context.currentFrameIndex);
+			//Record UI Command
+			renderUI(imageIndex);
 
 			VkSubmitInfo submitInfo = {};
-			renderUI(imageIndex);
+
 
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -434,7 +437,7 @@ void Render::createRenderContexts()
 
 } 
 
-void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t i)
+void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, std::vector<VK_Objects::CommandBuffer>&secondaryCommands, uint32_t i)
 {
 	//Record commands
 	std::array<VkClearValue, 3> clearValues = {};
@@ -452,10 +455,8 @@ void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t i)
 
 	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
 	renderpass->passes["DEFERRED_LIGHTING"]->clearValues.push_back(clearValues[1]);
-
 	renderpass->passes["SWAPCHAIN_RENDERPASS"]->clearValues.push_back(clearValues[1]);
 
-	i;
 	Vk_Functions::beginCommandBuffer(command.getCommandBufferHandle());
 
 	if (DEBUG_) {
@@ -465,11 +466,25 @@ void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t i)
 
 	if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, renderQueries.timeStampsPool, 0);
 
-	createShadowMap(command.getCommandBufferHandle(), i);
+	//Render ShadowMap
+	renderpass->passes["SHADOW_MAP"]->clearValues.push_back(clearValues[0]);
+	renderpass->passes["SHADOW_MAP"]->clearValues.push_back(clearValues[1]);
+	renderpass->passes["SHADOW_MAP"]->beginRenderPass(command.getCommandBufferHandle(), framebuffersManager->framebuffers["SHADOW_MAP"][i]->getFramebufferHandle(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+
+	threadPool.threads[0]->addJob([&] {
+		createShadowMap(secondaryCommands[0].getCommandBufferHandle(), i);
+		});
+
+		threadPool.wait();
+		vkCmdExecuteCommands(command.getCommandBufferHandle(), 1, &secondaryCommands[0].getCommandBufferHandle());
+	renderpass->passes["SHADOW_MAP"]->endRenderPass(command.getCommandBufferHandle());
+
 	if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 1);
 
 
 	renderpass->passes["G_BUFFER"]->beginRenderPass(command.getCommandBufferHandle(), framebuffersManager->framebuffers["G_BUFFER"][i]->getFramebufferHandle());
+	
+
 
 	VkExtent2D e = swapChain.getExtent();
 	VkViewport viewport = {};
@@ -484,41 +499,43 @@ void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t i)
 	rect.extent.height = static_cast<uint32_t>(e.height);
 	rect.offset = { 0,0 };
 
-	vkCmdSetViewport(command.getCommandBufferHandle(), 0, 1, &viewport);
 
-	vkCmdSetScissor(command.getCommandBufferHandle(), 0, 1, &rect);
-	if (DEBUG_) {
-		vkCmdBeginQuery(command.getCommandBufferHandle(), renderQueries.statisticPool, 0, 0);
-		vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, renderQueries.timeStampsPool, 2);
-	}
+		vkCmdSetViewport(command.getCommandBufferHandle(), 0, 1, &viewport);
 
-	VkDescriptorSet descriptorsets[1] = { globalData_Descriptorsets[i].getDescriptorSetHandle() };
-	vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 1, descriptorsets, 0, NULL);
-
-	vkCmdBindPipeline(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
-
-	std::string currentTag = meshes[0]->getMaterialTag();
-
-	for (int j = 0; j < meshes.size(); j++) {
-
-		if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
-			currentTag = meshes[j]->getMaterialTag();
-
+		vkCmdSetScissor(command.getCommandBufferHandle(), 0, 1, &rect);
+		if (DEBUG_) {
+			vkCmdBeginQuery(command.getCommandBufferHandle(), renderQueries.statisticPool, 0, 0);
+			vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, renderQueries.timeStampsPool, 2);
 		}
 
-		uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
+		VkDescriptorSet descriptorsets[1] = { globalData_Descriptorsets[i].getDescriptorSetHandle() };
+		vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 0, 1, descriptorsets, 0, NULL);
 
-		vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
-		vkCmdPushConstants(command.getCommandBufferHandle(), pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Engine::Material_adjustments), &meshes[j]->getMaterialSettings());
+		vkCmdBindPipeline(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineHandle());
 
-		if(meshes[j]->isAlive() == true)
-		meshes[j]->draw(command.getCommandBufferHandle(), pipelineManager, materialManager, i);
+		std::string currentTag = meshes[0]->getMaterialTag();
 
-	}
-	if (DEBUG_) {
-		vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 3);
-		vkCmdEndQuery(command.getCommandBufferHandle(), renderQueries.statisticPool, 0);
-	}
+		for (int j = 0; j < meshes.size(); j++) {
+
+			if (currentTag != meshes[j]->getMaterialTag() || j == 0) {
+				currentTag = meshes[j]->getMaterialTag();
+
+			}
+
+			uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
+
+			vkCmdBindDescriptorSets(command.getCommandBufferHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), 2, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
+			vkCmdPushConstants(command.getCommandBufferHandle(), pipelineManager["GBUFFER_COMPOSITION"]->getPipelineLayoutHandle()->getHandle(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Engine::Material_adjustments), &meshes[j]->getMaterialSettings());
+
+			if (meshes[j]->isAlive() == true)
+				meshes[j]->draw(command.getCommandBufferHandle(), pipelineManager, materialManager, i);
+
+		}
+		if (DEBUG_) {
+			vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 3);
+			vkCmdEndQuery(command.getCommandBufferHandle(), renderQueries.statisticPool, 0);
+		}
+
 	renderpass->passes["G_BUFFER"]->endRenderPass(command.getCommandBufferHandle());
 
 	{
@@ -576,31 +593,36 @@ void Render::recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t i)
 		vkCmdDraw(command.getCommandBufferHandle(), 3, 1, 0, 0);
 
 		renderpass->passes["SWAPCHAIN_RENDERPASS"]->endRenderPass(command.getCommandBufferHandle());
-
 		if (DEBUG_)vkCmdWriteTimestamp(command.getCommandBufferHandle(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, renderQueries.timeStampsPool, 9);
 
 	}
+
 
 	Vk_Functions::endCommandBuffer(command.getCommandBufferHandle());
 }
 
 void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 {
-	VkExtent2D e = swapChain.getExtent();
+	//VkExtent2D e = swapChain.getExtent();
 
-
-	//Vk_Functions::beginCommandBuffer(commandBuffer);
-
+	VkCommandBufferInheritanceInfo inheritance{};
+	inheritance.framebuffer = framebuffersManager->framebuffers["SHADOW_MAP"][i]->getFramebufferHandle();
+	inheritance.pipelineStatistics = VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_PRIMITIVES_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_VERTEX_SHADER_INVOCATIONS_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT |
+		VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT;
+	inheritance.renderPass = renderpass->passes["SHADOW_MAP"]->vk_renderpass;
+	inheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+	inheritance.subpass = 0;
 
 	std::array<VkClearValue, 2> clearValues = {};
 	clearValues[1].depthStencil = { 1.f };
-	clearValues[0].color = { .0,1.0,.0,.0 };
+	clearValues[0].color = { 1.0,1.0,1.0,1.0 };
 
+	Vk_Functions::beginCommandBuffer(commandBuffer, inheritance);
 
-	renderpass->passes["SHADOW_MAP"]->clearValues.push_back(clearValues[0]);
-	renderpass->passes["SHADOW_MAP"]->clearValues.push_back(clearValues[1]);
-
-	renderpass->passes["SHADOW_MAP"]->beginRenderPass(commandBuffer, framebuffersManager->framebuffers["SHADOW_MAP"][i]->getFramebufferHandle());
 
 	VkViewport viewport = {};
 
@@ -627,11 +649,11 @@ void Render::createShadowMap(VkCommandBuffer& commandBuffer, uint32_t i)
 		uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
 
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineManager["SHADOW_MAP"]->getPipelineLayoutHandle()->getHandle(), 1, 1, &modelMatrix_Descriptorsets[i].getDescriptorSetHandle(), 1, &dynamicOffset);
-
+	//	if (meshes[j]->isAlive() == true)
 		meshes[j]->draw(commandBuffer);
 	}
 
-	renderpass->passes["SHADOW_MAP"]->endRenderPass(commandBuffer);
+	Vk_Functions::endCommandBuffer(commandBuffer);
 
 }
 
@@ -1217,7 +1239,7 @@ void Render::createMaterials()
 	path.roughnessMap = "Assets\\common\\white.png";
 
 	//Create DeafultMaterial
-	materialManager["default_material"] = std::make_unique<Engine::Material>(&device, "default_material", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
+	//materialManager["default_material"] = std::make_unique<Engine::Material>(&device, "default_material", path, poolManager, transferPool.get(), graphicsPool.get(), swapChain.getNumberOfImages());
 
 
 	for (auto mesh : meshes) {
@@ -1728,7 +1750,7 @@ void Render::updateSceneGraph()
 
 
 void Render::updateUniforms(uint32_t imageIndex)
-{	glm::vec3 lightDireciton = glm::normalize(lightUniform.lights[0].position);
+{	glm::vec3 lightDireciton = glm::normalize(lightUniform.lights[0].position)*dist;
 
 
 
@@ -1754,24 +1776,26 @@ void Render::updateUniforms(uint32_t imageIndex)
 
 
 	//Light Space Directions
-	glm::vec3 right = glm::normalize(glm::cross(lightDireciton, glm::vec3(0, 1, 0)));
-	glm::vec3 lightUp = glm::vec3(glm::cross(lightDireciton, right));
-	glm::vec3 p = lightDireciton * main_camera->getFarPlane() * dist;
-	
-	glm::mat4 depthViewMatrix = lookAt(lightDireciton *main_camera->getFarPlane() + main_camera->getCenter(), main_camera->getCenter(), lightUp);
+	//glm::vec3 right = glm::normalize(glm::cross(lightDireciton, glm::vec3(0, 1, 0)));
+	//glm::vec3 lightUp = glm::vec3(glm::cross(lightDireciton, right));
+	//glm::vec3 p = lightDireciton * main_camera->getFarPlane() * dist;
+	//
+	//glm::mat4 depthViewMatrix = lookAt(lightDireciton *dist + main_camera->eulerDirections.front*10.0f,main_camera->eulerDirections.front*10.0f , glm::vec3(0,1,0));
 
-	//glm::mat4 depthViewMatrix = lookAt(normalize(lightDireciton*(main_camera->getFarPlane() - main_camera->getNearPlane()) - main_camera->getCenter()),main_camera->getCenter(), glm::vec3(0,-1,0));
+	////glm::mat4 depthViewMatrix = lookAt(normalize(lightDireciton*(main_camera->getFarPlane() - main_camera->getNearPlane()) - main_camera->getCenter()),main_camera->getCenter(), glm::vec3(0,-1,0));
+	//
+	//std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix,glm::vec3(lightDireciton));
 
-	std::array<float, 6> boundingBox = main_camera->calculateFrustumInLightSpace(depthViewMatrix,glm::vec3(lightDireciton));
-
-	glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3],nearFar.x,nearFar.y );
+	//glm::mat4 depthProjectionMatrix = glm::ortho(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3],nearFar.x,nearFar.y);
 	//glm::mat4 depthProjectionMatrix = glm::ortho(ortho.x, ortho.y, ortho.z, ortho.w, nearFar.x, nearFar.y);
 
-	glm::mat4 lightMatrix = depthProjectionMatrix * depthViewMatrix;
+	Engine::ShadowCamera cam = main_camera->calculateFrustumForShadowSplit(lightDireciton);
+
+	glm::mat4 lightMatrix = cam.ortho * cam.lightView;
 	lightUniform.lightMatrix = lightMatrix;
 
-	//main_camera->setFarplane(nearFar.y);
-	//main_camera->setNearPlane(nearFar.x);
+	main_camera->setFarplane(nearFar.y);
+	main_camera->setNearPlane(nearFar.x);
 	
 	lightUniformBuffers[imageIndex]->udpate(lightUniform);
 

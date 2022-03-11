@@ -31,7 +31,7 @@ namespace Engine {
 
 	struct Material_adjustments {
 		//roughness / metallicness / useNormalMap
-		glm::vec3 roughMettallicN = glm::vec3(1,1,1);
+		glm::vec3 roughMettallicN = glm::vec3(0,1,1);
 		glm::vec2 textureMultiplier = glm::vec2(1);
 
 	};

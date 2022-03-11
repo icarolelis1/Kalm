@@ -13,6 +13,8 @@ namespace Vk_Functions {
 
 		void beginCommandBuffer(VkCommandBuffer& cmd);
 
+		void beginCommandBuffer(VkCommandBuffer& cmd,VkCommandBufferInheritanceInfo& inheritanceInfo);
+
 		void endCommandBuffer(VkCommandBuffer& cmd);
 
 		void createSampler(const VK_Objects::Device*,VkSampler &sampler);

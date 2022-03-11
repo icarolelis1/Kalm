@@ -2,6 +2,7 @@
 
 Engine::Mesh::Mesh(std::shared_ptr<Engine::Entity> _entity, const char* id, const char* _materiaTag, const char* _file, const VK_Objects::Device* _device, VK_Objects::CommandPool* pool) :Component(id), file(_file), device(_device),entity(_entity),materialTag(_materiaTag)
 {
+
 	static const int assimpFlags = aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices;
 	scene = importer.ReadFile(file, aiProcess_Triangulate);
 	this->componentType = Engine::COMPONENT_TYPE::MESH;

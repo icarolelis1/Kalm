@@ -99,9 +99,8 @@ std::array<glm::vec3, 8> Engine::Camera::calculateFrustumConers(glm::vec3 shadow
 	glm::vec3 right = glm::normalize(glm::cross(shadow_caster,glm::vec3(0,1,0)));
 	glm::vec3 lightUp = glm::vec3(glm::cross(shadow_caster, right));
 
-	fov = 45.0f;
 	float tan = glm::tan(glm::radians(fov / 2.));
-
+	float farPlane = 25.0f;
 	float aspectRatio = width / height;
 	float heightNear = 2 * tan * nearPlane;
 	float widthNear = heightNear * aspectRatio;
@@ -182,4 +181,97 @@ Engine::Frustum& Engine::Camera::calculateFrustumPlanes()
 	frustum.bottomPlane.normal = n;
 
 	return frustum;
+}
+
+Engine::ShadowCamera& Engine::Camera::calculateFrustumForShadowSplit(glm::vec3 light_caster)
+{
+	float cascadeSplits[4];
+
+	unsigned int SHADOW_MAP_CASCADE_COUNT = 1;
+	std::array<float, 1> cascades;
+	float cascadeSplitLambda = 0.95f;
+
+	float nearClip = getNearPlane();
+	float farClip = getFarPlane();
+	float clipRange = farClip - nearClip;
+
+	float minZ = nearClip;
+	float maxZ = nearClip + clipRange;
+
+	float range = maxZ - minZ;
+	float ratio = maxZ / minZ;
+
+	// Calculate split depths based on view camera frustum
+	// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
+	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
+		float p = (i + 1) / static_cast<float>(SHADOW_MAP_CASCADE_COUNT);
+		float log = minZ * std::pow(ratio, p);
+		float uniform = minZ + range * p;
+		float d = cascadeSplitLambda * (log - uniform) + uniform;
+		cascadeSplits[i] = (d - nearClip) / clipRange;
+	}
+
+	// Calculate orthographic projection matrix for each cascade
+	float lastSplitDist = 0.0;
+	for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
+		float splitDist = cascadeSplits[i];
+
+		glm::vec3 frustumCorners[8] = {
+			glm::vec3(-1.0f,  1.0f, -1.0f),
+			glm::vec3(1.0f,  1.0f, -1.0f),
+			glm::vec3(1.0f, -1.0f, -1.0f),
+			glm::vec3(-1.0f, -1.0f, -1.0f),
+			glm::vec3(-1.0f,  1.0f,  1.0f),
+			glm::vec3(1.0f,  1.0f,  1.0f),
+			glm::vec3(1.0f, -1.0f,  1.0f),
+			glm::vec3(-1.0f, -1.0f,  1.0f),
+		};
+
+		// Project frustum corners into world space
+		glm::mat4 invCam = glm::inverse(getProjectionMatrix() * getViewMatrix());
+		for (uint32_t i = 0; i < 8; i++) {
+			glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[i], 1.0f);
+			frustumCorners[i] = invCorner / invCorner.w;
+		}
+
+		for (uint32_t i = 0; i < 4; i++) {
+			glm::vec3 dist = frustumCorners[i + 4] - frustumCorners[i];
+			frustumCorners[i + 4] = frustumCorners[i] + (dist * 1.f);
+			frustumCorners[i] = frustumCorners[i] + (dist * lastSplitDist);
+		}
+
+		// Get frustum center
+		glm::vec3 frustumCenter = glm::vec3(0.0f);
+		for (uint32_t i = 0; i < 8; i++) {
+			frustumCenter += frustumCorners[i];
+		}
+		frustumCenter /= 8.0f;
+
+		float radius = 0.0f;
+		for (uint32_t i = 0; i < 8; i++) {
+			float distance = glm::length(frustumCorners[i] - frustumCenter);
+			radius = glm::max(radius, distance);
+		}
+		radius = std::ceil(radius * 16.0f) / 16.0f;
+
+		glm::vec3 maxExtents = glm::vec3(radius);
+		glm::vec3 minExtents = -maxExtents;
+
+		glm::vec3 lightDir = normalize(-light_caster);
+		glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
+
+
+
+		lastSplitDist = cascadeSplits[i];
+
+
+
+
+		ShadowCamera shadowCamera = {};
+		shadowCamera.lightView = lightViewMatrix;
+		shadowCamera.ortho = lightOrthoMatrix;
+
+		return shadowCamera;
+	}
 }

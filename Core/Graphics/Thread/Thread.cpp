@@ -5,7 +5,6 @@ RENDER::Thread::Thread()
 
 	threadWork = std::thread(&Thread::queueThread, this);
 	unsigned int n = std::thread::hardware_concurrency();
-	std::cout << "Number of Threads avaible : " << n << std::endl;
 
 }
 

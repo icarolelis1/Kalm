@@ -14,6 +14,10 @@ namespace Engine {
 
 
 	};
+	struct ShadowCamera {
+		glm::mat4 ortho;
+		glm::mat4 lightView;
+	};
 
 	class Camera : public Entity{
 
@@ -36,11 +40,11 @@ namespace Engine {
 		EulerDirections eulerDirections;
 		std::array<glm::vec3, 8> calculateFrustumConers(glm::vec3 shadow_caster);
 		Engine::Frustum& calculateFrustumPlanes();
-		
+		ShadowCamera& calculateFrustumForShadowSplit(glm::vec3 light_caster);
 	private:
 		Frustum frustum;
 		glm::vec3 center;
-		float farPlane = 60.0;
+		float farPlane = 70.0;
 		float nearPlane = .1;
 		float fov;
 		glm::mat4 projectionMatrix;

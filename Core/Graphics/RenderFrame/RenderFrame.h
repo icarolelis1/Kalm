@@ -13,13 +13,14 @@ public:
 
 	VK_Objects::CommandBuffer& getCommandBuffer();
 	VkCommandBuffer&	 getCommandBufferHandler();
-
+	std::vector<VK_Objects::CommandBuffer>& getCommandSecondaryCommandBuffer();
 	uint32_t index;
 
 	~RenderFrame();
 
 private:
 	std::vector<VK_Objects::CommandBuffer> commands;
+	std::vector<VK_Objects::CommandBuffer> secondaryCommands;
 	const VK_Objects::Device& device;
 	std::vector<std::shared_ptr<VK_Objects::CommandPool>> commandPools;
 	VkSemaphore vk_finishSemaphore;
