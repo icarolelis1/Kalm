@@ -8,7 +8,7 @@ FramebufferManagement::FramebufferManagement( VK_Objects::Device * _device , VK_
 	createInterfaceAttachments(swapChain);
 	createBloomAttachments(swapChain);
 	createSwapChainAttachment(swapChain);
-
+	createSSDOAttachments(swapChain);
 }
 
 void FramebufferManagement::createAttachemnts(VkExtent2D extent)
@@ -198,6 +198,32 @@ void FramebufferManagement::createSwapChainAttachment(VK_Objects::SwapChain* swa
 	//msaa_Images["MSAA_IMAGES"] = std::move(msaaImage);
 
 
+}
+
+void FramebufferManagement::createSSDOAttachments(VK_Objects::SwapChain* swapChain)
+{
+
+	//Image(const Device* device, uint32_t Width, uint32_t Height, ImageFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageCreateFlags flags, VkImageAspectFlags aspectFlags, uint32_t arrayLayers = 1, bool useMaxNumMips = 0);
+	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+	VkExtent2D partion_extent = swapChain->getExtent();
+
+
+
+	VK_Objects::PImage ssdoImage = std::make_unique<VK_Objects::Image>(device, partion_extent.width, partion_extent.height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0);
+
+	int n = spChain->getNumberOfImages();
+
+	for (int i = 0; i < n; i++) {
+
+
+		VkImageView attachments[1] = { *ssdoImage->getVkImageViewHandle() };
+
+		framebuffers["SSDO"].push_back(std::move(std::make_unique<VK_Objects::Framebuffer>(device, 1, attachments, renderpasses["SSDO"], partion_extent)));
+
+	}
+
+	//Move the created images to g_bufferImages unordered map.
+	ssdo_images["VERTICAL_BLOOM"] = std::move(ssdoImage);
 }
 
 void FramebufferManagement::createFramebuffers(VkExtent2D extent)

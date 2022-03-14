@@ -144,6 +144,14 @@ VK_Objects::Shader::Shader(const Device& _device, SHADER_TYPE _type, const std::
 
 }
 
+VK_Objects::Shader::Shader(const Device& _device, SHADER_TYPE _type, const std::vector<char> _code, VkSpecializationInfo info) : device(_device), type(_type), code(_code),specializationInfo(info)
+{
+	useSpecializationConstant = true;
+}
+
+
+
+
 VkPipelineShaderStageCreateInfo VK_Objects::Shader::getShaderStageInfo( )
 {
 	VkShaderModuleCreateInfo createInfo{};
@@ -155,6 +163,10 @@ VkPipelineShaderStageCreateInfo VK_Objects::Shader::getShaderStageInfo( )
 
 	VkPipelineShaderStageCreateInfo stageCreateInfo = {};
 	stageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	
+
+	if (useSpecializationConstant)
+		stageCreateInfo.pSpecializationInfo = &specializationInfo;
 
 	if(type == SHADER_TYPE::VERTEX_SHADER)
 	stageCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;

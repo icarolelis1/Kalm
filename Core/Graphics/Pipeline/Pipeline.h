@@ -183,17 +183,20 @@ namespace VK_Objects {
 	public:
 
 		Shader(const Device&  _device , SHADER_TYPE _type, const std::vector<char> _code);
+		Shader(const Device& _device, SHADER_TYPE _type, const std::vector<char> _code,VkSpecializationInfo info);
 
 		VkPipelineShaderStageCreateInfo getShaderStageInfo();
 
 		void destroyModule();
 		
 	private:
+		bool useSpecializationConstant = false;
 		const std::vector<char> code;
 		const Device& device;
 		SHADER_TYPE type;
 		VkShaderModule vk_shaderModule;
 
+		VkSpecializationInfo specializationInfo;
 
 	};
 
@@ -213,6 +216,7 @@ namespace VK_Objects {
 		~DescriptorSetLayout();
 	
 	private:
+		
 
 		VkDescriptorSetLayout vk_descriptorSetLayout;
 

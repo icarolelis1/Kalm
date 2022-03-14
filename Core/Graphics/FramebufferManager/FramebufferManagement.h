@@ -27,6 +27,7 @@ public:
 	Attachments bloomImages;
 	Attachments deferreLighting_Images;
 	Attachments msaa_Images;
+	Attachments ssdo_images;
 
 	Framebuffers framebuffers;
 
@@ -42,6 +43,8 @@ private:
 	void createInterfaceAttachments(VK_Objects::SwapChain* swapChain);
 	void createBloomAttachments(VK_Objects::SwapChain* swapChain);
 	void createSwapChainAttachment(VK_Objects::SwapChain* swapChain);
+	void createSSDOAttachments(VK_Objects::SwapChain* swapChain);
+
 	VK_Objects::PImage msaaImage;
 
 	void createFramebuffers(VkExtent2D extent);

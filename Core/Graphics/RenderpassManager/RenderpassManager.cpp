@@ -17,6 +17,7 @@ void Game::RenderpassManager::createRenderpasses(VkExtent2D extent )
 	createImGuiRenderpass(extent);
 	createBloomRenderpasses(extent);
 	createSwapChainRenderPass(extent);
+	createSSDORenderpass(extent);
 
 }
 
@@ -558,4 +559,64 @@ void Game::RenderpassManager::createSwapChainRenderPass(VkExtent2D extent)
 
 	passes[swapChainRenderpass->getKey()] = std::move(swapChainRenderpass);
 
+}
+
+void Game::RenderpassManager::createSSDORenderpass(VkExtent2D extent)
+{
+	//SSDO 
+	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+
+	std::unique_ptr<VK_Objects::Renderpass> SSDORenderpass = std::make_unique<VK_Objects::Renderpass>(device, "SSDO", extent);
+
+	VK_Objects::RenderpassProperties renderpassProperties;
+	renderpassProperties.attachments.resize(1);
+	VK_Objects::RenderAttachment ssdoPass;
+
+	ssdoPass.description.format = format;
+	ssdoPass.description.samples = VK_SAMPLE_COUNT_1_BIT;
+	ssdoPass.description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	ssdoPass.description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	ssdoPass.description.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	ssdoPass.description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	ssdoPass.description.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	ssdoPass.description.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	ssdoPass.description.flags = 0;
+
+	ssdoPass.reference.attachment = 0;
+	ssdoPass.reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VK_Objects::Subpass subpass;
+	subpass.description.resize(1);
+	subpass.dependencies.resize(2);
+
+	VkAttachmentReference pColorAttachments[1] = { ssdoPass.reference };
+
+	subpass.description[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.description[0].colorAttachmentCount = 1;
+	subpass.description[0].pColorAttachments = pColorAttachments;
+
+	subpass.dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	subpass.dependencies[0].dstSubpass = 0;
+	subpass.dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpass.dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpass.dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpass.dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpass.dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	subpass.dependencies[1].srcSubpass = 0;
+	subpass.dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	subpass.dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	subpass.dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	subpass.dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpass.dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	subpass.dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	renderpassProperties.attachments[0] = ssdoPass;
+
+	SSDORenderpass->properties = renderpassProperties;
+	SSDORenderpass->subpass = subpass;
+
+	Vk_Functions::createRenderpass(device, *SSDORenderpass.get());
+
+	passes[SSDORenderpass->getKey()] = std::move(SSDORenderpass);
 }

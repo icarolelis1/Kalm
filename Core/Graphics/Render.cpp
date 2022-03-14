@@ -692,6 +692,10 @@ void Render::createBloom(VkCommandBuffer& commandBuffer, uint32_t i)
 	}
 }
 
+void Render::createSSDOPass(VkCommandBuffer& commandBuffer, uint32_t imageIndex)
+{
+}
+
 void Render::createPipeline()
 {
 
@@ -1170,6 +1174,111 @@ void Render::createPipeline()
 
 		pipelineManager["SWAPCHAIN_PIPELINE"] = std::move(SWAPCHAIN_PIPELINE);
 
+	}
+
+
+	//Pipeline FOR SSDO
+	{
+		VK_Objects::ShaderResource albedo{};
+		albedo.binding = static_cast<uint32_t>(0);
+		albedo.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		albedo.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+		VK_Objects::ShaderResource normal{};
+		normal.binding = static_cast<uint32_t>(1);
+		normal.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		normal.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+		VK_Objects::ShaderResource position{};
+		position.binding = static_cast<uint32_t>(2);
+		position.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		position.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+		
+		VK_Objects::ShaderResource samplesNoise{};
+		samplesNoise.binding = static_cast<uint32_t>(3);
+		samplesNoise.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		samplesNoise.type = VK_Objects::ShaderResourceType::IMAGE_SAMPLER;
+
+		VK_Objects::ShaderResource kernelSamples{};
+		kernelSamples.binding = static_cast<uint32_t>(4);
+		kernelSamples.size = sizeof(glm::vec4)*34;
+		kernelSamples.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		kernelSamples.type = VK_Objects::ShaderResourceType::UNIFORM_BUFFER;
+
+		VK_Objects::ShaderResource projection{};
+		projection.binding = static_cast<uint32_t>(5);
+		projection.size = sizeof(VP);
+		projection.stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+		projection.type = VK_Objects::ShaderResourceType::UNIFORM_BUFFER;
+
+		struct specializationMap {
+			uint32_t kernelsize = 34;
+			float radius = .5f;
+		}specialization;
+
+		std::array<VkSpecializationMapEntry,2> spcMapEntry;
+		VkSpecializationMapEntry entry1{};
+		entry1.constantID = 0;
+		entry1.offset = offsetof(specializationMap, kernelsize);
+		entry1.size = sizeof(specializationMap::kernelsize);
+
+		VkSpecializationMapEntry entry2{};
+		entry2.constantID = 1;
+		entry2.offset = offsetof(specializationMap, radius);
+		entry2.size = sizeof(specializationMap::radius);
+		spcMapEntry[0] = entry1; spcMapEntry[1] = entry2;
+
+
+		VkSpecializationInfo specializationInfo{  };
+		specializationInfo.dataSize = sizeof(specializationMap);
+		specializationInfo.mapEntryCount = 2;
+		specializationInfo.pMapEntries = spcMapEntry.data();
+		specializationInfo.pData = &specialization;
+
+		//Create shader resource and Allocate Descriptorsets 
+		std::vector<VK_Objects::ShaderResource> resources = { albedo,normal,position,kernelSamples,projection };
+
+		std::shared_ptr<VK_Objects::DescriptorSetLayout> descLayout = std::make_shared<VK_Objects::DescriptorSetLayout>(&device, resources);
+
+		for (unsigned int i = 0; i < swapChain.getNumberOfImages(); i++) {
+
+			//Allocate descriptorset for descLayout and store it inside sets variable.
+			horizontalBlur_Descriptorsets.push_back(poolManager->allocateDescriptor(descLayout));
+
+		}
+
+		std::vector<std::shared_ptr<VK_Objects::DescriptorSetLayout>> descriptors;
+		descriptors.push_back(std::move(descLayout));
+
+
+		//Create Pipeline
+		std::unique_ptr<VK_Objects::Shader> vert = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::VERTEX_SHADER, Utils::readFile("Shaders\\SSDO\\vert.spv"));
+		std::unique_ptr<VK_Objects::Shader> frag = std::make_unique< VK_Objects::Shader>(device, VK_Objects::SHADER_TYPE::FRAGMENT_SHADER, Utils::readFile("Shaders\\SSDO\\frag.spv"));
+
+		std::vector<VkPushConstantRange> pushConstants;
+
+		std::unique_ptr<VK_Objects::PipelineLayout> layout = std::make_unique<VK_Objects::PipelineLayout>(device, std::move(descriptors), pushConstants);
+
+		VK_Objects::PipelineProperties pipelineInfo{};
+
+		std::vector<VK_Objects::ATRIBUTES> atributes = { };
+
+		std::vector<std::vector<VK_Objects::ATRIBUTES>>att{ atributes };
+
+		pipelineInfo.atributes = att;
+		pipelineInfo.colorAttachmentsCount = 1;
+		pipelineInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+		pipelineInfo.dephTest = 0;
+		pipelineInfo.depthBias = 0;
+		pipelineInfo.rdpass = &renderpass->passes["HORIZONTAL_BLUR"]->vk_renderpass;
+		pipelineInfo.frontFaceClock = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		pipelineInfo.vertexOffsets = { 0 };
+		pipelineInfo.subpass = 0;
+
+		std::unique_ptr<VK_Objects::Pipeline> SSDOPipeline = std::make_unique<VK_Objects::Pipeline>(device, std::move(layout), std::move(vert), std::move(frag), pipelineInfo);
+		SSDOPipeline->id = "SSDO_PIPELINE";
+
+		pipelineManager["SSDO_PIPELINE"] = std::move(SSDOPipeline);
 	}
 }
 

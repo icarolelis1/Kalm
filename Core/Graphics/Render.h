@@ -108,6 +108,7 @@ private:
 	void recordCommandIndex(VK_Objects::CommandBuffer& command, uint32_t index);
 	void createShadowMap(VkCommandBuffer &commandBuffer,uint32_t imageIndex);
 	void createBloom(VkCommandBuffer& commandBuffer, uint32_t imageIndex);
+	void createSSDOPass(VkCommandBuffer& commandBuffer, uint32_t imageIndex);
 
 	void createPipeline();
 
